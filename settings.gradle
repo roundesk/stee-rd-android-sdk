@@ -1,0 +1,3 @@
+rootProject.name = "stee-rd-android-sdk"
+include ':stee-rd-app'
+include ':stee-rd-sdk'
