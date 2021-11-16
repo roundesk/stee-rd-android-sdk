@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">stee-rd-android-sdk</string>
+    <string name="str_settings">Settings</string>
+    <string name="str_edit_crew_details">Edit Crew Details</string>
+    <string name="str_queue_status">Queue Status</string>
+    <string name="str_all_updates_synced">All updates synced</string>
+    <string name="str_environment">Environment</string>
+    <string name="str_operations">Operations</string>
+    <string name="str_conference">Conference</string>
+    <string name="str_start_with_video_muted">Start with Video Muted</string>
+    <string name="str_start_with_audio_muted">Start with Audio Muted</string>
+    <string name="str_version">Version</string>
+    <string name="str__1_0_0">1.0.0</string>
+    <string name="str_image_content_description_back_arrow">Back Arrow</string>
+    <string name="str_start_with_chat">Start with Chat</string>
+    <string name="str_back_press_toast">Press again to exit</string>
+    <string name="str_outgoing_caller_name">Dr. LEONARD GIRARDI</string>
+    <string name="str_ringing">Ringing</string>
+    <string name="str_video_call">Video Call</string>
+    <string name="str_incoming_caller_name">JOHN M BROWN</string>
 </resources>

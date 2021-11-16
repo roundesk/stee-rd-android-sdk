@@ -3,9 +3,15 @@
     package="com.roundesk.sdk">
 
     <application>
-        <activity android:name=".SettingsActivity">
-
-        </activity>
+        <activity
+            android:name=".activity.VideoCallActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.OutgoingCallActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.IncomingCallActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

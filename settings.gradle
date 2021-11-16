@@ -1,3 +1,4 @@
 rootProject.name = "stee-rd-android-sdk"
 include ':stee-rd-app'
 include ':stee-rd-sdk'
+include ':webrtc-android-framework'

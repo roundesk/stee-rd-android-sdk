@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/publisher_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true">
+
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/camera_view_renderer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="top" />
+
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/pip_view_renderer"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="bottom|right"
+            android:layout_margin="5dp"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="4dp" />
+    </FrameLayout>
+
+    <!--  <Spinner
+          android:id="@+id/stream_info_list"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_alignParentTop="true"
+          android:layout_margin="3dp" />-->
+
+    <!--<ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="3dp"
+        android:onClick="showSendDataChannelMessageDialog"
+        android:src="@android:drawable/sym_action_chat" />-->
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="@color/grey" />
+
+    <Button
+        android:id="@+id/start_streaming_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="3dp"
+        android:visibility="gone"
+        android:text="Start" />
+
+    <LinearLayout
+        android:id="@+id/lin_layBottomOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_call_options"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <ImageView
+            android:layout_width="@dimen/dimen_30dp"
+            android:layout_height="@dimen/dimen_20dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/dimen_10dp"
+            android:src="@drawable/ic_arrow_up_white" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="@dimen/dimen_15dp">
+
+            <ImageView
+                android:id="@+id/imgCamera"
+                android:layout_width="@dimen/dimen_20dp"
+                android:layout_height="@dimen/dimen_25dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:src="@drawable/ic_camera" />
+
+            <ImageView
+                android:id="@+id/imgVideo"
+                android:layout_width="@dimen/dimen_30dp"
+                android:layout_height="@dimen/dimen_20dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="@dimen/dimen_10dp"
+                android:layout_weight="1"
+                android:src="@drawable/ic_video" />
+
+            <ImageView
+                android:id="@+id/imgAudio"
+                android:layout_width="@dimen/dimen_30dp"
+                android:layout_height="@dimen/dimen_30dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:src="@drawable/ic_audio" />
+
+            <ImageView
+                android:id="@+id/imgCallEnd"
+                android:layout_width="@dimen/dimen_30dp"
+                android:layout_height="@dimen/dimen_30dp"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:src="@drawable/ic_call_end" />
+        </LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>
