@@ -70,11 +70,12 @@ class ApiFunctions(private var mContext: Activity?) {
                     roomId = createCallDataClassResponse?.roomId
                     meetingId = createCallDataClassResponse?.meetingId
                     streamId = createCallDataClassResponse?.streamId
-                    LogUtil.e("initiateCall", "onSuccess: $response")
+                    LogUtil.e("getCreateCallSocketData", "onSuccess: ${Gson().toJson(response.body())}")
 
                     if (!isIncomingCall) {
                         val intent =
-                            Intent(mContext, OutgoingCallActivity::class.java)
+                            Intent(mContext, VideoCallActivity::class.java)
+                        intent.putExtra("activity", "Outgoing")
                         intent.putExtra("room_id", roomId)
                         intent.putExtra("meeting_id", meetingId)
                         intent.putExtra("stream_id", streamId)

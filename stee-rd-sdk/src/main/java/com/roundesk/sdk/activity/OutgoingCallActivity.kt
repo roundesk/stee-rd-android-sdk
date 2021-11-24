@@ -74,8 +74,8 @@ class OutgoingCallActivity : AppCompatActivity(), View.OnClickListener {
         when (view?.id) {
             R.id.imgCallEnd -> {
                 finish()
-                val intent = Intent(this, VideoCallActivity::class.java)
-                startActivity(intent)
+//                val intent = Intent(this, VideoCallActivity::class.java)
+//                startActivity(intent)
             }
             R.id.imgBack -> {
                 finish()
