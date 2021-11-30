@@ -110,12 +110,12 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener {
                         LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
                         if (response.isSuccessful) {
                             LogUtil.e(TAG, "onSuccess: $response")
-                            val intent = Intent(this@IncomingCallActivity, VideoCallActivity::class.java)
+                            val intent = Intent(this@IncomingCallActivity, VideoCallActivityNew::class.java)
                             intent.putExtra("activity","Incoming")
                             intent.putExtra("room_id",response.body()?.roomId)
                             intent.putExtra("meeting_id",response.body()?.meetingId)
+                            intent.putExtra("receiver_stream_id",response.body()?.streamId)
                             intent.putExtra("stream_id",response.body()?.caller_streamId)
-                            intent.putExtra("caller_streamId",response.body()?.caller_streamId)
                             startActivity(intent)
                         }
                     }

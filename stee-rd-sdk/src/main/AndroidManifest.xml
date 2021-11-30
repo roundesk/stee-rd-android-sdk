@@ -7,6 +7,9 @@
             android:name=".activity.VideoCallActivity"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".activity.VideoCallActivityNew"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".activity.OutgoingCallActivity"
             android:screenOrientation="portrait" />
         <activity

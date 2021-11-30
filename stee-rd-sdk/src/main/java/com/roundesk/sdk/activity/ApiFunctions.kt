@@ -22,7 +22,7 @@ class ApiFunctions(private var mContext: Activity?) {
     private var streamId: String? = null
     private var roomId: Int? = null
     private var meetingId: Int? = null
-    private var isIncomingCall: Boolean = true
+    private var isIncomingCall: Boolean = false
 
     fun initiateCall(
         arraylistReceiverId: ArrayList<String>,
@@ -74,11 +74,12 @@ class ApiFunctions(private var mContext: Activity?) {
 
                     if (!isIncomingCall) {
                         val intent =
-                            Intent(mContext, VideoCallActivity::class.java)
+                            Intent(mContext, VideoCallActivityNew::class.java)
                         intent.putExtra("activity", "Outgoing")
                         intent.putExtra("room_id", roomId)
                         intent.putExtra("meeting_id", meetingId)
                         intent.putExtra("stream_id", streamId)
+                        intent.putExtra("isIncomingCall", isIncomingCall)
                         mContext?.startActivity(intent)
                     }
                 }
@@ -89,5 +90,12 @@ class ApiFunctions(private var mContext: Activity?) {
                 Log.e("initiateCall", "onFailure : ${t.message}")
             }
         })
+    }
+
+
+    fun getCallerRole(
+        isIncoming: Boolean
+    ) {
+        isIncomingCall = isIncoming
     }
 }

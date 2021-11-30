@@ -36,6 +36,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         )
 
         initView()
+
+        ApiFunctions(this).getCallerRole(false)
     }
 
     private fun initView() {
