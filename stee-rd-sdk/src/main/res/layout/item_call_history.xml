@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/linlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="@dimen/dimen_10dp">
+
+            <TextView
+                android:id="@+id/txtCallerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/segoe_ui_semi_bold"
+                android:text="@string/str_outgoing_caller_name"
+                android:textSize="@dimen/dimen_16sp" />
+
+            <TextView
+                android:id="@+id/txtTimeStamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/txtCallerName"
+                android:layout_centerVertical="true"
+                android:fontFamily="@font/segoe_ui_semi_bold"
+                android:text="Yesterday, 09:08 AM"
+                android:textColor="#928787"
+                android:textSize="@dimen/dimen_14sp" />
+
+            <TextView
+                android:id="@+id/txtCallStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/txtCallerName"
+                android:layout_alignTop="@id/txtTimeStamp"
+                android:layout_alignBottom="@id/txtTimeStamp"
+                android:layout_marginStart="@dimen/dimen_5dp"
+                android:layout_toEndOf="@id/txtTimeStamp"
+                android:fontFamily="@font/segoe_ui_bold"
+                android:gravity="center"
+                android:text="Missed"
+                android:textSize="@dimen/dimen_14sp" />
+
+
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/imgCall"
+            android:layout_width="@dimen/dimen_32dp"
+            android:layout_height="@dimen/dimen_32dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/dimen_15dp"
+            android:src="@drawable/ic_video"
+            app:tint="@color/notification_background_color" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="wrap_content"
+        android:layout_height="0.1dp"
+        android:layout_below="@id/linlay"
+        android:background="#928787" />
+</RelativeLayout>

@@ -94,8 +94,8 @@ class ApiFunctions(private var mContext: Activity?) {
 
 
     fun getCallerRole(
-        isIncoming: Boolean
+        isReceiver: Boolean
     ) {
-        isIncomingCall = isIncoming
+        isIncomingCall = isReceiver
     }
 }

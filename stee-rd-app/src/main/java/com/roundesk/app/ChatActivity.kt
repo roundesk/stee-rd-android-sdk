@@ -61,7 +61,12 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
 
                 // Below line will initiate the call
                 ApiFunctions(this).initiateCall(
-                    arraylistReceiverId,"doctor" ,"drpbzfjiouhqkaegcvtl","on","on","a3dt3ffdd"
+                    arraylistReceiverId,
+                    "doctor" ,
+                    "drpbzfjiouhqkaegcvtl",
+                    "on",
+                    "on",
+                    "a3dt3ffdd"
                 )
             }
 

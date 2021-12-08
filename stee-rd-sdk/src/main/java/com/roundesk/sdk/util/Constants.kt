@@ -8,6 +8,7 @@ object Constants {
         const val API_KEY_CREATE_CALL: String = "call"
         const val API_KEY_ACCEPT_CALL: String = "accept-call"
         const val API_KEY_DECLINE_CALL: String = "decline-call"
+        const val API_KEY_ALL_CALL: String = "all-calls"
     }
 
     object SocketSuffix {

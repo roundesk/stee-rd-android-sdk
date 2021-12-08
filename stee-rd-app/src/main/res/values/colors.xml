@@ -16,4 +16,9 @@
     <color name="decline_color">#FF0000</color>
     <color name="accept_color">#09A013</color>
     <color name="text_color">#707070</color>
+    <color name="call_received_color">#08A437</color>
+    <color name="call_missed_color">#FF3C00</color>
+    <color name="call_dial_color">#0C44E0</color>
+    <color name="call_history_text_color">#928787</color>
+    <color name="grey_alpha">#59787878</color>
 </resources>

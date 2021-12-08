@@ -1,15 +1,20 @@
 package com.roundesk.sdk.activity
 
+import android.app.PictureInPictureParams
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.hardware.Camera
+import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
+import android.util.Rational
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.NonNull
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -28,7 +33,7 @@ import org.webrtc.SurfaceViewRenderer
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCListener {
+class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCListener,    IDataChannelObserver  {
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
@@ -37,23 +42,39 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     }
 
 
+    private var mCamera: Camera? = null
     private var mRoomId: Int = 0
     private var mMeetingId: Int = 0
-    private var mCallerStreamId: String? = null
-    private var mReceiverStreamId: String? = null
+    private var mStreamId: String? = null
+    private var mReceiver_stream_id: String? = null
     private var activityName: String? = null
-    private var isIncomingCall: Boolean = false
 
     private var conferenceManager: ConferenceManager? = null
 
-    private var btnJoinConference: Button? = null
+    private lateinit var publishViewRenderer: SurfaceViewRenderer
+    private var play_view_renderer1: SurfaceViewRenderer? = null
     private var imgCallEnd: ImageView? = null
     private var imgCamera: ImageView? = null
     private var imgVideo: ImageView? = null
     private var imgAudio: ImageView? = null
     private var imgArrowUp: ImageView? = null
+    private var imgBack: ImageView? = null
+    private var txtTimer: TextView? = null
+    private var switchView: View? = null
+    private var relLayToolbar: RelativeLayout? = null
+    private var relLayoutMain: RelativeLayout? = null
+    private var relLayoutSurfaceViews: RelativeLayout? = null
+
     private lateinit var layoutBottomSheet: CardView
     lateinit var sheetBehavior: BottomSheetBehavior<View>
+
+    private var enableVideo: Boolean = true
+    private var enableAudio: Boolean = true
+    private var isCallerSmall: Boolean = false
+    var counter = 0
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,25 +95,24 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             activityName = extras.getString("activity")
             mRoomId = extras.getInt("room_id")
             mMeetingId = extras.getInt("meeting_id")
-            mCallerStreamId = extras.getString("stream_id")
-            mReceiverStreamId = extras.getString("receiver_stream_id")
-            isIncomingCall = extras.getBoolean("isIncomingCall")
+            mStreamId = extras.getString("stream_id")
+            mReceiver_stream_id = extras.getString("receiver_stream_id")
         }
         LogUtil.e(
             TAG,
             "activity : $activityName"
                     + " room_id : $mRoomId"
                     + " meeting_id : $mMeetingId "
-                    + "stream_id : $mCallerStreamId"
-                    + "receiver_stream_id : $mReceiverStreamId"
+                    + "stream_id : $mStreamId"
+                    + "receiver_stream_id : $mReceiver_stream_id"
         )
     }
 
     private fun initView() {
-        val publishViewRenderer: SurfaceViewRenderer = findViewById(R.id.publish_view_renderer)
+        publishViewRenderer = findViewById(R.id.publish_view_renderer)
+        play_view_renderer1 = findViewById(R.id.play_view_renderer1)
         val playViewRenderers = ArrayList<SurfaceViewRenderer>()
 
-        btnJoinConference = findViewById(R.id.btnJoinConference)
         layoutBottomSheet = findViewById(R.id.bottomSheet)
         sheetBehavior = BottomSheetBehavior.from(layoutBottomSheet)
         imgCallEnd = findViewById(R.id.imgCallEnd)
@@ -100,6 +120,12 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         imgVideo = findViewById(R.id.imgVideo)
         imgAudio = findViewById(R.id.imgAudio)
         imgArrowUp = findViewById(R.id.imgArrowUp)
+        imgBack = findViewById(R.id.imgBack)
+        txtTimer = findViewById(R.id.txtTimer)
+        switchView = findViewById(R.id.switchView)
+        relLayToolbar = findViewById(R.id.relLayToolbar)
+        relLayoutMain = findViewById(R.id.relLayoutMain)
+        relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
 
@@ -107,6 +133,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
 
         sheetBehaviour()
         checkPermissions()
+
         conferenceDetails(publishViewRenderer, playViewRenderers)
 
         joinConference()
@@ -118,13 +145,6 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     ) {
         this.intent.putExtra(CallActivity.EXTRA_CAPTURETOTEXTURE_ENABLED, true)
 //          this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_CALL, false);
-        var streamIdUser: String? = ""
-
-        streamIdUser = if (isIncomingCall) {
-            mReceiverStreamId
-        } else {
-            mCallerStreamId
-        }
         conferenceManager = ConferenceManager(
             this,
             this,
@@ -133,9 +153,8 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             mRoomId.toString(),
             publishViewRenderer,
             playViewRenderers,
-//            mStreamId,
+            mStreamId,
 //            mReceiver_stream_id,
-            streamIdUser,
             null
         )
 
@@ -144,12 +163,13 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     }
 
     private fun setListeners() {
-        btnJoinConference?.setOnClickListener(this)
         imgCallEnd?.setOnClickListener(this)
         imgCamera?.setOnClickListener(this)
         imgVideo?.setOnClickListener(this)
         imgAudio?.setOnClickListener(this)
         imgArrowUp?.setOnClickListener(this)
+        imgBack?.setOnClickListener(this)
+        switchView?.setOnClickListener(this)
     }
 
     private fun checkPermissions() {
@@ -164,21 +184,15 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.btnJoinConference -> {
-//                joinConference()
-            }
-
             R.id.imgCallEnd -> {
                 conferenceManager?.leaveFromConference()
-//                webRTCClient!!.stopStream()
-//                stoppedStream = true
                 finish()
             }
 
             R.id.imgCamera -> {
-//                webRTCClient!!.switchCamera()
             }
 
             R.id.imgAudio -> {
@@ -192,36 +206,64 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             R.id.imgArrowUp -> {
                 toggleBottomSheet()
             }
+
+            R.id.imgBack -> {
+                val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
+                    enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
+                }
+//                enterPictureInPictureMode()
+            }
+
+            R.id.switchView -> {
+                isCallerSmall = !isCallerSmall
+                switchLayout(isCallerSmall)
+            }
         }
     }
 
     private fun joinConference() {
         if (conferenceManager?.isJoined == false) {
             Log.w(javaClass.simpleName, "Joining Conference")
-            btnJoinConference?.text = "Leave"
             conferenceManager?.joinTheConference()
         } else {
-            btnJoinConference?.text = "Join"
             conferenceManager?.leaveFromConference()
         }
     }
 
     private fun controlAudio() {
         if (conferenceManager!!.isPublisherAudioOn) {
-            conferenceManager!!.disableAudio()
+            if (conferenceManager != null) {
+                runOnUiThread {
+                    conferenceManager!!.disableAudio()
+                }
+            }
             imgAudio?.setImageResource(R.drawable.ic_audio_mute)
         } else {
-            conferenceManager!!.enableAudio()
+            if (conferenceManager != null) {
+                runOnUiThread {
+                    conferenceManager!!.enableAudio()
+                }
+            }
             imgAudio?.setImageResource(R.drawable.ic_audio)
         }
     }
 
     private fun controlVideo() {
-        if (conferenceManager?.isPublisherVideoOn == true) {
-            conferenceManager?.disableVideo()
+        if (conferenceManager!!.isPublisherVideoOn) {
+            if (conferenceManager != null) {
+                runOnUiThread {
+                    conferenceManager!!.disableVideo()
+                }
+            }
             imgVideo?.setImageResource(R.drawable.ic_video_mute)
         } else {
-            conferenceManager?.enableVideo()
+            if (conferenceManager != null) {
+                runOnUiThread {
+                    conferenceManager!!.enableVideo()
+                }
+            }
             imgVideo?.setImageResource(R.drawable.ic_video)
         }
     }
@@ -274,6 +316,9 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
 
     override fun onPublishStarted(streamId: String?) {
         LogUtil.e(TAG, "onPublishStarted streamId: $streamId")
+//        startTimeCounter()
+//        updateDisplay()
+
     }
 
     override fun onPlayStarted(streamId: String?) {
@@ -332,7 +377,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         )
     }
 
-    /*override fun onBufferedAmountChange(previousAmount: Long, dataChannelLabel: String?) {
+    override fun onBufferedAmountChange(previousAmount: Long, dataChannelLabel: String?) {
     }
 
     override fun onStateChange(state: DataChannel.State?, dataChannelLabel: String?) {
@@ -357,5 +402,138 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         val strDataJson = String(data.array(), StandardCharsets.UTF_8)
 
         Log.e(javaClass.simpleName, "SentEvent: $strDataJson")
-    }*/
+    }
+
+    private fun startTimeCounter() {
+        /* val countTime: TextView = findViewById(R.id.txtTimer)
+         object : CountDownTimer(50000, 1000) {
+             override fun onTick(millisUntilFinished: Long) {
+                 countTime.text = counter.toString()
+                 counter++
+             }
+             override fun onFinish() {
+                 countTime.text = "Finished"
+             }
+         }.start()*/
+
+        val duration: Long = 81200000 //6 hours
+
+        object : CountDownTimer(duration, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                var millisUntilFinished = millisUntilFinished
+                val secondsInMilli: Long = 1000
+                val minutesInMilli = secondsInMilli * 60
+                val hoursInMilli = minutesInMilli * 60
+                val elapsedHours = millisUntilFinished / hoursInMilli
+                millisUntilFinished = millisUntilFinished % hoursInMilli
+                val elapsedMinutes = millisUntilFinished / minutesInMilli
+                millisUntilFinished = millisUntilFinished % minutesInMilli
+                val elapsedSeconds = millisUntilFinished / secondsInMilli
+                val yy =
+                    String.format("%02d:%02d", /*elapsedHours,*/ elapsedMinutes, elapsedSeconds)
+                txtTimer?.setText(yy)
+            }
+
+            override fun onFinish() {
+                txtTimer?.setText("00:00")
+            }
+        }.start()
+    }
+
+    private fun updateDisplay() {
+        val timer = Timer()
+        timer.schedule(object : TimerTask() {
+            override fun run() {
+                val c = Calendar.getInstance()
+
+                var mHour = c[Calendar.HOUR_OF_DAY]
+                var mMinute = c[Calendar.MINUTE]
+                var mSecond = c[Calendar.SECOND]
+
+                runOnUiThread {
+                    txtTimer?.setText(
+                        StringBuilder()
+                            .append(mHour).append(":")
+                            .append(mMinute).append(":").append(mSecond)
+                    )
+                }
+
+            }
+        }, 0, 1000) //Update text every second
+    }
+
+    private fun switchLayout(isCallerSmall: Boolean) {
+        if (isCallerSmall) {
+            val paramsReceiver: RelativeLayout.LayoutParams =
+                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsReceiver.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsReceiver.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsReceiver.marginEnd = 0
+            paramsReceiver.topMargin = 0
+            play_view_renderer1?.layoutParams = paramsReceiver
+
+            val paramsCaller: RelativeLayout.LayoutParams =
+                publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsCaller.height = 510
+            paramsCaller.width = 432
+            paramsCaller.marginEnd = 48
+            paramsCaller.topMargin = 48
+            paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+//            paramsCaller.gravity = Gravity.TOP or Gravity.END
+            publishViewRenderer.layoutParams = paramsCaller
+            publishViewRenderer.elevation = 2F
+
+        } else {
+            val paramsCaller: RelativeLayout.LayoutParams =
+                publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsCaller.marginEnd = 0
+            paramsCaller.topMargin = 0
+            publishViewRenderer.layoutParams = paramsCaller
+
+
+            val paramsReceiver: RelativeLayout.LayoutParams =
+                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsReceiver.height = 510
+            paramsReceiver.width = 432
+            paramsReceiver.marginEnd = 48
+            paramsReceiver.topMargin = 48
+            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+//            paramsReceiver.gravity = Gravity.TOP or Gravity.END
+            play_view_renderer1?.layoutParams = paramsReceiver
+            play_view_renderer1?.elevation = 2F
+
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration?
+    ) {
+        if (isInPictureInPictureMode) {
+            layoutBottomSheet.visibility = View.GONE
+            relLayToolbar?.visibility = View.GONE
+            val paramsReceiver: RelativeLayout.LayoutParams =
+                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsReceiver.height = 210
+            paramsReceiver.width = 165
+            paramsReceiver.marginEnd = 10
+            paramsReceiver.topMargin = 10
+            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            play_view_renderer1?.layoutParams = paramsReceiver
+        } else {
+            layoutBottomSheet.visibility = View.VISIBLE
+            relLayToolbar?.visibility = View.VISIBLE
+            val paramsReceiver: RelativeLayout.LayoutParams =
+                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+            paramsReceiver.height = 510
+            paramsReceiver.width = 432
+            paramsReceiver.marginEnd = 48
+            paramsReceiver.topMargin = 48
+            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            play_view_renderer1?.layoutParams = paramsReceiver
+        }
+    }
 }

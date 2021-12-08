@@ -155,6 +155,18 @@
                 android:textColor="@color/black"
                 android:textSize="@dimen/dimen_16sp" />
 
+            <TextView
+                android:id="@+id/txtCallHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dimen_5dp"
+                android:fontFamily="@font/segoe_ui_regular"
+                android:paddingTop="@dimen/dimen_5dp"
+                android:paddingBottom="@dimen/dimen_5dp"
+                android:text="@string/str_call_history"
+                android:textColor="@color/black"
+                android:textSize="@dimen/dimen_16sp" />
+
         </LinearLayout>
 
         <LinearLayout
