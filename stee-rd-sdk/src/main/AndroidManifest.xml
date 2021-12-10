@@ -2,13 +2,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.roundesk.sdk">
 
-    <application>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:name=".socket.SocketInstance"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".activity.VideoCallActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activity.VideoCallActivityNew"
-            android:screenOrientation="portrait" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true"  />
+
         <activity
             android:name=".activity.OutgoingCallActivity"
             android:screenOrientation="portrait" />
