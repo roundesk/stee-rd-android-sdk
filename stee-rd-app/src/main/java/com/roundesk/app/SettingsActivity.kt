@@ -5,9 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
 import com.github.nkzawa.socketio.client.Socket
-import com.roundesk.sdk.activity.CallHistoryActivity
-import com.roundesk.sdk.activity.IncomingCallActivity
-import com.roundesk.sdk.socket.SocketFunctions
+import com.roundesk.sdk.activity.ApiFunctions
 
 class SettingsActivity : AppCompatActivity() {
     private var txtStartWithChat: TextView? = null
@@ -29,8 +27,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         txtCallHistory?.setOnClickListener {
-            val intent = Intent(this, CallHistoryActivity::class.java)
-            startActivity(intent)
+            ApiFunctions(this).navigateToCallHistory()
         }
 
     }

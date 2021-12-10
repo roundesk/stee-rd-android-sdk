@@ -30,10 +30,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_chat)
 
         // Below line will initiate the Socket and make it open
-        SocketFunctions(this).initiateSocket(
+       /* SocketFunctions(this).initiateSocket(
             mSocket,
             SocketConstants.SOCKET_SEND_CALL_TO_CLIENT + callerId,false
-        )
+        )*/
 
         initView()
 

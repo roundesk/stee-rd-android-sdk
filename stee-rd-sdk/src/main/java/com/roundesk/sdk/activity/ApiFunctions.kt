@@ -32,7 +32,7 @@ class ApiFunctions(private var mContext: Activity?) {
         videoStatus: String,
         caseId: String
     ) {
-        arraylistReceiverId.clear()
+//        arraylistReceiverId.clear()
 
         participants = CreateCallRequest.Participant("", "")
         participantsArrayList.clear()
