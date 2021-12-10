@@ -98,4 +98,9 @@ class ApiFunctions(private var mContext: Activity?) {
     ) {
         isIncomingCall = isReceiver
     }
+
+    fun navigateToCallHistory(){
+        val intent = Intent(mContext, CallHistoryActivity::class.java)
+        mContext?.startActivity(intent)
+    }
 }

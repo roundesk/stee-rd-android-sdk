@@ -15,6 +15,9 @@
         <activity
             android:name=".activity.IncomingCallActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.CallHistoryActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
