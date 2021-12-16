@@ -20,5 +20,7 @@
     <string name="str_video_call">Video Call</string>
     <string name="str_incoming_caller_name">JOHN M BROWN</string>
     <string name="str_call_history">Call History</string>
-
+    <string name="rationale_camera">This app needs access to your camera so you can make a video call</string>
+    <string name="rationale_microphone">This app needs access to your microphone so you can make a audio call.</string>
+    <string name="rationale_storage">This app needs access to your storage</string>
 </resources>

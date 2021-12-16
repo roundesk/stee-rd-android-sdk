@@ -1,12 +1,17 @@
 package com.roundesk.sdk.activity
 
+import android.app.ActivityManager
 import android.app.PictureInPictureParams
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.hardware.Camera
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.SystemClock
+import android.text.format.DateFormat
 import android.util.Log
 import android.util.Rational
 import android.view.View
@@ -59,11 +64,11 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     private var imgAudio: ImageView? = null
     private var imgArrowUp: ImageView? = null
     private var imgBack: ImageView? = null
-    private var txtTimer: TextView? = null
     private var switchView: View? = null
     private var relLayToolbar: RelativeLayout? = null
     private var relLayoutMain: RelativeLayout? = null
     private var relLayoutSurfaceViews: RelativeLayout? = null
+    private var chronometer: Chronometer? = null
 
     private lateinit var layoutBottomSheet: CardView
     lateinit var sheetBehavior: BottomSheetBehavior<View>
@@ -71,6 +76,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     private var enableVideo: Boolean = true
     private var enableAudio: Boolean = true
     private var isCallerSmall: Boolean = false
+    private var isPictureInPictureMode: Boolean = false
     var counter = 0
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -121,11 +127,11 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         imgAudio = findViewById(R.id.imgAudio)
         imgArrowUp = findViewById(R.id.imgArrowUp)
         imgBack = findViewById(R.id.imgBack)
-        txtTimer = findViewById(R.id.txtTimer)
         switchView = findViewById(R.id.switchView)
         relLayToolbar = findViewById(R.id.relLayToolbar)
         relLayoutMain = findViewById(R.id.relLayoutMain)
         relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
+        chronometer = findViewById(R.id.chronometer)
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
 
@@ -316,9 +322,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
 
     override fun onPublishStarted(streamId: String?) {
         LogUtil.e(TAG, "onPublishStarted streamId: $streamId")
-//        startTimeCounter()
-//        updateDisplay()
-
+        startCallDurationTimer()
     }
 
     override fun onPlayStarted(streamId: String?) {
@@ -431,11 +435,9 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
                 val elapsedSeconds = millisUntilFinished / secondsInMilli
                 val yy =
                     String.format("%02d:%02d", /*elapsedHours,*/ elapsedMinutes, elapsedSeconds)
-                txtTimer?.setText(yy)
             }
 
             override fun onFinish() {
-                txtTimer?.setText("00:00")
             }
         }.start()
     }
@@ -450,13 +452,13 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
                 var mMinute = c[Calendar.MINUTE]
                 var mSecond = c[Calendar.SECOND]
 
-                runOnUiThread {
+                /*runOnUiThread {
                     txtTimer?.setText(
                         StringBuilder()
                             .append(mHour).append(":")
                             .append(mMinute).append(":").append(mSecond)
                     )
-                }
+                }*/
 
             }
         }, 0, 1000) //Update text every second
@@ -513,6 +515,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         newConfig: Configuration?
     ) {
         if (isInPictureInPictureMode) {
+            isPictureInPictureMode = true
             layoutBottomSheet.visibility = View.GONE
             relLayToolbar?.visibility = View.GONE
             val paramsReceiver: RelativeLayout.LayoutParams =
@@ -535,5 +538,43 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             play_view_renderer1?.layoutParams = paramsReceiver
         }
+    }
+
+    private fun startCallDurationTimer() {
+        chronometer?.base = SystemClock.elapsedRealtime()
+        chronometer?.start()
+
+        chronometer?.setOnChronometerTickListener {
+            val t: Long = SystemClock.elapsedRealtime() - it.getBase() - 19800000
+            it.setText(DateFormat.format("HH:mm:ss", t))
+        }
+    }
+
+    override fun onBackPressed() {
+        val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
+            enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
+        }
+    }
+
+    fun navToLauncherTask(appContext: Context) {
+        val activityManager =
+            (appContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
+        val appTasks = activityManager.appTasks
+        for (task in appTasks) {
+            val baseIntent = task.taskInfo.baseIntent
+            val categories = baseIntent.categories
+            if (categories != null && categories.contains(Intent.CATEGORY_LAUNCHER)) {
+                task.moveToFront()
+                return
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isPictureInPictureMode)
+            navToLauncherTask(this)
     }
 }

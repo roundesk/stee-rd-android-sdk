@@ -24,7 +24,11 @@
             android:name=".activity.VideoCallActivityNew"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:screenOrientation="portrait"
-            android:supportsPictureInPicture="true"  />
+            android:supportsPictureInPicture="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:autoRemoveFromRecents="true"/>
 
         <activity
             android:name=".activity.OutgoingCallActivity"

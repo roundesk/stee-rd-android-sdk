@@ -66,14 +66,14 @@
             android:contentDescription="@string/str_image_content_description_back_arrow"
             android:src="@drawable/ic_arrow_back_white" />
 
-        <TextView
-            android:id="@+id/txtTimer"
+        <Chronometer
+            android:id="@+id/chronometer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:fontFamily="@font/segoe_ui_semi_bold"
+            android:format="00:00:00"
             android:textColor="@color/white_dark"
             android:textSize="@dimen/dimen_22sp" />
-
     </RelativeLayout>
 </RelativeLayout>
