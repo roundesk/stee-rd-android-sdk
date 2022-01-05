@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
-import com.github.nkzawa.socketio.client.Socket
+//import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.R
 
 class OutgoingCallActivity : AppCompatActivity(), View.OnClickListener {
@@ -14,7 +14,7 @@ class OutgoingCallActivity : AppCompatActivity(), View.OnClickListener {
 
     private var imgCallEnd: ImageView? = null
     private var imgBack: ImageView? = null
-    private var mSocket: Socket? = null
+//    private var mSocket: Socket? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

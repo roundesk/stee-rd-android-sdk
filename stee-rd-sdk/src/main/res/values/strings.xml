@@ -17,4 +17,9 @@
     <string name="str_ringing">Ringing</string>
     <string name="str_video_call">Video Call</string>
     <string name="str_incoming_caller_name">JOHN M BROWN</string>
+    <string name="rationale_camera">This app needs access to your camera so you can make a video call</string>
+    <string name="rationale_microphone">This app needs access to your microphone so you can make a audio call.</string>
+    <string name="rationale_storage">This app needs access to your storage</string>
+    <string name="toast_err_in_response">Error in getting response</string>
+    <string name="toast_request_to_try_later">Try later</string>
 </resources>

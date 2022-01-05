@@ -1,4 +1,4 @@
-package com.roundesk_stee_sdk.util
+package com.roundesk.sdk.util
 
 import android.content.Context
 import android.widget.Toast

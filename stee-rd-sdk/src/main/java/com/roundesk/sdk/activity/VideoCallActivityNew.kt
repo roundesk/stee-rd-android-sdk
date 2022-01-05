@@ -25,7 +25,7 @@ import androidx.cardview.widget.CardView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.util.LogUtil
 import de.tavendo.autobahn.WebSocket
 import io.antmedia.webrtcandroidframework.ConferenceManager
 import io.antmedia.webrtcandroidframework.IDataChannelObserver
@@ -38,7 +38,8 @@ import org.webrtc.SurfaceViewRenderer
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCListener,    IDataChannelObserver  {
+class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCListener,
+    IDataChannelObserver {
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
@@ -199,6 +200,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             }
 
             R.id.imgCamera -> {
+                Log.e("imgCamera","imgCamera")
             }
 
             R.id.imgAudio -> {
@@ -239,20 +241,18 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     }
 
     private fun controlAudio() {
-        if (conferenceManager!!.isPublisherAudioOn) {
-            if (conferenceManager != null) {
-                runOnUiThread {
+        runOnUiThread {
+            if (conferenceManager!!.isPublisherAudioOn) {
+                if (conferenceManager != null) {
                     conferenceManager!!.disableAudio()
                 }
-            }
-            imgAudio?.setImageResource(R.drawable.ic_audio_mute)
-        } else {
-            if (conferenceManager != null) {
-                runOnUiThread {
+                imgAudio?.setImageResource(R.drawable.ic_audio_mute)
+            } else {
+                if (conferenceManager != null) {
                     conferenceManager!!.enableAudio()
                 }
+                imgAudio?.setImageResource(R.drawable.ic_audio)
             }
-            imgAudio?.setImageResource(R.drawable.ic_audio)
         }
     }
 
@@ -543,9 +543,22 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     private fun startCallDurationTimer() {
         chronometer?.base = SystemClock.elapsedRealtime()
         chronometer?.start()
-
+        val locale: TimeZone = TimeZone.getDefault()
+        Log.e(
+            "SettingsActivity",
+            "TimeZone   " + locale.getDisplayName(
+                false,
+                TimeZone.SHORT
+            ) + " Timezone id :: " + locale.getID()
+        )
         chronometer?.setOnChronometerTickListener {
-            val t: Long = SystemClock.elapsedRealtime() - it.getBase() - 19800000
+            val timeZoneDiffInMilli: Int =
+                if (locale.getDisplayName(false, TimeZone.SHORT) == "SGT") {
+                    19800000 + 7200000
+                } else {
+                    19800000
+                }
+            val t: Long = SystemClock.elapsedRealtime() - it.getBase() - timeZoneDiffInMilli
             it.setText(DateFormat.format("HH:mm:ss", t))
         }
     }

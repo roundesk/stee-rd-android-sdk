@@ -15,7 +15,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.*
 import com.roundesk.sdk.R
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.util.LogUtil
 import de.tavendo.autobahn.WebSocket
 import io.antmedia.webrtcandroidframework.*
 import io.antmedia.webrtcandroidframework.apprtc.CallActivity

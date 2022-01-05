@@ -13,9 +13,9 @@ import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk_stee_sdk.adapter.CallHistoryAdapter
-import com.roundesk_stee_sdk.dataclass.CallHistoryResponseDataClass
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.adapter.CallHistoryAdapter
+import com.roundesk.sdk.dataclass.CallHistoryResponseDataClass
+import com.roundesk.sdk.util.LogUtil
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

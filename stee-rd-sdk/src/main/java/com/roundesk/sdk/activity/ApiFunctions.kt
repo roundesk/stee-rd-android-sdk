@@ -8,7 +8,7 @@ import com.roundesk.sdk.dataclass.CreateCallDataClassResponse
 import com.roundesk.sdk.dataclass.CreateCallRequest
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.util.LogUtil
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

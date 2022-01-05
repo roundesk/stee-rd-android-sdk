@@ -1,11 +1,16 @@
 package com.roundesk.app
 
+import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.telephony.TelephonyManager
+import android.util.Log
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.activity.ApiFunctions
+import java.util.*
+
 
 class SettingsActivity : AppCompatActivity() {
     private var txtStartWithChat: TextView? = null
@@ -29,6 +34,5 @@ class SettingsActivity : AppCompatActivity() {
         txtCallHistory?.setOnClickListener {
             ApiFunctions(this).navigateToCallHistory()
         }
-
     }
 }

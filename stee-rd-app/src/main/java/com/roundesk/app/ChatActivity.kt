@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.socket.SocketFunctions
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.util.LogUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import java.util.ArrayList

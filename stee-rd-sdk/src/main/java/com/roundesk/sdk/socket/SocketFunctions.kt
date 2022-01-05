@@ -4,20 +4,20 @@ import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.ContextCompat.startActivity
-import com.github.nkzawa.emitter.Emitter
-import com.github.nkzawa.socketio.client.IO
-import com.github.nkzawa.socketio.client.Socket
+//import com.github.nkzawa.emitter.Emitter
+//import com.github.nkzawa.socketio.client.IO
+//import com.github.nkzawa.socketio.client.Socket
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.IncomingCallActivity
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.dataclass.CreateCallSocketDataClass
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.util.LogUtil
 
 class SocketFunctions(private var mContext: Activity?) {
 
-    private var mSocket: Socket? = null
-    private var isIncomingCall: Boolean = false
-
+//    private var mSocket: Socket? = null
+//    private var isIncomingCall: Boolean = false
+/*
     fun initiateSocket(socket: Socket?, socketId: String, showIncomingScreen:Boolean) {
         mSocket = socket
         isIncomingCall = showIncomingScreen
@@ -33,10 +33,10 @@ class SocketFunctions(private var mContext: Activity?) {
             Toast.makeText(mContext, "Socket is connected", Toast.LENGTH_SHORT).show()
         }
 
-        mSocket?.on(socketId, onCreateCallEmitter)
+        mSocket?.on(socketId, onCreateCallEmitter)*/
     }
 
-    private val onCreateCallEmitter = Emitter.Listener { args ->
+/*    private val onCreateCallEmitter = Emitter.Listener { args ->
         val response = "" + args[0]
         LogUtil.e("onCreateCallEmitter", "socket response : $response")
         val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -53,5 +53,4 @@ class SocketFunctions(private var mContext: Activity?) {
                 }
             }
         }
-    }
-}
+    }*/

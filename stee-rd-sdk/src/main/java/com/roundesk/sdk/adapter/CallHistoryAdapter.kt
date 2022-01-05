@@ -1,4 +1,4 @@
-package com.roundesk_stee_sdk.adapter
+package com.roundesk.sdk.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -10,8 +10,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.roundesk.sdk.R
-import com.roundesk_stee_sdk.dataclass.CallHistoryResponseDataClass
-import com.roundesk_stee_sdk.util.LogUtil
+import com.roundesk.sdk.dataclass.CallHistoryResponseDataClass
+import com.roundesk.sdk.util.LogUtil
 import java.text.SimpleDateFormat
 import java.util.*
 

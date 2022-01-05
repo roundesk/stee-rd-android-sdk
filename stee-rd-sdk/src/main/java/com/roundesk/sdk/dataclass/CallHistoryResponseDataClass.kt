@@ -1,4 +1,4 @@
-package com.roundesk_stee_sdk.dataclass
+package com.roundesk.sdk.dataclass
 
 
 import com.google.gson.annotations.SerializedName
