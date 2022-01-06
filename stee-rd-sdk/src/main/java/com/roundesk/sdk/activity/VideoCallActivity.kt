@@ -15,6 +15,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.*
 import com.roundesk.sdk.R
+import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.util.LogUtil
 import de.tavendo.autobahn.WebSocket
 import io.antmedia.webrtcandroidframework.*
@@ -23,7 +24,7 @@ import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import java.util.ArrayList
 
-class VideoCallActivity : AppCompatActivity(), IWebRTCListener, View.OnClickListener {
+class VideoCallActivity : AppBaseActivity(), IWebRTCListener, View.OnClickListener {
 
     private val TAG = VideoCallActivity::class.java.simpleName
 

@@ -3,6 +3,7 @@ package com.roundesk.sdk.activity
 import android.app.ActivityManager
 import android.app.PictureInPictureParams
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -20,12 +21,21 @@ import android.view.WindowManager
 import android.widget.*
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
+import com.roundesk.sdk.base.AppBaseActivity
+import com.roundesk.sdk.dataclass.*
+import com.roundesk.sdk.network.ApiInterface
+import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketListener
+import com.roundesk.sdk.socket.SocketManager
+import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.ToastUtil
 import de.tavendo.autobahn.WebSocket
 import io.antmedia.webrtcandroidframework.ConferenceManager
 import io.antmedia.webrtcandroidframework.IDataChannelObserver
@@ -35,16 +45,20 @@ import io.antmedia.webrtcandroidframework.apprtc.CallActivity
 import org.json.JSONObject
 import org.webrtc.DataChannel
 import org.webrtc.SurfaceViewRenderer
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCListener,
-    IDataChannelObserver {
+class VideoCallActivityNew : AppBaseActivity(),
+    View.OnClickListener, IWebRTCListener,
+    IDataChannelObserver, SocketListener<Any> {
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
         private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
-        private val SERVER_URL = "ws://$SERVER_ADDRESS/WebRTCAppEE/websocket"
+        private val SERVER_URL = "ws://$SERVER_ADDRESS/STEEAPP/websocket"
     }
 
 
@@ -70,6 +84,12 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     private var relLayoutMain: RelativeLayout? = null
     private var relLayoutSurfaceViews: RelativeLayout? = null
     private var chronometer: Chronometer? = null
+    private var txtDoctorName: TextView? = null
+    private var linlayCallerDetails: LinearLayout? = null
+    private var relLayTopNotification: RelativeLayout? = null
+    private var txtCallerName: TextView? = null
+    private var btnAccept: Button? = null
+    private var btnDecline: Button? = null
 
     private lateinit var layoutBottomSheet: CardView
     lateinit var sheetBehavior: BottomSheetBehavior<View>
@@ -78,7 +98,10 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     private var enableAudio: Boolean = true
     private var isCallerSmall: Boolean = false
     private var isPictureInPictureMode: Boolean = false
-    var counter = 0
+    private var isReceiverID: Boolean = true
+    private var isOtherCallAccepted: Boolean = false
+    var newRoomId: Int? = null
+    var newMeetingId: Int? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
@@ -92,6 +115,7 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
                     or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         setContentView(R.layout.activity_video_call_new)
+        initSocket()
         getIntentData()
         initView()
     }
@@ -115,6 +139,10 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         )
     }
 
+    private fun initSocket() {
+        SocketManager(this, socketConnection!!).createCallSocket()
+    }
+
     private fun initView() {
         publishViewRenderer = findViewById(R.id.publish_view_renderer)
         play_view_renderer1 = findViewById(R.id.play_view_renderer1)
@@ -134,6 +162,18 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
         chronometer = findViewById(R.id.chronometer)
 
+        linlayCallerDetails = findViewById(R.id.linlayCallerDetails)
+        txtDoctorName = findViewById(R.id.txtDoctorName)
+        relLayTopNotification = findViewById(R.id.relLayTopNotification)
+        txtCallerName = findViewById(R.id.txtCallerName)
+        btnAccept = findViewById(R.id.btnAccept)
+        btnDecline = findViewById(R.id.btnDecline)
+
+        imgCallEnd?.isEnabled = false
+        imgCamera?.isEnabled = false
+        imgVideo?.isEnabled = false
+        imgAudio?.isEnabled = false
+
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
 
         setListeners()
@@ -152,6 +192,12 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
     ) {
         this.intent.putExtra(CallActivity.EXTRA_CAPTURETOTEXTURE_ENABLED, true)
 //          this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_CALL, false);
+        val strStreamID: String? = if (isReceiverID) {
+            mReceiver_stream_id
+        } else {
+            mStreamId
+        }
+
         conferenceManager = ConferenceManager(
             this,
             this,
@@ -160,7 +206,8 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             mRoomId.toString(),
             publishViewRenderer,
             playViewRenderers,
-            mStreamId,
+            strStreamID,
+//            mStreamId,
 //            mReceiver_stream_id,
             null
         )
@@ -177,6 +224,8 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         imgArrowUp?.setOnClickListener(this)
         imgBack?.setOnClickListener(this)
         switchView?.setOnClickListener(this)
+        btnAccept?.setOnClickListener(this)
+        btnDecline?.setOnClickListener(this)
     }
 
     private fun checkPermissions() {
@@ -200,15 +249,15 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             }
 
             R.id.imgCamera -> {
-                Log.e("imgCamera","imgCamera")
+                Log.e("imgCamera", "imgCamera")
             }
 
             R.id.imgAudio -> {
-                controlAudio()
+//                controlAudio()
             }
 
             R.id.imgVideo -> {
-                controlVideo()
+//                controlVideo()
             }
 
             R.id.imgArrowUp -> {
@@ -227,6 +276,14 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
             R.id.switchView -> {
                 isCallerSmall = !isCallerSmall
                 switchLayout(isCallerSmall)
+            }
+
+            R.id.btnAccept -> {
+                showAlertDialog()
+            }
+
+            R.id.btnDecline -> {
+                declineCall()
             }
         }
     }
@@ -322,6 +379,11 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
 
     override fun onPublishStarted(streamId: String?) {
         LogUtil.e(TAG, "onPublishStarted streamId: $streamId")
+        imgCallEnd?.isEnabled = true
+        imgCamera?.isEnabled = true
+        imgVideo?.isEnabled = true
+        imgAudio?.isEnabled = true
+
         startCallDurationTimer()
     }
 
@@ -589,5 +651,145 @@ class VideoCallActivityNew : AppCompatActivity(), View.OnClickListener, IWebRTCL
         super.onPause()
         if (isPictureInPictureMode)
             navToLauncherTask(this)
+    }
+
+    override fun handleSocketSuccessResponse(response: String, type: String) {
+        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        when (type) {
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
+                val createCallSocketDataClass: CreateCallSocketDataClass =
+                    Gson().fromJson(response, CreateCallSocketDataClass::class.java)
+                runOnUiThread {
+                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
+                        linlayCallerDetails?.visibility = View.GONE
+                    }
+
+                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
+//                        txtDoctorName?.text = "Dr. ${createCallSocketDataClass.receiver_name}"
+                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_HIMANSHU) {
+                            newRoomId = createCallSocketDataClass.room_id
+                            newMeetingId = createCallSocketDataClass.meetingId
+                            relLayTopNotification?.visibility = View.VISIBLE
+                            txtCallerName?.text = createCallSocketDataClass.msg
+                        }
+                    }
+
+                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
+                        imgCallEnd?.performClick()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun handleSocketErrorResponse(error: Any) {
+        LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        ToastUtil.displayShortDurationToast(
+            this,
+            "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
+                    resources.getString(R.string.toast_request_to_try_later)
+        )
+    }
+
+    private fun showAlertDialog() {
+        val dialogBuilder = AlertDialog.Builder(this)
+        dialogBuilder.setMessage("Accepting the call will end the current meeting")
+            // if the dialog is cancelable
+            .setCancelable(false)
+            .setPositiveButton("YES", DialogInterface.OnClickListener { dialog, id ->
+                acceptCall()
+                dialog.dismiss()
+            })
+            .setNegativeButton("No", DialogInterface.OnClickListener { dialogInterface, i ->
+                dialogInterface.dismiss()
+            })
+
+        val alert = dialogBuilder.create()
+        alert.show()
+    }
+
+    private fun acceptCall() {
+        val acceptCallRequest = AcceptCallRequest(
+            Constants.UUIDs.USER_HIMANSHU,
+            "on",
+            "on",
+            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            newMeetingId!!,
+            newRoomId!!
+        )
+        val acceptCallJson = Gson().toJson(acceptCallRequest)
+        LogUtil.e(TAG, "json : $acceptCallJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+
+        acceptCall.enqueue(object : Callback<AcceptCallDataClassResponse?> {
+            override fun onResponse(
+                call: Call<AcceptCallDataClassResponse?>,
+                response: Response<AcceptCallDataClassResponse?>
+            ) {
+                LogUtil.e(TAG, "onSuccess: $response")
+                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+
+                if (response.isSuccessful) {
+                    imgCallEnd?.performClick()
+                    relLayTopNotification?.visibility = View.GONE
+                    isOtherCallAccepted = true
+                    val intent =
+                        Intent(this@VideoCallActivityNew, VideoCallActivityNew::class.java)
+                    intent.putExtra("activity", "ChatActivity")
+                    intent.putExtra("room_id", response.body()?.roomId)
+                    intent.putExtra("meeting_id", response.body()?.meetingId)
+                    intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                    intent.putExtra("stream_id", response.body()?.streamId)
+                    startActivity(intent)
+
+                }
+            }
+
+            override fun onFailure(
+                call: Call<AcceptCallDataClassResponse?>,
+                t: Throwable
+            ) {
+                Log.e(TAG, "onFailure : ${t.message}")
+            }
+        })
+    }
+
+    private fun declineCall() {
+        val declineCallRequest = DeclineCallRequest(
+            Constants.UUIDs.USER_HIMANSHU,
+            "on",
+            "on",
+            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            newMeetingId!!,
+            newRoomId!!
+        )
+        val declineCallJson = Gson().toJson(declineCallRequest)
+        LogUtil.e(TAG, "json : $declineCallJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val declineCall = request.declineCall(declineCallRequest)
+
+        declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
+            override fun onResponse(
+                call: Call<BaseDataClassResponse?>,
+                response: Response<BaseDataClassResponse?>
+            ) {
+                isOtherCallAccepted = false
+                LogUtil.e(TAG, "onSuccess: $response")
+                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                if (response.isSuccessful) {
+                    relLayTopNotification?.visibility = View.GONE
+                }
+            }
+
+            override fun onFailure(
+                call: Call<BaseDataClassResponse?>,
+                t: Throwable
+            ) {
+                LogUtil.e(TAG, "onFailure : ${t.message}")
+            }
+        })
     }
 }

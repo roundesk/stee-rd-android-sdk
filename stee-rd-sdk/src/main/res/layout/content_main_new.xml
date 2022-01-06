@@ -76,4 +76,44 @@
             android:textColor="@color/white_dark"
             android:textSize="@dimen/dimen_22sp" />
     </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/linlayCallerDetails"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_centerInParent="true"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imgCallerId"
+            android:layout_width="@dimen/dimen_100dp"
+            android:layout_height="@dimen/dimen_100dp"
+            android:src="@drawable/img_call_doctor" />
+
+        <TextView
+            android:id="@+id/txtDoctorName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dimen_10dp"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="@string/str_outgoing_caller_name"
+            android:textColor="@color/white"
+            android:textSize="@dimen/dimen_16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dimen_5dp"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="@string/str_ringing"
+            android:textColor="@color/text_color"
+            android:textSize="@dimen/dimen_14sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <include layout="@layout/new_call_top_bar"/>
+
 </RelativeLayout>

@@ -7,8 +7,9 @@ import android.view.View
 import android.widget.ImageView
 //import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.R
+import com.roundesk.sdk.base.AppBaseActivity
 
-class OutgoingCallActivity : AppCompatActivity(), View.OnClickListener {
+class OutgoingCallActivity : AppBaseActivity(), View.OnClickListener {
 
     private val TAG = OutgoingCallActivity::class.java.simpleName
 

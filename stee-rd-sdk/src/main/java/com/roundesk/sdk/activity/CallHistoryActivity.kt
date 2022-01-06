@@ -14,13 +14,14 @@ import com.roundesk.sdk.R
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.adapter.CallHistoryAdapter
+import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.CallHistoryResponseDataClass
 import com.roundesk.sdk.util.LogUtil
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class CallHistoryActivity : AppCompatActivity() {
+class CallHistoryActivity : AppBaseActivity() {
 
     private val TAG = CallHistoryActivity::class.java.simpleName
 

@@ -7,7 +7,6 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.activity.ApiFunctions
 import java.util.*
 
@@ -15,7 +14,6 @@ import java.util.*
 class SettingsActivity : AppCompatActivity() {
     private var txtStartWithChat: TextView? = null
     private var txtStartWithAudio: TextView? = null
-    private var mSocket: Socket? = null
     private var txtCallHistory: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

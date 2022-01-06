@@ -1,24 +1,36 @@
 package com.roundesk.app
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.github.nkzawa.socketio.client.Socket
+import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
-import com.roundesk.sdk.socket.SocketFunctions
+import com.roundesk.sdk.activity.IncomingCallActivity
+import com.roundesk.sdk.activity.VideoCallActivityNew
+import com.roundesk.sdk.base.AppBaseActivity
+import com.roundesk.sdk.dataclass.*
+import com.roundesk.sdk.network.ApiInterface
+import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketListener
+import com.roundesk.sdk.socket.SocketManager
+import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.ArrayList
 
-class ChatActivity : AppCompatActivity(), View.OnClickListener,
+class ChatActivity : AppBaseActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
-    EasyPermissions.RationaleCallbacks  {
+    EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
     private val TAG = ChatActivity::class.java.simpleName
 
@@ -27,27 +39,27 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     private var relLayTopNotification: RelativeLayout? = null
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
-    private var mSocket: Socket? = null
     var arraylistReceiverId: ArrayList<String> = arrayListOf()
-    private var callerId: String = "drpbzfjiouhqkaegcvtl"
+    var newRoomId: Int? = null
+    var newMeetingId: Int? = null
 
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
+    private var isIncomingCall: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
-
-        // Below line will initiate the Socket and make it open
-        /*SocketFunctions(this).initiateSocket(
-            mSocket,
-            SocketConstants.SOCKET_SEND_CALL_TO_CLIENT + callerId,false
-        )*/
+        initSocket()
 
         initView()
 
-        ApiFunctions(this).getCallerRole(false)
+        ApiFunctions(this).getCallerRole(isIncomingCall)
+    }
+
+    private fun initSocket() {
+        SocketManager(this, socketConnection!!).createCallSocket()
     }
 
     private fun initView() {
@@ -66,19 +78,24 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
-                arraylistReceiverId.add("agjqticlbhvredpouzkf")
-                arraylistReceiverId.add("drpbzfjiouhqkaegcvtl")
+                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK_OUTLOOK)
+                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK)
+                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK_YAHOO)
+                arraylistReceiverId.add(Constants.UUIDs.USER_ROUNDESK_ADMIN)
+                arraylistReceiverId.add(Constants.UUIDs.USER_PRIYANKA)
+                arraylistReceiverId.add(Constants.UUIDs.USER_VASU)
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
                     // Below line will initiate the call
                     ApiFunctions(this).initiateCall(
                         arraylistReceiverId,
-                        "doctor",
-                        "drpbzfjiouhqkaegcvtl",
+                        "paramedic",
+                        Constants.UUIDs.USER_HIMANSHU,
                         "on",
                         "on",
-                        getRandomString(9)
+                        "a3dt3ffdd"
+//                        getRandomString(9)
                     )
                 } else {
                     if (!hasCameraPermission()) {
@@ -112,11 +129,126 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
 
             R.id.btnAccept -> {
                 relLayTopNotification?.visibility = View.GONE
+                acceptCall()
             }
             R.id.btnDecline -> {
+                declineCall()
                 relLayTopNotification?.visibility = View.GONE
             }
         }
+    }
+
+    private fun acceptCall() {
+        val acceptCallRequest = AcceptCallRequest(
+            Constants.UUIDs.USER_HIMANSHU,
+            "on",
+            "on",
+            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            newMeetingId!!,
+            newRoomId!!
+        )
+        val acceptCallJson = Gson().toJson(acceptCallRequest)
+        LogUtil.e(TAG, "json : $acceptCallJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+
+        if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
+
+            acceptCall.enqueue(object : Callback<AcceptCallDataClassResponse?> {
+                override fun onResponse(
+                    call: Call<AcceptCallDataClassResponse?>,
+                    response: Response<AcceptCallDataClassResponse?>
+                ) {
+                    LogUtil.e(TAG, "onSuccess: $response")
+                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+
+                    if (response.isSuccessful) {
+                        relLayTopNotification?.visibility = View.GONE
+                        val intent =
+                            Intent(this@ChatActivity, VideoCallActivityNew::class.java)
+                        intent.putExtra("activity", "ChatActivity")
+                        intent.putExtra("room_id", response.body()?.roomId)
+                        intent.putExtra("meeting_id", response.body()?.meetingId)
+                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                        intent.putExtra("stream_id", response.body()?.streamId)
+                        startActivity(intent)
+
+                    }
+                }
+
+                override fun onFailure(
+                    call: Call<AcceptCallDataClassResponse?>,
+                    t: Throwable
+                ) {
+                    Log.e(TAG, "onFailure : ${t.message}")
+                }
+            })
+            finish()
+        } else {
+            if (!hasCameraPermission()) {
+                EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.rationale_camera),
+                    RC_CAMERA_PERM,
+                    Manifest.permission.CAMERA
+                )
+            }
+
+            if (!hasMicrophonePermission()) {
+                EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.rationale_microphone),
+                    RC_MICROPHONE_PERM,
+                    Manifest.permission.RECORD_AUDIO
+                )
+            }
+
+            if (!hasStoragePermission()) {
+                EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.rationale_storage),
+                    RC_STORAGE_PERM,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+            }
+        }
+    }
+
+    private fun declineCall() {
+        val declineCallRequest = DeclineCallRequest(
+            Constants.UUIDs.USER_HIMANSHU,
+            "on",
+            "on",
+            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            newMeetingId!!,
+            newRoomId!!
+        )
+        val declineCallJson = Gson().toJson(declineCallRequest)
+        LogUtil.e(TAG, "json : $declineCallJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val declineCall = request.declineCall(declineCallRequest)
+
+        declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
+            override fun onResponse(
+                call: Call<BaseDataClassResponse?>,
+                response: Response<BaseDataClassResponse?>
+            ) {
+                LogUtil.e(TAG, "onSuccess: $response")
+                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                if (response.isSuccessful) {
+                    relLayTopNotification?.visibility = View.GONE
+                }
+            }
+
+            override fun onFailure(
+                call: Call<BaseDataClassResponse?>,
+                t: Throwable
+            ) {
+                LogUtil.e(TAG, "onFailure : ${t.message}")
+            }
+        })
     }
 
     fun getRandomString(length: Int): String {
@@ -166,5 +298,41 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
 
     override fun onRationaleDenied(requestCode: Int) {
         LogUtil.d(TAG, "onRationaleDenied: $requestCode")
+    }
+
+    override fun handleSocketSuccessResponse(response: String, type: String) {
+        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        when (type) {
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
+                val createCallSocketDataClass: CreateCallSocketDataClass =
+                    Gson().fromJson(response, CreateCallSocketDataClass::class.java)
+
+                runOnUiThread {
+                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
+                        if (isIncomingCall) {
+                            val intent = Intent(this@ChatActivity, IncomingCallActivity::class.java)
+                            intent.putExtra("room_id", createCallSocketDataClass.room_id)
+                            intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                            intent.putExtra(
+                                "receiver_name",
+                                createCallSocketDataClass.msg
+                            )
+                            startActivity(intent)
+                        }
+
+                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_HIMANSHU) {
+                            newRoomId = createCallSocketDataClass.room_id
+                            newMeetingId = createCallSocketDataClass.meetingId
+                            relLayTopNotification?.visibility = View.VISIBLE
+                            txtCallerName?.text = createCallSocketDataClass.msg
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun handleSocketErrorResponse(error: Any) {
+        LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
     }
 }
