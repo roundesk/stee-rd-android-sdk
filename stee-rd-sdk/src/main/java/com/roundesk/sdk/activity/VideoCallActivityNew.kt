@@ -98,7 +98,7 @@ class VideoCallActivityNew : AppBaseActivity(),
     private var enableAudio: Boolean = true
     private var isCallerSmall: Boolean = false
     private var isPictureInPictureMode: Boolean = false
-    private var isReceiverID: Boolean = true
+    private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null

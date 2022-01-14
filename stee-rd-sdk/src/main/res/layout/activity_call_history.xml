@@ -15,6 +15,7 @@
         android:orientation="horizontal">
 
         <ImageView
+            android:id="@+id/imgBack"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
@@ -46,4 +47,58 @@
         android:layout_height="wrap_content"
         android:indeterminateTint="@color/notification_background_color"
         android:layout_centerInParent="true"/>
+
+
+    <RelativeLayout
+        android:id="@+id/relLayTopNotification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/top_notification"
+        android:paddingStart="@dimen/dimen_15dp"
+        android:paddingTop="@dimen/dimen_20dp"
+        android:paddingEnd="@dimen/dimen_15dp"
+        android:paddingBottom="@dimen/dimen_20dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/txtCallerName"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:maxLines="2"
+            android:lines="2"
+            android:textColor="@color/white_dark"
+            android:textSize="@dimen/dimen_16sp" />
+
+        <Button
+            android:id="@+id/btnDecline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/dimen_10dp"
+            android:layout_marginEnd="@dimen/dimen_10dp"
+            android:layout_toStartOf="@id/btnAccept"
+            android:textColor="@color/white_dark"
+            android:background="@drawable/rectangle_call_decline"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="Decline"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dimen_16sp" />
+
+        <Button
+            android:id="@+id/btnAccept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white_dark"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/rectangle_call_accept"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="Accept"
+            android:textAllCaps="false"
+            android:textSize="@dimen/dimen_16sp" />
+    </RelativeLayout>
+
+    <include layout="@layout/new_call_top_bar"/>
 </RelativeLayout>

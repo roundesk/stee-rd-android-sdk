@@ -46,7 +46,7 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
-    private var isIncomingCall: Boolean = false
+    private var isIncomingCall: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,12 +78,12 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
-                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK_OUTLOOK)
-                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK)
-                arraylistReceiverId.add(Constants.UUIDs.USER_DEEPAK_YAHOO)
-                arraylistReceiverId.add(Constants.UUIDs.USER_ROUNDESK_ADMIN)
-                arraylistReceiverId.add(Constants.UUIDs.USER_PRIYANKA)
-                arraylistReceiverId.add(Constants.UUIDs.USER_VASU)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_OUTLOOK)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_YAHOO)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -91,7 +91,7 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
                     ApiFunctions(this).initiateCall(
                         arraylistReceiverId,
                         "paramedic",
-                        Constants.UUIDs.USER_HIMANSHU,
+                        SocketConstants.UUIDs.USER_HIMANSHU,
                         "on",
                         "on",
                         "a3dt3ffdd"
@@ -140,7 +140,7 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            SocketConstants.UUIDs.USER_HIMANSHU,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -217,7 +217,7 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            SocketConstants.UUIDs.USER_HIMANSHU,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -303,12 +303,12 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
     override fun handleSocketSuccessResponse(response: String, type: String) {
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
         when (type) {
-            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
+            SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
 
                 runOnUiThread {
-                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
+                    if (createCallSocketDataClass.type == SocketConstants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
                         if (isIncomingCall) {
                             val intent = Intent(this@ChatActivity, IncomingCallActivity::class.java)
                             intent.putExtra("room_id", createCallSocketDataClass.room_id)
@@ -320,7 +320,7 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
                             startActivity(intent)
                         }
 
-                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_HIMANSHU) {
+                        if (createCallSocketDataClass.receiverId == SocketConstants.UUIDs.USER_HIMANSHU) {
                             newRoomId = createCallSocketDataClass.room_id
                             newMeetingId = createCallSocketDataClass.meetingId
                             relLayTopNotification?.visibility = View.VISIBLE

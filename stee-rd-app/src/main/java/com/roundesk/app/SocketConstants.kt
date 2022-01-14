@@ -15,7 +15,7 @@ object SocketConstants {
 
     object SocketSuffix {
         const val SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String =
-            "sendCallToClient${UUIDs.USER_HIMANSHU}"
+            "$SOCKET_SEND_CALL_TO_CLIENT ${UUIDs.USER_HIMANSHU}"
         const val SOCKET_TYPE_ACCEPT_CALL: String = "accepted"
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"
