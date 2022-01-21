@@ -70,7 +70,10 @@ class ApiFunctions(private var mContext: Activity?) {
                     roomId = createCallDataClassResponse?.roomId
                     meetingId = createCallDataClassResponse?.meetingId
                     streamId = createCallDataClassResponse?.streamId
-                    LogUtil.e("getCreateCallSocketData", "onSuccess: ${Gson().toJson(response.body())}")
+                    LogUtil.e(
+                        "getCreateCallSocketData",
+                        "onSuccess: ${Gson().toJson(response.body())}"
+                    )
 
                     if (!isIncomingCall) {
                         val intent =
@@ -92,15 +95,16 @@ class ApiFunctions(private var mContext: Activity?) {
         })
     }
 
-
     fun getCallerRole(
         isReceiver: Boolean
     ) {
         isIncomingCall = isReceiver
     }
 
-    fun navigateToCallHistory(){
+    fun navigateToCallHistory(isIncomingCall: Boolean, showTopBarUI: Boolean) {
         val intent = Intent(mContext, CallHistoryActivity::class.java)
+        intent.putExtra("isIncomingCall", isIncomingCall)
+        intent.putExtra("showTopBarUI", showTopBarUI)
         mContext?.startActivity(intent)
     }
 }

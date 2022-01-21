@@ -41,7 +41,8 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
     private var imgBack: ImageView? = null
-    private var isIncomingCall: Boolean = true
+    private var isIncomingCall: Boolean = false
+    private var showTopBarUI: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
@@ -53,6 +54,7 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call_history)
         initSocket()
+        getIntentData()
         recyclerview = findViewById(R.id.recyclerview)
         progressBar = findViewById(R.id.progressBar)
         relLayTopNotification = findViewById(R.id.relLayTopNotification)
@@ -69,7 +71,23 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
     }
 
     private fun initSocket() {
-        SocketManager(this, socketConnection!!).createCallSocket()
+        SocketManager(
+            this, socketConnection!!,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).createCallSocket()
+    }
+
+    private fun getIntentData() {
+        val extras = intent.extras
+        if (extras != null) {
+            isIncomingCall = extras.getBoolean("isIncomingCall")
+            showTopBarUI = extras.getBoolean("showTopBarUI")
+
+        }
+        LogUtil.e(
+            TAG, "isIncomingCall : $isIncomingCall"
+                    + " showTopBarUI : $showTopBarUI"
+        )
     }
 
     private fun callAPI() {
@@ -127,11 +145,13 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
                             startActivity(intent)
                         }
 
-                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_HIMANSHU) {
-                            newRoomId = createCallSocketDataClass.room_id
-                            newMeetingId = createCallSocketDataClass.meetingId
-                            relLayTopNotification?.visibility = View.VISIBLE
-                            txtCallerName?.text = createCallSocketDataClass.msg
+                        if (showTopBarUI) {
+                            if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_DEEPAK) {
+                                newRoomId = createCallSocketDataClass.room_id
+                                newMeetingId = createCallSocketDataClass.meetingId
+                                relLayTopNotification?.visibility = View.VISIBLE
+                                txtCallerName?.text = createCallSocketDataClass.msg
+                            }
                         }
                     }
                 }
@@ -169,7 +189,7 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            Constants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -246,7 +266,7 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            Constants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",

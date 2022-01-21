@@ -43,7 +43,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
     private var txtCallerName: TextView? = null
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
-    private var isIncomingCall: Boolean = true
+//    private var isIncomingCall: Boolean = true
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
     private val RC_CAMERA_PERM = 123
@@ -53,7 +53,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-        ForegroundService.startService(this@SettingsActivity, "Foreground Service is running...")
+        ForegroundService.startService(this@SettingsActivity, "STEE-SDK SOCKET Service is running...")
         initSocket()
         txtStartWithChat = findViewById(R.id.txtStartWithChat)
         txtStartWithAudio = findViewById(R.id.txtStartWithAudio)
@@ -70,7 +70,14 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
     }
 
     private fun initSocket() {
-        SocketManager(this, socketConnection!!).createCallSocket()
+        Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
+            SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+
+        SocketManager(
+            this,
+            socketConnection!!,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).createCallSocket()
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
@@ -82,7 +89,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
 
                 runOnUiThread {
                     if (createCallSocketDataClass.type == SocketConstants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-                        if (isIncomingCall) {
+                        if (SocketConstants.showIncomingCallUI) {
                             val intent =
                                 Intent(this@SettingsActivity, IncomingCallActivity::class.java)
                             intent.putExtra("room_id", createCallSocketDataClass.room_id)
@@ -94,13 +101,14 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
                             startActivity(intent)
                         }
 
-                        if (createCallSocketDataClass.receiverId == SocketConstants.UUIDs.USER_HIMANSHU) {
-                            newRoomId = createCallSocketDataClass.room_id
-                            newMeetingId = createCallSocketDataClass.meetingId
-                            relLayTopNotification?.visibility = View.VISIBLE
-                            txtCallerName?.text = createCallSocketDataClass.msg
+                        if (SocketConstants.showIncomingCallTopBarUI) {
+                            if (createCallSocketDataClass.receiverId == SocketConstants.UUIDs.USER_DEEPAK) {
+                                newRoomId = createCallSocketDataClass.room_id
+                                newMeetingId = createCallSocketDataClass.meetingId
+                                relLayTopNotification?.visibility = View.VISIBLE
+                                txtCallerName?.text = createCallSocketDataClass.msg
+                            }
                         }
-
                     }
                 }
             }
@@ -119,8 +127,10 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
             }
 
             R.id.txtCallHistory -> {
-                ApiFunctions(this).navigateToCallHistory()
-//            ForegroundService.stopService(this)
+                ApiFunctions(this).navigateToCallHistory(
+                    SocketConstants.showIncomingCallUI,
+                    SocketConstants.showIncomingCallTopBarUI
+                )
             }
 
             R.id.btnAccept -> {
@@ -137,7 +147,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            SocketConstants.UUIDs.USER_HIMANSHU,
+            SocketConstants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -214,7 +224,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            SocketConstants.UUIDs.USER_HIMANSHU,
+            SocketConstants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",

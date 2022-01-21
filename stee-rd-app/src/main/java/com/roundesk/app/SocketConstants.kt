@@ -1,6 +1,8 @@
 package com.roundesk.app
 
 object SocketConstants {
+    const val showIncomingCallUI: Boolean = true
+    const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"
 
     object UUIDs {
@@ -15,7 +17,8 @@ object SocketConstants {
 
     object SocketSuffix {
         const val SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String =
-            "$SOCKET_SEND_CALL_TO_CLIENT ${UUIDs.USER_HIMANSHU}"
+            "$SOCKET_SEND_CALL_TO_CLIENT${UUIDs.USER_HIMANSHU}"
+
         const val SOCKET_TYPE_ACCEPT_CALL: String = "accepted"
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"

@@ -16,7 +16,7 @@ import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.LogUtil
 
 class ForegroundService : Service() {
-    private val CHANNEL_ID = "ForegroundService Kotlin"
+    private val CHANNEL_ID = "STEE-SDK SOCKET Service"
     var socketConnection: SocketConnection? = null
 
     companion object {
@@ -44,8 +44,7 @@ class ForegroundService : Service() {
             0, notificationIntent, 0
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-//            .setContentTitle("Foreground Service Kotlin Example")
-            .setContentTitle("")
+            .setContentTitle("STEE-SDK SOCKET Service")
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(pendingIntent)
@@ -59,7 +58,7 @@ class ForegroundService : Service() {
     }
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, "Foreground Service Channel", NotificationManager.IMPORTANCE_DEFAULT)
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "STEE-SDK SOCKET Service Channel", NotificationManager.IMPORTANCE_DEFAULT)
             val manager = getSystemService(NotificationManager::class.java)
             manager!!.createNotificationChannel(serviceChannel)
         }

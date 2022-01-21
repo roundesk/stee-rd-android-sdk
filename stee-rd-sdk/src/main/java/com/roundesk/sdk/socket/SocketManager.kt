@@ -1,26 +1,26 @@
 package com.roundesk.sdk.socket
 
-import com.roundesk.sdk.util.Constants
 import io.socket.emitter.Emitter
 
 class SocketManager(
     private val socketListener: SocketListener<Any>,
-    private val socketConnection: SocketConnection
+    private val socketConnection: SocketConnection,
+    private val socketConnectId: String
 ) {
 
     fun createCallSocket() {
         if (socketConnection.mSocket!!.connected()) {
 
-            if (!socketConnection.mSocket!!.hasListeners(Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT)) {
+            if (!socketConnection.mSocket!!.hasListeners(socketConnectId)) {
                 socketConnection.mSocket?.on(
-                    Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT,
+                    socketConnectId,
                     onCreateCallEmitter
                 )//Listener call for getting data
             } else {
-                socketConnection.mSocket!!.off(Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT)
+                socketConnection.mSocket!!.off(socketConnectId)
                 if (socketConnection.mSocket!!.connected()) {
                     socketConnection.mSocket?.on(
-                        Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT,
+                        socketConnectId,
                         onCreateCallEmitter
                     )//Listener call for getting data
                 }
@@ -32,7 +32,7 @@ class SocketManager(
         val response = "" + args[0]
         socketListener.handleSocketSuccessResponse(
             response,
-            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+            socketConnectId
         )
     }
 
@@ -41,7 +41,7 @@ class SocketManager(
     }*/
 
     fun offAllEvent() {
-        socketConnection.mSocket!!.off(Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT)
+        socketConnection.mSocket!!.off(socketConnectId)
     }
 
 

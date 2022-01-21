@@ -128,6 +128,8 @@ class VideoCallActivityNew : AppBaseActivity(),
             mMeetingId = extras.getInt("meeting_id")
             mStreamId = extras.getString("stream_id")
             mReceiver_stream_id = extras.getString("receiver_stream_id")
+            isReceiverID = extras.getBoolean("isIncomingCall")
+
         }
         LogUtil.e(
             TAG,
@@ -140,7 +142,10 @@ class VideoCallActivityNew : AppBaseActivity(),
     }
 
     private fun initSocket() {
-        SocketManager(this, socketConnection!!).createCallSocket()
+        SocketManager(
+            this, socketConnection!!,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).createCallSocket()
     }
 
     private fun initView() {
@@ -710,7 +715,7 @@ class VideoCallActivityNew : AppBaseActivity(),
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            Constants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -758,7 +763,7 @@ class VideoCallActivityNew : AppBaseActivity(),
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_HIMANSHU,
+            Constants.UUIDs.USER_DEEPAK,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",

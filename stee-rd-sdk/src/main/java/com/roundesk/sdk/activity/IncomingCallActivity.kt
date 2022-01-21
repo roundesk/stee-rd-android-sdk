@@ -72,16 +72,13 @@ class IncomingCallActivity : AppBaseActivity(), View.OnClickListener,
         }
         initSocket()
         initView()
-
-        imgCallEnd?.setOnClickListener {
-            /*val intent = Intent(this, ChatActivity::class.java)
-            startActivity(intent)*/
-            finish()
-        }
     }
 
     private fun initSocket() {
-        SocketManager(this, socketConnection!!).createCallSocket()
+        SocketManager(
+            this, socketConnection!!,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).createCallSocket()
     }
 
     private fun initView() {
