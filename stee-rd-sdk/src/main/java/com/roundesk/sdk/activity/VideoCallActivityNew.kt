@@ -22,7 +22,6 @@ import android.widget.*
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
@@ -37,19 +36,16 @@ import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
 import de.tavendo.autobahn.WebSocket
-import io.antmedia.webrtcandroidframework.ConferenceManager
-import io.antmedia.webrtcandroidframework.IDataChannelObserver
-import io.antmedia.webrtcandroidframework.IWebRTCListener
-import io.antmedia.webrtcandroidframework.StreamInfo
+import io.antmedia.webrtcandroidframework.*
 import io.antmedia.webrtcandroidframework.apprtc.CallActivity
 import org.json.JSONObject
-import org.webrtc.DataChannel
-import org.webrtc.SurfaceViewRenderer
+import org.webrtc.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.nio.charset.StandardCharsets
 import java.util.*
+
 
 class VideoCallActivityNew : AppBaseActivity(),
     View.OnClickListener, IWebRTCListener,
@@ -58,9 +54,8 @@ class VideoCallActivityNew : AppBaseActivity(),
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
         private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
-        private val SERVER_URL = "ws://$SERVER_ADDRESS/STEEAPP/websocket"
+        private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
     }
-
 
     private var mCamera: Camera? = null
     private var mRoomId: Int = 0
@@ -103,6 +98,8 @@ class VideoCallActivityNew : AppBaseActivity(),
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
+    private lateinit var rtcClient: WebRTCClient
+
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
 
@@ -129,16 +126,48 @@ class VideoCallActivityNew : AppBaseActivity(),
             mStreamId = extras.getString("stream_id")
             mReceiver_stream_id = extras.getString("receiver_stream_id")
             isReceiverID = extras.getBoolean("isIncomingCall")
-
         }
+
         LogUtil.e(
             TAG,
             "activity : $activityName"
                     + " room_id : $mRoomId"
                     + " meeting_id : $mMeetingId "
-                    + "stream_id : $mStreamId"
-                    + "receiver_stream_id : $mReceiver_stream_id"
+                    + " stream_id : $mStreamId "
+                    + " receiver_stream_id : $mReceiver_stream_id"
+                    + " isReceiverID : $isReceiverID"
         )
+    }
+
+    private fun createCameraCaptor(enumerator: CameraEnumerator): CameraVideoCapturer? {
+        val deviceNames = enumerator.deviceNames
+
+        // First, try to find back facing camera
+        Log.e("VideoCallActivityNew", "Looking for back facing cameras.")
+        for (deviceName in deviceNames) {
+            if (enumerator.isBackFacing(deviceName)) {
+                Log.e("VideoCallActivityNew", "Creating back facing camera captor.")
+                val videoCapturer: CameraVideoCapturer? =
+                    enumerator.createCapturer(deviceName, null)
+                if (videoCapturer != null) {
+                    return videoCapturer
+                }
+            }
+        }
+
+        // back facing camera not found, try something else
+        Log.e("VideoCallActivityNew", "Looking for other cameras.")
+        for (deviceName in deviceNames) {
+            if (!enumerator.isBackFacing(deviceName)) {
+                Log.e("VideoCallActivityNew", "Creating other camera captor.")
+                val videoCapturer: CameraVideoCapturer? =
+                    enumerator.createCapturer(deviceName, null)
+                if (videoCapturer != null) {
+                    return videoCapturer
+                }
+            }
+        }
+        return null
     }
 
     private fun initSocket() {
@@ -186,8 +215,12 @@ class VideoCallActivityNew : AppBaseActivity(),
         sheetBehaviour()
         checkPermissions()
 
-        conferenceDetails(publishViewRenderer, playViewRenderers)
+        rtcClient = WebRTCClient(this, this)
+        rtcClient.setVideoRenderers(publishViewRenderer, play_view_renderer1)
 
+        // this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_FPS, 24);
+
+        conferenceDetails(publishViewRenderer, playViewRenderers)
         joinConference()
     }
 
@@ -203,6 +236,7 @@ class VideoCallActivityNew : AppBaseActivity(),
             mStreamId
         }
 
+        LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
         conferenceManager = ConferenceManager(
             this,
             this,
@@ -255,14 +289,15 @@ class VideoCallActivityNew : AppBaseActivity(),
 
             R.id.imgCamera -> {
                 Log.e("imgCamera", "imgCamera")
+//                rtcClient.switchCamera()
             }
 
             R.id.imgAudio -> {
-//                controlAudio()
+                controlAudio()
             }
 
             R.id.imgVideo -> {
-//                controlVideo()
+                controlVideo()
             }
 
             R.id.imgArrowUp -> {
@@ -303,34 +338,28 @@ class VideoCallActivityNew : AppBaseActivity(),
     }
 
     private fun controlAudio() {
-        runOnUiThread {
-            if (conferenceManager!!.isPublisherAudioOn) {
-                if (conferenceManager != null) {
-                    conferenceManager!!.disableAudio()
-                }
-                imgAudio?.setImageResource(R.drawable.ic_audio_mute)
-            } else {
-                if (conferenceManager != null) {
-                    conferenceManager!!.enableAudio()
-                }
-                imgAudio?.setImageResource(R.drawable.ic_audio)
+        if (conferenceManager!!.isPublisherAudioOn) {
+            if (conferenceManager != null) {
+                conferenceManager!!.disableAudio()
             }
+            imgAudio?.setImageResource(R.drawable.ic_audio_mute)
+        } else {
+            if (conferenceManager != null) {
+                conferenceManager!!.enableAudio()
+            }
+            imgAudio?.setImageResource(R.drawable.ic_audio)
         }
     }
 
     private fun controlVideo() {
         if (conferenceManager!!.isPublisherVideoOn) {
             if (conferenceManager != null) {
-                runOnUiThread {
-                    conferenceManager!!.disableVideo()
-                }
+                conferenceManager!!.disableVideo()
             }
             imgVideo?.setImageResource(R.drawable.ic_video_mute)
         } else {
             if (conferenceManager != null) {
-                runOnUiThread {
-                    conferenceManager!!.enableVideo()
-                }
+                conferenceManager!!.enableVideo()
             }
             imgVideo?.setImageResource(R.drawable.ic_video)
         }
@@ -797,4 +826,10 @@ class VideoCallActivityNew : AppBaseActivity(),
             }
         })
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        conferenceManager?.leaveFromConference()
+    }
+
 }

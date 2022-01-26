@@ -85,12 +85,12 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_OUTLOOK)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_YAHOO)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
 //                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -103,7 +103,6 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
                         "on",
                         "on",
                         "a3dt3ffdd"
-//                        getRandomString(9)
                     )
                 } else {
                     if (!hasCameraPermission()) {
@@ -182,7 +181,6 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
                         intent.putExtra("stream_id", response.body()?.streamId)
                         intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
                         startActivity(intent)
-
                     }
                 }
 

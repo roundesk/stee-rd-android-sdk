@@ -69,6 +69,12 @@ class IncomingCallActivity : AppBaseActivity(), View.OnClickListener,
             meeting_id = extras.getInt("meeting_id")
             receiver_name = extras.getString("receiver_name")
             //The key argument here must match that used in the other activity
+            LogUtil.e(
+                VideoCallActivityNew.TAG,
+                " room_id : $room_id"
+                        + " meeting_id : $meeting_id "
+                        + " receiver_name : $receiver_name"
+            )
         }
         initSocket()
         initView()
@@ -142,6 +148,7 @@ class IncomingCallActivity : AppBaseActivity(), View.OnClickListener,
                         intent.putExtra("meeting_id", response.body()?.meetingId)
                         intent.putExtra("receiver_stream_id", response.body()?.streamId)
                         intent.putExtra("stream_id", response.body()?.caller_streamId)
+                        intent.putExtra("isIncomingCall", true)
                         startActivity(intent)
 //                            }, 3000)
 

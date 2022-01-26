@@ -1,7 +1,7 @@
 package com.roundesk.app
 
 object SocketConstants {
-    const val showIncomingCallUI: Boolean = true
+    const val showIncomingCallUI: Boolean = false
     const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"
 
@@ -23,4 +23,6 @@ object SocketConstants {
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"
     }
+
+
 }
