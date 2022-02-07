@@ -1,4 +1,4 @@
-package com.roundesk.sdk.config
+package com.roundesk.app
 
 import android.app.Activity
 import android.app.Application
@@ -7,17 +7,15 @@ import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.LogUtil
 
 
-class AppController : Application(), Application.ActivityLifecycleCallbacks {
+class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
 
     private var socketConnection: SocketConnection? = null
-    private var activityReferences = 0
-    private var isActivityChangingConfigurations = false
 
     companion object {
-        private var mInstance: AppController? = null
+        private var mInstance: SocketConfig? = null
 
         @Synchronized
-        fun getInstance(): AppController? {
+        fun getInstance(): SocketConfig? {
             return mInstance
         }
     }
@@ -40,9 +38,6 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (++activityReferences == 1 && !isActivityChangingConfigurations) {
-            // App enters foreground
-        }
         LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
     }
 
@@ -55,10 +50,6 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStopped(activity: Activity) {
-        isActivityChangingConfigurations = activity.isChangingConfigurations;
-        if (--activityReferences == 0 && !isActivityChangingConfigurations) {
-            // App enters background
-        }
         LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
     }
 

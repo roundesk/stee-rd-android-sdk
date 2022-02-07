@@ -1,8 +1,11 @@
 package com.roundesk.sdk.util
 
+import com.roundesk.sdk.socket.SocketConnection
+
 object Constants {
     const val BASE_URL: String = "http://test.roundesk.io/stee-server/public/api/"
     const val SOCKET_URL: String = "http://socket.roundesk.io:3000"
+
 
     object ApiSuffix {
         const val API_KEY_CREATE_CALL: String = "call"
@@ -22,10 +25,9 @@ object Constants {
         const val USER_VASU: String = "cvdbzfjiouhqkaegcvtl"
     }
 
-/*    object SocketSuffix {
-        const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClientdrpbzfjiouhqkaegcvtl"
-        const val SOCKET_ACCEPT_CALL: String = "acceptCall"
-    }*/
+    object InitializeSocket {
+        var socketConnection: SocketConnection? = null
+    }
 
     object SocketSuffix {
         var SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String = ""

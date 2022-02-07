@@ -7,16 +7,14 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.roundesk.sdk.R
+import com.roundesk.sdk.adapter.CallHistoryAdapter
+import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.adapter.CallHistoryAdapter
-import com.roundesk.sdk.base.AppBaseActivity
-import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -28,7 +26,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickListener,
+class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks {
 
@@ -72,7 +70,7 @@ class CallHistoryActivity : AppBaseActivity(), SocketListener<Any>, View.OnClick
 
     private fun initSocket() {
         SocketManager(
-            this, socketConnection!!,
+            this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).createCallSocket()
     }

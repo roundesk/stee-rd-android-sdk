@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
@@ -17,6 +18,7 @@ import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -28,7 +30,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.ArrayList
 
-class ChatActivity : AppBaseActivity(), View.OnClickListener,
+class ChatActivity : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
@@ -46,7 +48,9 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
-//    private var isIncomingCall: Boolean = false
+
+    //    private var isIncomingCall: Boolean = false
+    private var socketConnection: SocketConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +63,10 @@ class ChatActivity : AppBaseActivity(), View.OnClickListener,
     }
 
     private fun initSocket() {
+        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+
+        ApiFunctions(this).getSocketInstance(socketConnection)
+
         Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
 

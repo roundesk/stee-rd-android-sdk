@@ -11,7 +11,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.roundesk.sdk.config.AppController
+import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.LogUtil
 
@@ -35,8 +35,8 @@ class ForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         //do heavy work on a background thread
         val input = intent?.getStringExtra("inputExtra")
-        socketConnection = AppController.getInstance()?.getSocketInstance()
-        LogUtil.e("AppBaseActivity", "socketConnection : ${socketConnection.toString()}")
+        initSocket()
+        LogUtil.e("ForegroundService", "socketConnection : ${socketConnection.toString()}")
         createNotificationChannel()
         val notificationIntent = Intent(this, SettingsActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -53,20 +53,33 @@ class ForegroundService : Service() {
         //stopSelf();
         return START_NOT_STICKY
     }
+
     override fun onBind(intent: Intent): IBinder? {
         return null
     }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, "STEE-SDK SOCKET Service Channel", NotificationManager.IMPORTANCE_DEFAULT)
+            val serviceChannel = NotificationChannel(
+                CHANNEL_ID,
+                "STEE-SDK SOCKET Service Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
             val manager = getSystemService(NotificationManager::class.java)
-            manager!!.createNotificationChannel(serviceChannel)
+            manager?.createNotificationChannel(serviceChannel)
         }
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        Log.e("ForegroundService","ForegroundService Stopped")
+        Log.e("ForegroundService", "ForegroundService Stopped")
+        socketConnection?.disConnectSocket()
         stopSelf()
+    }
+
+    private fun initSocket() {
+        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+//        ApiFunctions(this).getSocketInstance(socketConnection)
+
     }
 }

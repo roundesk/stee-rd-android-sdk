@@ -7,12 +7,14 @@ import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -25,7 +27,7 @@ import retrofit2.Callback
 import retrofit2.Response
 
 
-class IncomingCallActivity : AppBaseActivity(), View.OnClickListener,
+class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
@@ -82,7 +84,7 @@ class IncomingCallActivity : AppBaseActivity(), View.OnClickListener,
 
     private fun initSocket() {
         SocketManager(
-            this, socketConnection!!,
+            this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).createCallSocket()
     }

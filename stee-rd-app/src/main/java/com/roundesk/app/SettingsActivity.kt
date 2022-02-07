@@ -19,6 +19,7 @@ import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -31,7 +32,7 @@ import retrofit2.Response
 import java.util.*
 
 
-class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickListener,
+class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks {
 
@@ -49,6 +50,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
+    private var socketConnection: SocketConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,12 +72,14 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
     }
 
     private fun initSocket() {
+        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+        ApiFunctions(this).getSocketInstance(socketConnection)
+
         Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
 
         SocketManager(
-            this,
-            socketConnection!!,
+            this, socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).createCallSocket()
     }
@@ -179,6 +183,7 @@ class SettingsActivity : AppBaseActivity(), SocketListener<Any>, View.OnClickLis
                         intent.putExtra("meeting_id", response.body()?.meetingId)
                         intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
                         intent.putExtra("stream_id", response.body()?.streamId)
+                        intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
                         startActivity(intent)
 
                     }

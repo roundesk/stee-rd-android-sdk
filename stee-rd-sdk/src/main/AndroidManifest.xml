@@ -13,8 +13,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
+<!--    android:name=".config.AppController"-->
     <application
-        android:name=".config.AppController"
         android:allowBackup="true"
         android:usesCleartextTraffic="true">
         <activity
@@ -22,13 +22,13 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".activity.VideoCallActivityNew"
+            android:autoRemoveFromRecents="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
-            android:screenOrientation="portrait"
-            android:supportsPictureInPicture="true"
-            android:launchMode="singleTask"
             android:excludeFromRecents="true"
+            android:launchMode="singleTask"
             android:noHistory="true"
-            android:autoRemoveFromRecents="true"/>
+            android:screenOrientation="portrait"
+            android:supportsPictureInPicture="true" />
 
         <activity
             android:name=".activity.OutgoingCallActivity"

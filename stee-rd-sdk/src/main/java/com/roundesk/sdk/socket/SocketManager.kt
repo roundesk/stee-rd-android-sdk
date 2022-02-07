@@ -1,5 +1,6 @@
 package com.roundesk.sdk.socket
 
+import com.roundesk.sdk.util.LogUtil
 import io.socket.emitter.Emitter
 
 class SocketManager(
@@ -9,6 +10,8 @@ class SocketManager(
 ) {
 
     fun createCallSocket() {
+        LogUtil.e("SocketManager", "isSocketConnected : " + socketConnection.mSocket!!.connected())
+
         if (socketConnection.mSocket!!.connected()) {
 
             if (!socketConnection.mSocket!!.hasListeners(socketConnectId)) {

@@ -1,5 +1,6 @@
 package com.roundesk.sdk.activity
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -7,12 +8,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.hardware.Camera
-import android.os.Build
-import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.SystemClock
-import android.text.format.DateFormat
+import android.os.*
 import android.util.Log
 import android.util.Rational
 import android.view.View
@@ -22,18 +18,19 @@ import android.widget.*
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
-import androidx.cardview.widget.CardView
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
-import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.Stopwatch
 import com.roundesk.sdk.util.ToastUtil
 import de.tavendo.autobahn.WebSocket
 import io.antmedia.webrtcandroidframework.*
@@ -44,10 +41,12 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
-class VideoCallActivityNew : AppBaseActivity(),
+class VideoCallActivityNew : AppCompatActivity(),
     View.OnClickListener, IWebRTCListener,
     IDataChannelObserver, SocketListener<Any> {
 
@@ -57,7 +56,6 @@ class VideoCallActivityNew : AppBaseActivity(),
         private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
-    private var mCamera: Camera? = null
     private var mRoomId: Int = 0
     private var mMeetingId: Int = 0
     private var mStreamId: String? = null
@@ -79,18 +77,23 @@ class VideoCallActivityNew : AppBaseActivity(),
     private var relLayoutMain: RelativeLayout? = null
     private var relLayoutSurfaceViews: RelativeLayout? = null
     private var chronometer: Chronometer? = null
+    private var txtTimer: TextView? = null
     private var txtDoctorName: TextView? = null
     private var linlayCallerDetails: LinearLayout? = null
     private var relLayTopNotification: RelativeLayout? = null
     private var txtCallerName: TextView? = null
+    private var txtBottomCallerName: TextView? = null
+    private var txtBottomReceiverName: TextView? = null
+    private var txtRinging1: TextView? = null
+    private var txtRinging2: TextView? = null
+    private var progressBar1: ProgressBar? = null
+    private var progressBar2: ProgressBar? = null
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
 
-    private lateinit var layoutBottomSheet: CardView
+    private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
 
-    private var enableVideo: Boolean = true
-    private var enableAudio: Boolean = true
     private var isCallerSmall: Boolean = false
     private var isPictureInPictureMode: Boolean = false
     private var isReceiverID: Boolean = false
@@ -98,10 +101,15 @@ class VideoCallActivityNew : AppBaseActivity(),
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
-    private lateinit var rtcClient: WebRTCClient
-
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
+    val MSG_START_TIMER = 0
+    val MSG_STOP_TIMER = 1
+    val MSG_UPDATE_TIMER = 2
+
+    var timer: Stopwatch = Stopwatch()
+    val REFRESH_RATE = 100
+    var stoppedTimeDuration: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +123,7 @@ class VideoCallActivityNew : AppBaseActivity(),
         initSocket()
         getIntentData()
         initView()
+        startCallDurationTimer()
     }
 
     private fun getIntentData() {
@@ -139,40 +148,9 @@ class VideoCallActivityNew : AppBaseActivity(),
         )
     }
 
-    private fun createCameraCaptor(enumerator: CameraEnumerator): CameraVideoCapturer? {
-        val deviceNames = enumerator.deviceNames
-
-        // First, try to find back facing camera
-        Log.e("VideoCallActivityNew", "Looking for back facing cameras.")
-        for (deviceName in deviceNames) {
-            if (enumerator.isBackFacing(deviceName)) {
-                Log.e("VideoCallActivityNew", "Creating back facing camera captor.")
-                val videoCapturer: CameraVideoCapturer? =
-                    enumerator.createCapturer(deviceName, null)
-                if (videoCapturer != null) {
-                    return videoCapturer
-                }
-            }
-        }
-
-        // back facing camera not found, try something else
-        Log.e("VideoCallActivityNew", "Looking for other cameras.")
-        for (deviceName in deviceNames) {
-            if (!enumerator.isBackFacing(deviceName)) {
-                Log.e("VideoCallActivityNew", "Creating other camera captor.")
-                val videoCapturer: CameraVideoCapturer? =
-                    enumerator.createCapturer(deviceName, null)
-                if (videoCapturer != null) {
-                    return videoCapturer
-                }
-            }
-        }
-        return null
-    }
-
     private fun initSocket() {
         SocketManager(
-            this, socketConnection!!,
+            this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).createCallSocket()
     }
@@ -195,11 +173,18 @@ class VideoCallActivityNew : AppBaseActivity(),
         relLayoutMain = findViewById(R.id.relLayoutMain)
         relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
         chronometer = findViewById(R.id.chronometer)
+        txtTimer = findViewById(R.id.txtTimer)
 
         linlayCallerDetails = findViewById(R.id.linlayCallerDetails)
         txtDoctorName = findViewById(R.id.txtDoctorName)
         relLayTopNotification = findViewById(R.id.relLayTopNotification)
         txtCallerName = findViewById(R.id.txtCallerName)
+        txtBottomCallerName = findViewById(R.id.txtBottomCallerName)
+        txtBottomReceiverName = findViewById(R.id.txtBottomReceiverName)
+        txtRinging1 = findViewById(R.id.txtRinging1)
+        txtRinging2 = findViewById(R.id.txtRinging2)
+        progressBar1 = findViewById(R.id.progressBar1)
+        progressBar2 = findViewById(R.id.progressBar2)
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
 
@@ -214,9 +199,6 @@ class VideoCallActivityNew : AppBaseActivity(),
 
         sheetBehaviour()
         checkPermissions()
-
-        rtcClient = WebRTCClient(this, this)
-        rtcClient.setVideoRenderers(publishViewRenderer, play_view_renderer1)
 
         // this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_FPS, 24);
 
@@ -235,6 +217,13 @@ class VideoCallActivityNew : AppBaseActivity(),
         } else {
             mStreamId
         }
+
+        txtBottomCallerName?.text = "Himanshu"
+        txtBottomReceiverName?.text = "Deepak"
+//        txtBottomCallerName?.text = "Deepak"
+//        txtBottomReceiverName?.text = "Himanshu"
+        progressBar2?.visibility = View.VISIBLE
+        txtRinging2?.visibility = View.VISIBLE
 
         LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
         conferenceManager = ConferenceManager(
@@ -284,12 +273,16 @@ class VideoCallActivityNew : AppBaseActivity(),
         when (view?.id) {
             R.id.imgCallEnd -> {
                 conferenceManager?.leaveFromConference()
+                stopCallDurationTimer()
                 finish()
+                endCall()
             }
 
             R.id.imgCamera -> {
                 Log.e("imgCamera", "imgCamera")
-//                rtcClient.switchCamera()
+                runOnUiThread {
+                    conferenceManager?.flipCamera()
+                }
             }
 
             R.id.imgAudio -> {
@@ -399,6 +392,42 @@ class VideoCallActivityNew : AppBaseActivity(),
         }
     }
 
+    private fun endCall() {
+        val endCallRequest = EndCallRequest(
+            mMeetingId.toString(),
+            Constants.UUIDs.USER_HIMANSHU,
+//            Constants.UUIDs.USER_DEEPAK,
+            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            txtTimer?.text.toString()
+            )
+        val endCallJson = Gson().toJson(endCallRequest)
+        LogUtil.e(TAG, "json : $endCallJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val endCall = request.endCall(endCallRequest)
+
+        endCall.enqueue(object : Callback<BaseDataClassResponse?> {
+            override fun onResponse(
+                call: Call<BaseDataClassResponse?>,
+                response: Response<BaseDataClassResponse?>
+            ) {
+                LogUtil.e(TAG, "onSuccess: $response")
+                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                if (response.isSuccessful) {
+                    finish()
+                }
+            }
+
+            override fun onFailure(
+                call: Call<BaseDataClassResponse?>,
+                t: Throwable
+            ) {
+                LogUtil.e(TAG, "onFailure : ${t.message}")
+            }
+        })
+
+    }
+
     override fun onDisconnected(streamId: String?) {
         LogUtil.e(TAG, "onDisconnected streamId: $streamId")
     }
@@ -418,7 +447,16 @@ class VideoCallActivityNew : AppBaseActivity(),
         imgVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
-        startCallDurationTimer()
+//        startCallDurationTimer()
+        val handler = Handler()
+//        runOnUiThread {
+        handler.postDelayed({
+            progressBar2?.visibility = View.GONE
+            txtRinging2?.visibility = View.GONE
+        }, 1000)
+//        }
+
+
     }
 
     override fun onPlayStarted(streamId: String?) {
@@ -504,62 +542,6 @@ class VideoCallActivityNew : AppBaseActivity(),
         Log.e(javaClass.simpleName, "SentEvent: $strDataJson")
     }
 
-    private fun startTimeCounter() {
-        /* val countTime: TextView = findViewById(R.id.txtTimer)
-         object : CountDownTimer(50000, 1000) {
-             override fun onTick(millisUntilFinished: Long) {
-                 countTime.text = counter.toString()
-                 counter++
-             }
-             override fun onFinish() {
-                 countTime.text = "Finished"
-             }
-         }.start()*/
-
-        val duration: Long = 81200000 //6 hours
-
-        object : CountDownTimer(duration, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                var millisUntilFinished = millisUntilFinished
-                val secondsInMilli: Long = 1000
-                val minutesInMilli = secondsInMilli * 60
-                val hoursInMilli = minutesInMilli * 60
-                val elapsedHours = millisUntilFinished / hoursInMilli
-                millisUntilFinished = millisUntilFinished % hoursInMilli
-                val elapsedMinutes = millisUntilFinished / minutesInMilli
-                millisUntilFinished = millisUntilFinished % minutesInMilli
-                val elapsedSeconds = millisUntilFinished / secondsInMilli
-                val yy =
-                    String.format("%02d:%02d", /*elapsedHours,*/ elapsedMinutes, elapsedSeconds)
-            }
-
-            override fun onFinish() {
-            }
-        }.start()
-    }
-
-    private fun updateDisplay() {
-        val timer = Timer()
-        timer.schedule(object : TimerTask() {
-            override fun run() {
-                val c = Calendar.getInstance()
-
-                var mHour = c[Calendar.HOUR_OF_DAY]
-                var mMinute = c[Calendar.MINUTE]
-                var mSecond = c[Calendar.SECOND]
-
-                /*runOnUiThread {
-                    txtTimer?.setText(
-                        StringBuilder()
-                            .append(mHour).append(":")
-                            .append(mMinute).append(":").append(mSecond)
-                    )
-                }*/
-
-            }
-        }, 0, 1000) //Update text every second
-    }
-
     private fun switchLayout(isCallerSmall: Boolean) {
         if (isCallerSmall) {
             val paramsReceiver: RelativeLayout.LayoutParams =
@@ -590,7 +572,6 @@ class VideoCallActivityNew : AppBaseActivity(),
             paramsCaller.marginEnd = 0
             paramsCaller.topMargin = 0
             publishViewRenderer.layoutParams = paramsCaller
-
 
             val paramsReceiver: RelativeLayout.LayoutParams =
                 play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
@@ -636,27 +617,49 @@ class VideoCallActivityNew : AppBaseActivity(),
         }
     }
 
-    private fun startCallDurationTimer() {
-        chronometer?.base = SystemClock.elapsedRealtime()
-        chronometer?.start()
-        val locale: TimeZone = TimeZone.getDefault()
-        Log.e(
-            "SettingsActivity",
-            "TimeZone   " + locale.getDisplayName(
-                false,
-                TimeZone.SHORT
-            ) + " Timezone id :: " + locale.getID()
-        )
-        chronometer?.setOnChronometerTickListener {
-            val timeZoneDiffInMilli: Int =
-                if (locale.getDisplayName(false, TimeZone.SHORT) == "SGT") {
-                    19800000 + 7200000
-                } else {
-                    19800000
+    private val mHandler: Handler = object : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            when (msg.what) {
+                MSG_START_TIMER -> {
+                    timer.start()
+                    sendEmptyMessage(MSG_UPDATE_TIMER)
                 }
-            val t: Long = SystemClock.elapsedRealtime() - it.getBase() - timeZoneDiffInMilli
-            it.setText(DateFormat.format("HH:mm:ss", t))
+                MSG_UPDATE_TIMER -> {
+                    val millis = timer.getElapsedTime()
+                    val hh = TimeUnit.MILLISECONDS.toHours(millis)
+                    val mm = (TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(
+                        TimeUnit.MILLISECONDS.toHours(millis)
+                    ))
+                    val ss = (TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(
+                        TimeUnit.MILLISECONDS.toMinutes(millis)
+                    ))
+                    stoppedTimeDuration = String.format("%02d:%02d:%02d", hh, mm, ss)
+                    txtTimer?.text = stoppedTimeDuration
+
+                    sendEmptyMessageDelayed(
+                        MSG_UPDATE_TIMER,
+                        REFRESH_RATE.toLong()
+                    )
+                }
+                MSG_STOP_TIMER -> {
+                    this.removeMessages(MSG_UPDATE_TIMER)
+                    timer.stop()
+//                    txtTimer?.setText("" + timer.getElapsedTime())
+                    txtTimer?.text = stoppedTimeDuration
+                }
+                else -> {
+                }
+            }
         }
+    }
+
+    private fun startCallDurationTimer() {
+        mHandler.sendEmptyMessage(MSG_START_TIMER);
+    }
+
+    private fun stopCallDurationTimer() {
+        mHandler.sendEmptyMessage(MSG_STOP_TIMER);
     }
 
     override fun onBackPressed() {
@@ -667,7 +670,7 @@ class VideoCallActivityNew : AppBaseActivity(),
         }
     }
 
-    fun navToLauncherTask(appContext: Context) {
+    private fun navToLauncherTask(appContext: Context) {
         val activityManager =
             (appContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
         val appTasks = activityManager.appTasks
@@ -696,6 +699,10 @@ class VideoCallActivityNew : AppBaseActivity(),
                 runOnUiThread {
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
                         linlayCallerDetails?.visibility = View.GONE
+                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_DEEPAK) {
+                            txtRinging2?.visibility = View.GONE
+                            progressBar2?.visibility = View.GONE
+                        }
                     }
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
@@ -831,5 +838,4 @@ class VideoCallActivityNew : AppBaseActivity(),
         super.onDestroy()
         conferenceManager?.leaveFromConference()
     }
-
 }
