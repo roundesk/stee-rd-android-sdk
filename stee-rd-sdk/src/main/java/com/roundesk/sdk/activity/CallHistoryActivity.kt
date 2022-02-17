@@ -131,7 +131,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
                 runOnUiThread {
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-                        if (isIncomingCall) {
+                        if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
+//                            if (isIncomingCall) {
                             val intent =
                                 Intent(this@CallHistoryActivity, IncomingCallActivity::class.java)
                             intent.putExtra("room_id", createCallSocketDataClass.room_id)
@@ -144,7 +145,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                         }
 
                         if (showTopBarUI) {
-                            if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_DEEPAK) {
+                            if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
                                 newRoomId = createCallSocketDataClass.room_id
                                 newMeetingId = createCallSocketDataClass.meetingId
                                 relLayTopNotification?.visibility = View.VISIBLE
@@ -187,7 +188,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -264,7 +265,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",

@@ -29,9 +29,12 @@ object Constants {
         var socketConnection: SocketConnection? = null
     }
 
+    var CALLER_SOCKET_ID: String = ""
+
     object SocketSuffix {
         var SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String = ""
-//            "sendCallToClient${UUIDs.USER_DEEPAK}"
+
+        //            "sendCallToClient${UUIDs.USER_DEEPAK}"
         const val SOCKET_TYPE_ACCEPT_CALL: String = "accepted"
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"

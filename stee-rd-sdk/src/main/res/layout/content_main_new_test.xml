@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
     android:id="@+id/relLayoutMain"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.VideoCallActivityNew">
 
@@ -16,6 +16,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relLayoutSurfaceViews1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
         <org.webrtc.SurfaceViewRenderer
             android:id="@+id/publish_view_renderer"
@@ -23,13 +29,14 @@
             android:layout_height="170dp"
             android:layout_alignParentEnd="true"
             android:layout_margin="16dp" />
+    </RelativeLayout>
 
-        <View
-            android:id="@+id/switchView"
-            android:layout_width="144dp"
-            android:layout_height="170dp"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="16dp"/>        <!--<org.webrtc.SurfaceViewRenderer
+    <View
+        android:id="@+id/switchView"
+        android:layout_width="144dp"
+        android:layout_height="170dp"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp" />        <!--<org.webrtc.SurfaceViewRenderer
             android:id="@+id/play_view_renderer2"
             android:layout_height="144dp"
             android:layout_width="144dp"
@@ -47,8 +54,6 @@
             android:layout_width="144dp"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"/>-->
-
-    </RelativeLayout>
 
 
     <RelativeLayout
@@ -73,9 +78,9 @@
             android:layout_centerInParent="true"
             android:fontFamily="@font/segoe_ui_semi_bold"
             android:format="00:00:00"
-            android:visibility="gone"
             android:textColor="@color/white_dark"
-            android:textSize="@dimen/dimen_22sp" />
+            android:textSize="@dimen/dimen_22sp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/txtTimer"
@@ -92,11 +97,11 @@
         android:id="@+id/linlayCallerDetails"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:layout_gravity="center"
         android:gravity="center"
-        android:visibility="gone"
-        android:layout_centerInParent="true"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="visible">
 
         <ImageView
             android:id="@+id/imgCallerId"
@@ -111,7 +116,7 @@
             android:layout_marginTop="@dimen/dimen_10dp"
             android:fontFamily="@font/segoe_ui_semi_bold"
             android:text="@string/str_outgoing_caller_name"
-            android:textColor="@color/white"
+            android:textColor="@color/white_dark"
             android:textSize="@dimen/dimen_16sp" />
 
         <TextView
@@ -120,11 +125,11 @@
             android:layout_marginTop="@dimen/dimen_5dp"
             android:fontFamily="@font/segoe_ui_semi_bold"
             android:text="@string/str_ringing"
-            android:textColor="@color/text_color"
+            android:textColor="@color/white_dark"
             android:textSize="@dimen/dimen_14sp"
-            android:visibility="gone" />
+            android:visibility="visible" />
     </LinearLayout>
 
-    <include layout="@layout/new_call_top_bar"/>
+    <include layout="@layout/new_call_top_bar" />
 
 </RelativeLayout>

@@ -76,6 +76,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                 " room_id : $room_id"
                         + " meeting_id : $meeting_id "
                         + " receiver_name : $receiver_name"
+                        + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
             )
         }
         initSocket()
@@ -118,7 +119,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -151,6 +152,8 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                         intent.putExtra("receiver_stream_id", response.body()?.streamId)
                         intent.putExtra("stream_id", response.body()?.caller_streamId)
                         intent.putExtra("isIncomingCall", true)
+                        intent.putExtra("caller_name", response.body()?.caller_name)
+                        intent.putExtra("receiver_name", response.body()?.receiver_name)
                         startActivity(intent)
 //                            }, 3000)
 
@@ -197,7 +200,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",

@@ -1,6 +1,5 @@
 package com.roundesk.sdk.activity
 
-import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -12,6 +11,7 @@ import android.os.*
 import android.util.Log
 import android.util.Rational
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.*
@@ -25,7 +25,6 @@ import com.roundesk.sdk.R
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -41,7 +40,6 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.nio.charset.StandardCharsets
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -59,6 +57,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var mRoomId: Int = 0
     private var mMeetingId: Int = 0
     private var mStreamId: String? = null
+    private var callerName: String? = null
+    private var receiverName: String? = null
     private var mReceiver_stream_id: String? = null
     private var activityName: String? = null
 
@@ -76,6 +76,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var relLayToolbar: RelativeLayout? = null
     private var relLayoutMain: RelativeLayout? = null
     private var relLayoutSurfaceViews: RelativeLayout? = null
+    private var relLayoutSurfaceViews1: RelativeLayout? = null
     private var chronometer: Chronometer? = null
     private var txtTimer: TextView? = null
     private var txtDoctorName: TextView? = null
@@ -84,6 +85,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var txtCallerName: TextView? = null
     private var txtBottomCallerName: TextView? = null
     private var txtBottomReceiverName: TextView? = null
+    private var imgCallRejected: ImageView? = null
     private var txtRinging1: TextView? = null
     private var txtRinging2: TextView? = null
     private var progressBar1: ProgressBar? = null
@@ -98,6 +100,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var isPictureInPictureMode: Boolean = false
     private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
+    private var initialView: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
@@ -110,6 +113,22 @@ class VideoCallActivityNew : AppCompatActivity(),
     var timer: Stopwatch = Stopwatch()
     val REFRESH_RATE = 100
     var stoppedTimeDuration: String? = null
+    lateinit var mainHandler: Handler
+    private val updateTextTask = object : Runnable {
+        override fun run() {
+            Log.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
+            runOnUiThread {
+                if (conferenceManager?.connectedStreamList?.size == 1) {
+                    if (!initialView) {
+                        startCallDurationTimer()
+                        switchView?.performClick()
+                        initialView = true
+                    }
+                }
+            }
+            mainHandler.postDelayed(this, 1000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,10 +139,11 @@ class VideoCallActivityNew : AppCompatActivity(),
                     or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         setContentView(R.layout.activity_video_call_new)
+        mainHandler = Handler(Looper.getMainLooper())
         initSocket()
         getIntentData()
         initView()
-        startCallDurationTimer()
+
     }
 
     private fun getIntentData() {
@@ -134,7 +154,9 @@ class VideoCallActivityNew : AppCompatActivity(),
             mMeetingId = extras.getInt("meeting_id")
             mStreamId = extras.getString("stream_id")
             mReceiver_stream_id = extras.getString("receiver_stream_id")
-            isReceiverID = extras.getBoolean("isIncomingCall")
+            callerName = extras.getString("caller_name")
+            receiverName = extras.getString("receiver_name")
+//            isReceiverID = extras.getBoolean("isIncomingCall")
         }
 
         LogUtil.e(
@@ -144,7 +166,10 @@ class VideoCallActivityNew : AppCompatActivity(),
                     + " meeting_id : $mMeetingId "
                     + " stream_id : $mStreamId "
                     + " receiver_stream_id : $mReceiver_stream_id"
+                    + " callerName : $callerName"
+                    + " receiverName : $receiverName"
                     + " isReceiverID : $isReceiverID"
+                    + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
         )
     }
 
@@ -172,6 +197,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         relLayToolbar = findViewById(R.id.relLayToolbar)
         relLayoutMain = findViewById(R.id.relLayoutMain)
         relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
+        relLayoutSurfaceViews1 = findViewById(R.id.relLayoutSurfaceViews1)
         chronometer = findViewById(R.id.chronometer)
         txtTimer = findViewById(R.id.txtTimer)
 
@@ -181,6 +207,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         txtCallerName = findViewById(R.id.txtCallerName)
         txtBottomCallerName = findViewById(R.id.txtBottomCallerName)
         txtBottomReceiverName = findViewById(R.id.txtBottomReceiverName)
+        imgCallRejected = findViewById(R.id.imgCallRejected)
         txtRinging1 = findViewById(R.id.txtRinging1)
         txtRinging2 = findViewById(R.id.txtRinging2)
         progressBar1 = findViewById(R.id.progressBar1)
@@ -195,8 +222,8 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
 
+        defaultView()
         setListeners()
-
         sheetBehaviour()
         checkPermissions()
 
@@ -204,6 +231,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         conferenceDetails(publishViewRenderer, playViewRenderers)
         joinConference()
+
     }
 
     private fun conferenceDetails(
@@ -212,18 +240,33 @@ class VideoCallActivityNew : AppCompatActivity(),
     ) {
         this.intent.putExtra(CallActivity.EXTRA_CAPTURETOTEXTURE_ENABLED, true)
 //          this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_CALL, false);
-        val strStreamID: String? = if (isReceiverID) {
-            mReceiver_stream_id
+        val strStreamID: String?
+        if (mReceiver_stream_id?.contains(Constants.CALLER_SOCKET_ID) == true) {
+            strStreamID = mReceiver_stream_id
+            linlayCallerDetails?.visibility = View.GONE
+            progressBar2?.visibility = View.GONE
+            txtRinging2?.visibility = View.GONE
         } else {
-            mStreamId
+            strStreamID = mStreamId
+            linlayCallerDetails?.visibility = View.VISIBLE
+            progressBar2?.visibility = View.VISIBLE
+            txtRinging2?.visibility = View.VISIBLE
         }
 
-        txtBottomCallerName?.text = "Himanshu"
-        txtBottomReceiverName?.text = "Deepak"
-//        txtBottomCallerName?.text = "Deepak"
+
+//        txtBottomCallerName?.text = callerName
+//        txtBottomReceiverName?.text = receiverName
+//        txtBottomCallerName?.text = "Deepak Outlook"
 //        txtBottomReceiverName?.text = "Himanshu"
-        progressBar2?.visibility = View.VISIBLE
-        txtRinging2?.visibility = View.VISIBLE
+
+        if(Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU){
+            txtBottomCallerName?.text = "Himanshu"
+            txtBottomReceiverName?.text = "Deepak"
+        }else{
+            txtBottomCallerName?.text = "Deepak"
+            txtBottomReceiverName?.text = "Himanshu"
+        }
+
 
         LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
         conferenceManager = ConferenceManager(
@@ -235,8 +278,6 @@ class VideoCallActivityNew : AppCompatActivity(),
             publishViewRenderer,
             playViewRenderers,
             strStreamID,
-//            mStreamId,
-//            mReceiver_stream_id,
             null
         )
 
@@ -395,11 +436,11 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun endCall() {
         val endCallRequest = EndCallRequest(
             mMeetingId.toString(),
-            Constants.UUIDs.USER_HIMANSHU,
+            Constants.CALLER_SOCKET_ID,
 //            Constants.UUIDs.USER_DEEPAK,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             txtTimer?.text.toString()
-            )
+        )
         val endCallJson = Gson().toJson(endCallRequest)
         LogUtil.e(TAG, "json : $endCallJson")
 
@@ -447,15 +488,13 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
-//        startCallDurationTimer()
-        val handler = Handler()
-//        runOnUiThread {
-        handler.postDelayed({
-            progressBar2?.visibility = View.GONE
-            txtRinging2?.visibility = View.GONE
-        }, 1000)
-//        }
-
+/*        val handler = Handler()
+        runOnUiThread {
+            handler.postDelayed({
+                progressBar2?.visibility = View.GONE
+                txtRinging2?.visibility = View.GONE
+            }, 5000)
+        }*/
 
     }
 
@@ -559,10 +598,14 @@ class VideoCallActivityNew : AppCompatActivity(),
             paramsCaller.marginEnd = 48
             paramsCaller.topMargin = 48
             paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-//            paramsCaller.gravity = Gravity.TOP or Gravity.END
             publishViewRenderer.layoutParams = paramsCaller
             publishViewRenderer.elevation = 2F
+
+//            publishViewRenderer.bringToFront()
+
+//            publishViewRenderer.invalidate()
+//            play_view_renderer1?.invalidate()
+
 
         } else {
             val paramsCaller: RelativeLayout.LayoutParams =
@@ -580,9 +623,13 @@ class VideoCallActivityNew : AppCompatActivity(),
             paramsReceiver.marginEnd = 48
             paramsReceiver.topMargin = 48
             paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-//            paramsReceiver.gravity = Gravity.TOP or Gravity.END
             play_view_renderer1?.layoutParams = paramsReceiver
             play_view_renderer1?.elevation = 2F
+
+//            play_view_renderer1?.bringToFront()
+
+//            publishViewRenderer.invalidate()
+//            play_view_renderer1?.invalidate()
 
         }
     }
@@ -688,6 +735,13 @@ class VideoCallActivityNew : AppCompatActivity(),
         super.onPause()
         if (isPictureInPictureMode)
             navToLauncherTask(this)
+
+        mainHandler.removeCallbacks(updateTextTask)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mainHandler.post(updateTextTask)
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
@@ -698,6 +752,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
                 runOnUiThread {
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
+                        receiverName = createCallSocketDataClass.receiver_name
+//                        txtBottomReceiverName?.text = receiverName
                         linlayCallerDetails?.visibility = View.GONE
                         if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_DEEPAK) {
                             txtRinging2?.visibility = View.GONE
@@ -707,7 +763,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
 //                        txtDoctorName?.text = "Dr. ${createCallSocketDataClass.receiver_name}"
-                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_HIMANSHU) {
+                        if (createCallSocketDataClass.receiverId == Constants.CALLER_SOCKET_ID) {
                             newRoomId = createCallSocketDataClass.room_id
                             newMeetingId = createCallSocketDataClass.meetingId
                             relLayTopNotification?.visibility = View.VISIBLE
@@ -716,7 +772,11 @@ class VideoCallActivityNew : AppCompatActivity(),
                     }
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
-                        imgCallEnd?.performClick()
+//                        imgCallEnd?.performClick()
+                        txtRinging2?.text = "Rejected"
+                        progressBar2?.visibility = View.GONE
+                        imgCallRejected?.visibility = View.VISIBLE
+                        linlayCallerDetails?.visibility = View.GONE
                     }
                 }
             }
@@ -751,7 +811,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun acceptCall() {
         val acceptCallRequest = AcceptCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -799,7 +859,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
-            Constants.UUIDs.USER_DEEPAK,
+            Constants.CALLER_SOCKET_ID,
             "on",
             "on",
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
@@ -837,5 +897,28 @@ class VideoCallActivityNew : AppCompatActivity(),
     override fun onDestroy() {
         super.onDestroy()
         conferenceManager?.leaveFromConference()
+        initialView = false
     }
+
+    private fun defaultView() {
+        val paramsCaller: RelativeLayout.LayoutParams =
+            publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.marginEnd = 0
+        paramsCaller.topMargin = 0
+        publishViewRenderer.layoutParams = paramsCaller
+
+        val paramsReceiver: RelativeLayout.LayoutParams =
+            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsReceiver.height = 510
+        paramsReceiver.width = 432
+        paramsReceiver.marginEnd = 48
+        paramsReceiver.topMargin = 48
+        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        play_view_renderer1?.layoutParams = paramsReceiver
+        play_view_renderer1?.elevation = 2F
+    }
+
+
 }

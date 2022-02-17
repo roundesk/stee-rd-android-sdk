@@ -13,7 +13,9 @@
     <string name="str_image_content_description_back_arrow">Back Arrow</string>
     <string name="str_start_with_chat">Start with Chat</string>
     <string name="str_back_press_toast">Press again to exit</string>
-    <string name="str_outgoing_caller_name">Dr. LEONARD GIRARDI</string>
+<!--    <string name="str_outgoing_caller_name">Dr. LEONARD GIRARDI</string>-->
+    <string name="str_outgoing_caller_name">Deepak outlook</string>
+<!--    <string name="str_outgoing_caller_name">Himanshu</string>-->
     <string name="str_ringing">Ringing</string>
     <string name="str_video_call">Video Call</string>
     <string name="str_incoming_caller_name">JOHN M BROWN</string>

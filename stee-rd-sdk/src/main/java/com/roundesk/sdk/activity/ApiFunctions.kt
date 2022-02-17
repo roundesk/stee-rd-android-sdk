@@ -22,6 +22,7 @@ class ApiFunctions(private var mContext: Activity?) {
     private var participantsArrayList: ArrayList<CreateCallRequest.Participant> = arrayListOf()
     private var arraylistReceiverId: ArrayList<String> = arrayListOf()
     private var streamId: String? = null
+    private var callerName: String? = null
     private var roomId: Int? = null
     private var meetingId: Int? = null
     private var isIncomingCall: Boolean = false
@@ -72,6 +73,7 @@ class ApiFunctions(private var mContext: Activity?) {
                     roomId = createCallDataClassResponse?.roomId
                     meetingId = createCallDataClassResponse?.meetingId
                     streamId = createCallDataClassResponse?.streamId
+                    callerName = createCallDataClassResponse?.caller_name
                     LogUtil.e(
                         "getCreateCallSocketData",
                         "onSuccess: ${Gson().toJson(response.body())}"
@@ -84,6 +86,7 @@ class ApiFunctions(private var mContext: Activity?) {
                         intent.putExtra("room_id", roomId)
                         intent.putExtra("meeting_id", meetingId)
                         intent.putExtra("stream_id", streamId)
+                        intent.putExtra("caller_name", callerName)
                         intent.putExtra("isIncomingCall", isIncomingCall)
                         mContext?.startActivity(intent)
                     }

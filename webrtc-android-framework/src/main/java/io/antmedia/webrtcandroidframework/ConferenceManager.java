@@ -42,11 +42,11 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
     private Handler handler = new Handler();
     private boolean joined = false;
 
-    private boolean openFrontCamera = false;
+    private boolean openFrontCamera = true;
+    private String[] connectedStreamList;
 
     private int ROOM_INFO_POLLING_MILLIS = 5000;
     private Runnable getRoomInfoRunnable = new Runnable() {
-
         @Override
         public void run() {
             getRoomInfo();
@@ -203,9 +203,9 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
     @Override
     public void streamIdInUse(String streamId) {
         Log.e("ConferenceManager", "streamIdInUse" + streamId);
-        if (!streamId.equalsIgnoreCase("null") && streamId != null) {
+//        if (!streamId.equalsIgnoreCase("null") && streamId != null) {
             peers.get(streamId).streamIdInUse(streamId);
-        }
+//        }
     }
 
     @Override
@@ -250,7 +250,8 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
 
     @Override
     public void onRoomInformation(String[] streams) {
-        Log.e("ConferenceManager", "streams : "+streams.length);
+        Log.e("ConferenceManager", "streams : " + streams.length);
+        connectedStreamList = streams;
         Set<String> streamSet = new HashSet<>();
         Collections.addAll(streamSet, streams);
         Set<String> oldStreams = new HashSet<>(peers.keySet());
@@ -465,6 +466,10 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
 
     public void flipCamera() {
         webRTCClient.switchCamera();
+    }
+
+    public String[] getConnectedStreamList() {
+        return connectedStreamList;
     }
 
 
