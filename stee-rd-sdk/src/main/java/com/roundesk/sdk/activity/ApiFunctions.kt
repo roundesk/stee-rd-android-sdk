@@ -88,6 +88,8 @@ class ApiFunctions(private var mContext: Activity?) {
                         intent.putExtra("stream_id", streamId)
                         intent.putExtra("caller_name", callerName)
                         intent.putExtra("isIncomingCall", isIncomingCall)
+                        intent.putExtra("audioStatus", audioStatus)
+                        intent.putExtra("videoStatus", videoStatus)
                         mContext?.startActivity(intent)
                     }
                 }

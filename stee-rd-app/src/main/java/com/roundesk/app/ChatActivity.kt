@@ -94,11 +94,11 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_OUTLOOK)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_YAHOO)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_OUTLOOK)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_YAHOO)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
 
@@ -155,10 +155,13 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun acceptCall() {
+        val audioStatus = "on"
+        val videoStatus = "on"
+
         val acceptCallRequest = AcceptCallRequest(
             SocketConstants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             newMeetingId!!,
             newRoomId!!
@@ -189,6 +192,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                         intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
                         intent.putExtra("stream_id", response.body()?.streamId)
                         intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
+                        intent.putExtra("audioStatus", audioStatus)
+                        intent.putExtra("videoStatus", videoStatus)
                         startActivity(intent)
                     }
                 }
@@ -232,10 +237,13 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun declineCall() {
+        val audioStatus = "on"
+        val videoStatus = "on"
+
         val declineCallRequest = DeclineCallRequest(
             SocketConstants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             newMeetingId!!,
             newRoomId!!

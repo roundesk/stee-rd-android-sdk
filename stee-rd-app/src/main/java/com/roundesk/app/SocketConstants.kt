@@ -15,7 +15,7 @@ object SocketConstants {
     const val showIncomingCallUI: Boolean = false
     const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"
-    const val CALLER_SOCKET_ID: String = UUIDs.USER_HIMANSHU
+    const val CALLER_SOCKET_ID: String = UUIDs.USER_DEEPAK
 
     object SocketSuffix {
         const val SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String =

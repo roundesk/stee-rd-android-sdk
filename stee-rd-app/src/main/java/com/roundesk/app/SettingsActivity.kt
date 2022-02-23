@@ -157,10 +157,13 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     private fun acceptCall() {
+        val audioStatus = "on"
+        val videoStatus = "on"
+
         val acceptCallRequest = AcceptCallRequest(
             SocketConstants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             newMeetingId!!,
             newRoomId!!
@@ -191,6 +194,8 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
                         intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
                         intent.putExtra("stream_id", response.body()?.streamId)
                         intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
+                        intent.putExtra("audioStatus", audioStatus)
+                        intent.putExtra("videoStatus", videoStatus)
                         startActivity(intent)
 
                     }

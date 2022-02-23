@@ -2,7 +2,10 @@ package com.roundesk.sdk.activity
 
 import android.Manifest
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -46,10 +49,22 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
     private val RC_TELEPHONE_PERM = 126
+    var mpCallRing: MediaPlayer? = null
+    lateinit var mainHandler: Handler
+    private val updateTask = object : Runnable {
+        override fun run() {
+            runOnUiThread {
+                playSong()
+            }
+            mainHandler.postDelayed(this, 15000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_incoming_call)
+        mpCallRing = MediaPlayer.create(this, R.raw.call_ring_tone);
+        mainHandler = Handler(Looper.getMainLooper())
 
         /*   val app: SocketInstance = application as SocketInstance
            mSocket = app.getMSocket()
@@ -81,6 +96,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         }
         initSocket()
         initView()
+        playSong()
     }
 
     private fun initSocket() {
@@ -118,10 +134,12 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun acceptCall() {
+        val audioStatus = "on"
+        val videoStatus = "on"
         val acceptCallRequest = AcceptCallRequest(
             Constants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             meeting_id,
             room_id
@@ -154,6 +172,8 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                         intent.putExtra("isIncomingCall", true)
                         intent.putExtra("caller_name", response.body()?.caller_name)
                         intent.putExtra("receiver_name", response.body()?.receiver_name)
+                        intent.putExtra("audioStatus", audioStatus)
+                        intent.putExtra("videoStatus", videoStatus)
                         startActivity(intent)
 //                            }, 3000)
 
@@ -285,6 +305,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
 
                 runOnUiThread {
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
+
                     }
                 }
             }
@@ -298,5 +319,33 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
                     resources.getString(R.string.toast_request_to_try_later)
         )
+    }
+
+    private fun playSong() {
+        mpCallRing?.start()
+    }
+
+    private fun pauseSong() {
+        mpCallRing?.pause()
+    }
+
+    private fun stopSong() {
+        mpCallRing?.stop()
+//        mp = MediaPlayer.create(this, R.raw.abcd)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mainHandler.post(updateTask)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopSong()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mainHandler.removeCallbacks(updateTask)
     }
 }

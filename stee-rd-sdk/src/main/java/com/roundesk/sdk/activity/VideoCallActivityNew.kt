@@ -7,11 +7,11 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.media.MediaPlayer
 import android.os.*
 import android.util.Log
 import android.util.Rational
 import android.view.View
-import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.*
@@ -61,11 +61,16 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var receiverName: String? = null
     private var mReceiver_stream_id: String? = null
     private var activityName: String? = null
+    private var audioStatus: String? = null
+    private var videoStatus: String? = null
 
     private var conferenceManager: ConferenceManager? = null
 
     private lateinit var publishViewRenderer: SurfaceViewRenderer
     private var play_view_renderer1: SurfaceViewRenderer? = null
+    private var play_view_renderer2: SurfaceViewRenderer? = null
+    private var play_view_renderer3: SurfaceViewRenderer? = null
+    private var play_view_renderer4: SurfaceViewRenderer? = null
     private var imgCallEnd: ImageView? = null
     private var imgCamera: ImageView? = null
     private var imgVideo: ImageView? = null
@@ -73,6 +78,10 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var imgArrowUp: ImageView? = null
     private var imgBack: ImageView? = null
     private var switchView: View? = null
+    private var dividerView: View? = null
+    private var viewHideShowBottomSheet: View? = null
+    private var relLayUser12: RelativeLayout? = null
+    private var linLayUser34: LinearLayout? = null
     private var relLayToolbar: RelativeLayout? = null
     private var relLayoutMain: RelativeLayout? = null
     private var relLayoutSurfaceViews: RelativeLayout? = null
@@ -101,6 +110,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
     private var initialView: Boolean = false
+    private var isMultipleUsersConnected: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
@@ -113,6 +123,9 @@ class VideoCallActivityNew : AppCompatActivity(),
     var timer: Stopwatch = Stopwatch()
     val REFRESH_RATE = 100
     var stoppedTimeDuration: String? = null
+
+    var mpCallReject: MediaPlayer? = null
+
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
@@ -121,10 +134,32 @@ class VideoCallActivityNew : AppCompatActivity(),
                 if (conferenceManager?.connectedStreamList?.size == 1) {
                     if (!initialView) {
                         startCallDurationTimer()
+                        linlayCallerDetails?.visibility = View.GONE
                         switchView?.performClick()
                         initialView = true
                     }
+
+                    if (isMultipleUsersConnected) {
+                        showTwoUsersUI()
+                        isMultipleUsersConnected = false
+                    }
                 }
+
+                if (conferenceManager?.connectedStreamList?.size == 2) {
+                    isMultipleUsersConnected = true
+                    showThreeUsersUI()
+                }
+
+                if (conferenceManager?.connectedStreamList?.size == 3) {
+                    isMultipleUsersConnected = true
+                    showFourUsersUI()
+                }
+
+                if (conferenceManager?.connectedStreamList?.size == 4) {
+                    isMultipleUsersConnected = true
+                    showFiveUsersUI()
+                }
+
             }
             mainHandler.postDelayed(this, 1000)
         }
@@ -156,6 +191,8 @@ class VideoCallActivityNew : AppCompatActivity(),
             mReceiver_stream_id = extras.getString("receiver_stream_id")
             callerName = extras.getString("caller_name")
             receiverName = extras.getString("receiver_name")
+            audioStatus = extras.getString("audioStatus")
+            videoStatus = extras.getString("videoStatus")
 //            isReceiverID = extras.getBoolean("isIncomingCall")
         }
 
@@ -170,6 +207,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                     + " receiverName : $receiverName"
                     + " isReceiverID : $isReceiverID"
                     + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
+                    + " audioStatus : $audioStatus"
+                    + " videoStatus : $videoStatus"
         )
     }
 
@@ -183,6 +222,9 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun initView() {
         publishViewRenderer = findViewById(R.id.publish_view_renderer)
         play_view_renderer1 = findViewById(R.id.play_view_renderer1)
+        play_view_renderer2 = findViewById(R.id.play_view_renderer2)
+        play_view_renderer3 = findViewById(R.id.play_view_renderer3)
+        play_view_renderer4 = findViewById(R.id.play_view_renderer4)
         val playViewRenderers = ArrayList<SurfaceViewRenderer>()
 
         layoutBottomSheet = findViewById(R.id.bottomSheet)
@@ -194,6 +236,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgArrowUp = findViewById(R.id.imgArrowUp)
         imgBack = findViewById(R.id.imgBack)
         switchView = findViewById(R.id.switchView)
+        dividerView = findViewById(R.id.dividerView)
+        viewHideShowBottomSheet = findViewById(R.id.viewHideShowBottomSheet)
         relLayToolbar = findViewById(R.id.relLayToolbar)
         relLayoutMain = findViewById(R.id.relLayoutMain)
         relLayoutSurfaceViews = findViewById(R.id.relLayoutSurfaceViews)
@@ -215,14 +259,27 @@ class VideoCallActivityNew : AppCompatActivity(),
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
 
+        relLayUser12 = findViewById(R.id.relLayUser12)
+        linLayUser34 = findViewById(R.id.linLayUser34)
+
         imgCallEnd?.isEnabled = false
         imgCamera?.isEnabled = false
         imgVideo?.isEnabled = false
         imgAudio?.isEnabled = false
 
-        playViewRenderers.add(findViewById(R.id.play_view_renderer1))
+        linLayUser34?.visibility = View.GONE
+        play_view_renderer4?.visibility = View.GONE
+        sheetBehavior.isHideable = true
 
-        defaultView()
+        playViewRenderers.add(findViewById(R.id.play_view_renderer1))
+        playViewRenderers.add(findViewById(R.id.play_view_renderer2))
+        playViewRenderers.add(findViewById(R.id.play_view_renderer3))
+        playViewRenderers.add(findViewById(R.id.play_view_renderer4))
+
+        mpCallReject = MediaPlayer.create(this, R.raw.call_reject_tone);
+
+//        defaultView()
+        showDefaultView()
         setListeners()
         sheetBehaviour()
         checkPermissions()
@@ -259,12 +316,14 @@ class VideoCallActivityNew : AppCompatActivity(),
 //        txtBottomCallerName?.text = "Deepak Outlook"
 //        txtBottomReceiverName?.text = "Himanshu"
 
-        if(Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU){
+        if (Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU) {
             txtBottomCallerName?.text = "Himanshu"
             txtBottomReceiverName?.text = "Deepak"
-        }else{
+            txtDoctorName?.text = "Deepak"
+        } else {
             txtBottomCallerName?.text = "Deepak"
             txtBottomReceiverName?.text = "Himanshu"
+            txtDoctorName?.text = "Himanshu"
         }
 
 
@@ -295,6 +354,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         switchView?.setOnClickListener(this)
         btnAccept?.setOnClickListener(this)
         btnDecline?.setOnClickListener(this)
+        viewHideShowBottomSheet?.setOnClickListener(this)
     }
 
     private fun checkPermissions() {
@@ -358,6 +418,19 @@ class VideoCallActivityNew : AppCompatActivity(),
 
             R.id.btnDecline -> {
                 declineCall()
+            }
+
+            R.id.viewHideShowBottomSheet -> {
+                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED
+                    || sheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN
+                ) {
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
+                    imgArrowUp?.rotation = 0F
+                }
+
+                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN)
+                }
             }
         }
     }
@@ -488,6 +561,11 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
+        if(audioStatus?.equals("on", ignoreCase = true) == true){
+            controlAudio()
+        }else{
+            controlAudio()
+        }
 /*        val handler = Handler()
         runOnUiThread {
             handler.postDelayed({
@@ -582,6 +660,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun switchLayout(isCallerSmall: Boolean) {
+//        dividerView?.visibility = View.GONE
+
         if (isCallerSmall) {
             val paramsReceiver: RelativeLayout.LayoutParams =
                 play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
@@ -597,7 +677,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             paramsCaller.width = 432
             paramsCaller.marginEnd = 48
             paramsCaller.topMargin = 48
-            paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_END);
             publishViewRenderer.layoutParams = paramsCaller
             publishViewRenderer.elevation = 2F
 
@@ -643,24 +723,24 @@ class VideoCallActivityNew : AppCompatActivity(),
             layoutBottomSheet.visibility = View.GONE
             relLayToolbar?.visibility = View.GONE
             val paramsReceiver: RelativeLayout.LayoutParams =
-                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+                publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
             paramsReceiver.height = 210
             paramsReceiver.width = 165
             paramsReceiver.marginEnd = 10
             paramsReceiver.topMargin = 10
             paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            play_view_renderer1?.layoutParams = paramsReceiver
+            publishViewRenderer?.layoutParams = paramsReceiver
         } else {
             layoutBottomSheet.visibility = View.VISIBLE
             relLayToolbar?.visibility = View.VISIBLE
             val paramsReceiver: RelativeLayout.LayoutParams =
-                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+                publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
             paramsReceiver.height = 510
             paramsReceiver.width = 432
             paramsReceiver.marginEnd = 48
             paramsReceiver.topMargin = 48
             paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            play_view_renderer1?.layoutParams = paramsReceiver
+            publishViewRenderer?.layoutParams = paramsReceiver
         }
     }
 
@@ -772,7 +852,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                     }
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
-//                        imgCallEnd?.performClick()
+                        playSong()
+
+                        //                        imgCallEnd?.performClick()
                         txtRinging2?.text = "Rejected"
                         progressBar2?.visibility = View.GONE
                         imgCallRejected?.visibility = View.VISIBLE
@@ -810,10 +892,13 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun acceptCall() {
+        val audioStatus = "on"
+        val videoStatus = "on"
+
         val acceptCallRequest = AcceptCallRequest(
             Constants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
             newMeetingId!!,
             newRoomId!!
@@ -843,6 +928,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                     intent.putExtra("meeting_id", response.body()?.meetingId)
                     intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
                     intent.putExtra("stream_id", response.body()?.streamId)
+                    intent.putExtra("audioStatus", audioStatus)
+                    intent.putExtra("videoStatus", videoStatus)
                     startActivity(intent)
 
                 }
@@ -920,5 +1007,117 @@ class VideoCallActivityNew : AppCompatActivity(),
         play_view_renderer1?.elevation = 2F
     }
 
+    private fun showDefaultView() {
+        relLayUser12?.visibility = View.VISIBLE
+        linLayUser34?.visibility = View.GONE
+        play_view_renderer4?.visibility = View.GONE
+        dividerView?.visibility = View.GONE
 
+        val paramsCaller: RelativeLayout.LayoutParams =
+            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.marginEnd = 0
+        paramsCaller.topMargin = 0
+        publishViewRenderer?.layoutParams = paramsCaller
+
+        val paramsReceiver: RelativeLayout.LayoutParams =
+            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsReceiver.height = 510
+        paramsReceiver.width = 432
+        paramsReceiver.marginEnd = 48
+        paramsReceiver.topMargin = 48
+        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        play_view_renderer1?.layoutParams = paramsReceiver
+        play_view_renderer1?.elevation = 2F
+    }
+
+    private fun showTwoUsersUI() {
+        relLayUser12?.visibility = View.VISIBLE
+        linLayUser34?.visibility = View.GONE
+        play_view_renderer2?.visibility = View.GONE
+        play_view_renderer3?.visibility = View.GONE
+        play_view_renderer4?.visibility = View.GONE
+        dividerView?.visibility = View.GONE
+
+        val paramsCaller: RelativeLayout.LayoutParams =
+            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.marginEnd = 0
+        paramsCaller.topMargin = 0
+        play_view_renderer1?.layoutParams = paramsCaller
+
+        val paramsReceiver: RelativeLayout.LayoutParams =
+            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsReceiver.height = 510
+        paramsReceiver.width = 432
+        paramsReceiver.marginEnd = 48
+        paramsReceiver.marginStart = 48
+        paramsReceiver.topMargin = 48
+        paramsReceiver.addRule(RelativeLayout.END_OF, R.id.dividerView);
+        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_END);
+        publishViewRenderer?.layoutParams = paramsReceiver
+        publishViewRenderer?.elevation = 2F
+    }
+
+    private fun showThreeUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+        play_view_renderer2?.visibility = View.VISIBLE
+        play_view_renderer3?.visibility = View.GONE
+        play_view_renderer4?.visibility = View.GONE
+    }
+
+    private fun showFourUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+        play_view_renderer3?.visibility = View.VISIBLE
+        play_view_renderer4?.visibility = View.GONE
+    }
+
+    private fun showFiveUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+        play_view_renderer3?.visibility = View.VISIBLE
+        play_view_renderer4?.visibility = View.VISIBLE
+    }
+
+    private fun twoUsersTopView() {
+        dividerView?.visibility = View.VISIBLE
+        val paramsCaller: RelativeLayout.LayoutParams =
+            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsCaller.marginEnd = 0
+        paramsCaller.topMargin = 0
+        paramsCaller.addRule(RelativeLayout.END_OF, R.id.dividerView);
+        paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_END);
+        publishViewRenderer?.layoutParams = paramsCaller
+
+        val paramsReceiver: RelativeLayout.LayoutParams =
+            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+        paramsReceiver.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsReceiver.width = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsReceiver.marginEnd = 0
+        paramsReceiver.topMargin = 0
+
+        paramsReceiver.addRule(RelativeLayout.START_OF, R.id.dividerView)
+        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_START)
+        play_view_renderer1?.layoutParams = paramsReceiver
+        play_view_renderer1?.elevation = 2F
+    }
+
+    private fun playSong() {
+        mpCallReject?.start()
+    }
+
+    private fun pauseSong() {
+        mpCallReject?.pause()
+    }
+
+    private fun stopSong() {
+        mpCallReject?.stop()
+//        mp = MediaPlayer.create(this, R.raw.abcd)
+    }
 }
