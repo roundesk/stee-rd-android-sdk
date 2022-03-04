@@ -23,6 +23,9 @@ interface ApiInterface {
     @POST(Constants.ApiSuffix.API_KEY_DECLINE_CALL)
     fun declineCall(@Body body: DeclineCallRequest?): Call<BaseDataClassResponse?>
 
+    @POST(Constants.ApiSuffix.API_KEY_ROOM_DETAIL)
+    fun getRoomDetail(@Body body: RoomDetailRequest?): Call<RoomDetailDataClassResponse?>
+
     @GET(Constants.ApiSuffix.API_KEY_ALL_CALL)
     fun getCallHistoryData(@Query("apiToken") apiToken: String,
                            @Query("uuid") uuid: String,

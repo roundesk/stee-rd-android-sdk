@@ -164,7 +164,7 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
             SocketConstants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            SocketConstants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )
@@ -244,7 +244,7 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
             SocketConstants.CALLER_SOCKET_ID,
             "on",
             "on",
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            SocketConstants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )

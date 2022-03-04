@@ -140,7 +140,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             Constants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             meeting_id,
             room_id
         )
@@ -223,7 +223,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             Constants.CALLER_SOCKET_ID,
             "on",
             "on",
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             meeting_id,
             room_id
         )

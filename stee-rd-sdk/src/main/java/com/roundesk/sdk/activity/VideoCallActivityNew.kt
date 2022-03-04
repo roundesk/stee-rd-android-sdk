@@ -19,9 +19,13 @@ import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
+import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
+import com.roundesk.sdk.adapter.CallHistoryAdapter
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
@@ -101,6 +105,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var progressBar2: ProgressBar? = null
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
+    private var recyclerview: RecyclerView? = null
 
     private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
@@ -126,13 +131,18 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     var mpCallReject: MediaPlayer? = null
 
+    //    var tempConnectedUserSize: Int? = 0
+    private var bottomSheetAdapter: BottomSheetUserListAdapter? = null
+
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
             Log.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
             runOnUiThread {
+
                 if (conferenceManager?.connectedStreamList?.size == 1) {
                     if (!initialView) {
+                        imgBack?.isEnabled = true
                         startCallDurationTimer()
                         linlayCallerDetails?.visibility = View.GONE
                         switchView?.performClick()
@@ -159,6 +169,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     isMultipleUsersConnected = true
                     showFiveUsersUI()
                 }
+
 
             }
             mainHandler.postDelayed(this, 1000)
@@ -258,6 +269,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         progressBar2 = findViewById(R.id.progressBar2)
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
+        recyclerview = findViewById(R.id.recyclerview)
 
         relLayUser12 = findViewById(R.id.relLayUser12)
         linLayUser34 = findViewById(R.id.linLayUser34)
@@ -266,6 +278,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgCamera?.isEnabled = false
         imgVideo?.isEnabled = false
         imgAudio?.isEnabled = false
+        imgBack?.isEnabled = false
 
         linLayUser34?.visibility = View.GONE
         play_view_renderer4?.visibility = View.GONE
@@ -277,6 +290,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         playViewRenderers.add(findViewById(R.id.play_view_renderer4))
 
         mpCallReject = MediaPlayer.create(this, R.raw.call_reject_tone);
+
+        bottomSheetAdapter = BottomSheetUserListAdapter(this, listOf())
 
 //        defaultView()
         showDefaultView()
@@ -511,7 +526,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             mMeetingId.toString(),
             Constants.CALLER_SOCKET_ID,
 //            Constants.UUIDs.USER_DEEPAK,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             txtTimer?.text.toString()
         )
         val endCallJson = Gson().toJson(endCallRequest)
@@ -539,7 +554,6 @@ class VideoCallActivityNew : AppCompatActivity(),
                 LogUtil.e(TAG, "onFailure : ${t.message}")
             }
         })
-
     }
 
     override fun onDisconnected(streamId: String?) {
@@ -561,10 +575,20 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
-        if(audioStatus?.equals("on", ignoreCase = true) == true){
-            controlAudio()
-        }else{
-            controlAudio()
+        getRoomInfoDetails()
+
+        if (audioStatus?.equals("on", ignoreCase = true) == true) {
+            if (conferenceManager != null) {
+                conferenceManager!!.enableAudio()
+            }
+            imgAudio?.setImageResource(R.drawable.ic_audio)
+        } else {
+            if (conferenceManager!!.isPublisherAudioOn) {
+                if (conferenceManager != null) {
+                    conferenceManager!!.disableAudio()
+                }
+                imgAudio?.setImageResource(R.drawable.ic_audio_mute)
+            }
         }
 /*        val handler = Handler()
         runOnUiThread {
@@ -790,10 +814,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun onBackPressed() {
-        val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
-            enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
+        if (imgBack?.isEnabled == true) {
+            val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
+                enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
+            }
         }
     }
 
@@ -831,6 +857,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                 val createCallSocketDataClass: CreateCallSocketDataClass =
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
                 runOnUiThread {
+                    bottomSheetAdapter?.manageUIVisibility(createCallSocketDataClass)
+
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
                         receiverName = createCallSocketDataClass.receiver_name
 //                        txtBottomReceiverName?.text = receiverName
@@ -839,6 +867,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                             txtRinging2?.visibility = View.GONE
                             progressBar2?.visibility = View.GONE
                         }
+
                     }
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
@@ -899,7 +928,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             Constants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )
@@ -949,7 +978,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             Constants.CALLER_SOCKET_ID,
             "on",
             "on",
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )
@@ -1120,4 +1149,44 @@ class VideoCallActivityNew : AppCompatActivity(),
         mpCallReject?.stop()
 //        mp = MediaPlayer.create(this, R.raw.abcd)
     }
+
+
+    private fun getRoomInfoDetails() {
+        val roomDetailRequest = RoomDetailRequest(
+            mRoomId.toString(),
+            Constants.API_TOKEN
+        )
+        val roomInfoJson = Gson().toJson(roomDetailRequest)
+        LogUtil.e(TAG, "json : $roomInfoJson")
+
+        val request = ServiceBuilder.buildService(ApiInterface::class.java)
+        val getRoomInfoDetail = request.getRoomDetail(roomDetailRequest)
+
+        getRoomInfoDetail.enqueue(object : Callback<RoomDetailDataClassResponse?> {
+            override fun onResponse(
+                call: Call<RoomDetailDataClassResponse?>,
+                response: Response<RoomDetailDataClassResponse?>
+            ) {
+                LogUtil.e(TAG, "onSuccess: $response")
+                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+
+                recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
+
+                bottomSheetAdapter =
+                    response.body()
+                        ?.let { BottomSheetUserListAdapter(this@VideoCallActivityNew, it.success) }
+
+                // Setting the Adapter with the recyclerview
+                recyclerview?.adapter = bottomSheetAdapter
+            }
+
+            override fun onFailure(
+                call: Call<RoomDetailDataClassResponse?>,
+                t: Throwable
+            ) {
+                LogUtil.e(TAG, "onFailure : ${t.message}")
+            }
+        })
+    }
+
 }

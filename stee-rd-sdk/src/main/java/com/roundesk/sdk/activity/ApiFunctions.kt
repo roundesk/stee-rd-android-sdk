@@ -52,7 +52,7 @@ class ApiFunctions(private var mContext: Activity?) {
             audioStatus,
             videoStatus,
             participantsArrayList,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             caseId
         )
 

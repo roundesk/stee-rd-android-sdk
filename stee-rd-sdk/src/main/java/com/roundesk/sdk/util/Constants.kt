@@ -6,6 +6,7 @@ object Constants {
     const val BASE_URL: String = "http://test.roundesk.io/stee-server/public/api/"
     const val SOCKET_URL: String = "http://socket.roundesk.io:3000"
 
+    const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 
     object ApiSuffix {
         const val API_KEY_CREATE_CALL: String = "call"
@@ -13,6 +14,7 @@ object Constants {
         const val API_KEY_DECLINE_CALL: String = "decline-call"
         const val API_KEY_END_CALL: String = "end-call"
         const val API_KEY_ALL_CALL: String = "all-calls"
+        const val API_KEY_ROOM_DETAIL: String = "room-detail"
     }
 
     object UUIDs {
@@ -33,8 +35,6 @@ object Constants {
 
     object SocketSuffix {
         var SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String = ""
-
-        //            "sendCallToClient${UUIDs.USER_DEEPAK}"
         const val SOCKET_TYPE_ACCEPT_CALL: String = "accepted"
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"

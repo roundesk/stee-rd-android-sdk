@@ -92,8 +92,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
 
         val call = request.getCallHistoryData(
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
-            "drpbzfjiouhqkaegcvtl",
+            Constants.API_TOKEN,
+            Constants.CALLER_SOCKET_ID,
             "all"
         )
 
@@ -193,7 +193,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             Constants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )
@@ -272,7 +272,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             Constants.CALLER_SOCKET_ID,
             "on",
             "on",
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/bottomSheet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -75,6 +76,7 @@
             android:layout_height="wrap_content"
             android:background="@color/bottom_bar_color"
             android:orientation="horizontal"
+            android:visibility="gone"
             android:padding="@dimen/dimen_15dp">
 
             <TextView
@@ -114,6 +116,7 @@
             android:layout_height="wrap_content"
             android:background="@color/bottom_bar_color"
             android:orientation="horizontal"
+            android:visibility="gone"
             android:padding="@dimen/dimen_15dp">
 
             <TextView
@@ -157,5 +160,12 @@
                 android:visibility="gone"
                 app:tint="@color/decline_color" />
         </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dimen_200dp"
+            tools:listitem="@layout/item_bottom_sheet_users" />
+
     </LinearLayout>
 </RelativeLayout>

@@ -2,6 +2,8 @@ package com.roundesk.app
 
 object SocketConstants {
 
+    const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
+
     object UUIDs {
         const val USER_ROUNDESK_ADMIN: String = "rfhuzkfvodpajiletqss"
         const val USER_DEEPAK_YAHOO: String = "crhuzkfvodpajiletqgb"
@@ -15,7 +17,7 @@ object SocketConstants {
     const val showIncomingCallUI: Boolean = false
     const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"
-    const val CALLER_SOCKET_ID: String = UUIDs.USER_DEEPAK
+    const val CALLER_SOCKET_ID: String = UUIDs.USER_HIMANSHU
 
     object SocketSuffix {
         const val SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String =

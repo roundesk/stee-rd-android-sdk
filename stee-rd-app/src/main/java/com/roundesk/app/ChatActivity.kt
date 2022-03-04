@@ -99,7 +99,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
+//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
@@ -162,7 +162,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
             SocketConstants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            SocketConstants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )
@@ -244,7 +244,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
             SocketConstants.CALLER_SOCKET_ID,
             audioStatus,
             videoStatus,
-            "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9",
+            SocketConstants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
         )

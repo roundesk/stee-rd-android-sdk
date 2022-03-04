@@ -4,7 +4,6 @@ package com.roundesk.sdk.dataclass
 import com.google.gson.annotations.SerializedName
 
 data class CallHistoryResponseDataClass(
-
     @SerializedName("type")
     var type: String,
     @SerializedName("case_id")
