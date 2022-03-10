@@ -41,6 +41,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     private var imgBack: ImageView? = null
     private var isIncomingCall: Boolean = false
     private var showTopBarUI: Boolean = false
+    private var audioStatus: String = ""
+    private var videoStatus: String = ""
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
 
@@ -80,6 +82,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
         if (extras != null) {
             isIncomingCall = extras.getBoolean("isIncomingCall")
             showTopBarUI = extras.getBoolean("showTopBarUI")
+            audioStatus = extras.getString("audioStatus").toString()
+            videoStatus = extras.getString("videoStatus").toString()
 
         }
         LogUtil.e(
@@ -137,6 +141,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                                 Intent(this@CallHistoryActivity, IncomingCallActivity::class.java)
                             intent.putExtra("room_id", createCallSocketDataClass.room_id)
                             intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
                             intent.putExtra(
                                 "receiver_name",
                                 createCallSocketDataClass.msg
@@ -187,8 +193,6 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     }
 
     private fun acceptCall() {
-        val audioStatus = "on"
-        val videoStatus = "on"
         val acceptCallRequest = AcceptCallRequest(
             Constants.CALLER_SOCKET_ID,
             audioStatus,
@@ -270,8 +274,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
             Constants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!

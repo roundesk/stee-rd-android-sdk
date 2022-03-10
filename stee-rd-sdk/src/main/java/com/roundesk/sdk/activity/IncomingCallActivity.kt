@@ -44,6 +44,8 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     private var room_id: Int = 0
     private var meeting_id: Int = 0
     private var receiver_name: String? = null
+    private var audioStatus: String = ""
+    private var videoStatus: String = ""
 
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
@@ -66,25 +68,14 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         mpCallRing = MediaPlayer.create(this, R.raw.call_ring_tone);
         mainHandler = Handler(Looper.getMainLooper())
 
-        /*   val app: SocketInstance = application as SocketInstance
-           mSocket = app.getMSocket()
-           //connecting socket
-           mSocket?.connect()
-           val options = IO.Options()
-           options.reconnection = true //reconnection
-           options.forceNew = true
-
-           if (mSocket?.connected() == true) {
-               Toast.makeText(this, "Socket is connected", Toast.LENGTH_SHORT).show()
-           }
-
-           mSocket?.on(Constants.SocketSuffix.SOCKET_ACCEPT_CALL, onCreateCallEmitter)
-   */
         val extras = intent.extras
         if (extras != null) {
             room_id = extras.getInt("room_id")
             meeting_id = extras.getInt("meeting_id")
             receiver_name = extras.getString("receiver_name")
+            audioStatus = extras.getString("audioStatus").toString()
+            videoStatus = extras.getString("videoStatus").toString()
+
             //The key argument here must match that used in the other activity
             LogUtil.e(
                 VideoCallActivityNew.TAG,
@@ -134,8 +125,6 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun acceptCall() {
-        val audioStatus = "on"
-        val videoStatus = "on"
         val acceptCallRequest = AcceptCallRequest(
             Constants.CALLER_SOCKET_ID,
             audioStatus,
@@ -221,8 +210,8 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
             Constants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus,
+            videoStatus,
             Constants.API_TOKEN,
             meeting_id,
             room_id

@@ -325,13 +325,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             txtRinging2?.visibility = View.VISIBLE
         }
 
-
-//        txtBottomCallerName?.text = callerName
-//        txtBottomReceiverName?.text = receiverName
-//        txtBottomCallerName?.text = "Deepak Outlook"
-//        txtBottomReceiverName?.text = "Himanshu"
-
-        if (Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU) {
+        /*if (Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU) {
             txtBottomCallerName?.text = "Himanshu"
             txtBottomReceiverName?.text = "Deepak"
             txtDoctorName?.text = "Deepak"
@@ -339,7 +333,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             txtBottomCallerName?.text = "Deepak"
             txtBottomReceiverName?.text = "Himanshu"
             txtDoctorName?.text = "Himanshu"
-        }
+        }*/
 
 
         LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
@@ -577,12 +571,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         getRoomInfoDetails()
 
-        if (audioStatus?.equals("on", ignoreCase = true) == true) {
-            if (conferenceManager != null) {
-                conferenceManager!!.enableAudio()
-            }
-            imgAudio?.setImageResource(R.drawable.ic_audio)
-        } else {
+        if (audioStatus?.equals("off", ignoreCase = true) == true) {
             if (conferenceManager!!.isPublisherAudioOn) {
                 if (conferenceManager != null) {
                     conferenceManager!!.disableAudio()
@@ -590,14 +579,15 @@ class VideoCallActivityNew : AppCompatActivity(),
                 imgAudio?.setImageResource(R.drawable.ic_audio_mute)
             }
         }
-/*        val handler = Handler()
-        runOnUiThread {
-            handler.postDelayed({
-                progressBar2?.visibility = View.GONE
-                txtRinging2?.visibility = View.GONE
-            }, 5000)
-        }*/
 
+        if (videoStatus?.equals("off", ignoreCase = true) == true) {
+            if (conferenceManager!!.isPublisherVideoOn) {
+                if (conferenceManager != null) {
+                    conferenceManager!!.disableVideo()
+                }
+                imgVideo?.setImageResource(R.drawable.ic_video_mute)
+            }
+        }
     }
 
     override fun onPlayStarted(streamId: String?) {
@@ -921,13 +911,10 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun acceptCall() {
-        val audioStatus = "on"
-        val videoStatus = "on"
-
         val acceptCallRequest = AcceptCallRequest(
             Constants.CALLER_SOCKET_ID,
-            audioStatus,
-            videoStatus,
+            audioStatus.toString(),
+            videoStatus.toString(),
             Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
@@ -976,8 +963,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
             Constants.CALLER_SOCKET_ID,
-            "on",
-            "on",
+            audioStatus.toString(),
+            videoStatus.toString(),
             Constants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!

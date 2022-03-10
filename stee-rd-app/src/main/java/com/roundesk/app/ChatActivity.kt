@@ -109,8 +109,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                         arraylistReceiverId,
                         "paramedic",
                         SocketConstants.CALLER_SOCKET_ID,
-                        "on",
-                        "on",
+                        SocketConstants.CALLER_AUDIO_STATUS,
+                        SocketConstants.CALLER_VIDEO_STATUS,
                         "a3dt3ffdd"
                     )
                 } else {
@@ -155,8 +155,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun acceptCall() {
-        val audioStatus = "on"
-        val videoStatus = "on"
+        val audioStatus = SocketConstants.CALLER_AUDIO_STATUS
+        val videoStatus = SocketConstants.CALLER_VIDEO_STATUS
 
         val acceptCallRequest = AcceptCallRequest(
             SocketConstants.CALLER_SOCKET_ID,
@@ -237,13 +237,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun declineCall() {
-        val audioStatus = "on"
-        val videoStatus = "on"
-
         val declineCallRequest = DeclineCallRequest(
             SocketConstants.CALLER_SOCKET_ID,
-            audioStatus,
-            videoStatus,
+            SocketConstants.CALLER_AUDIO_STATUS,
+            SocketConstants.CALLER_VIDEO_STATUS,
             SocketConstants.API_TOKEN,
             newMeetingId!!,
             newRoomId!!
@@ -338,6 +335,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                             val intent = Intent(this@ChatActivity, IncomingCallActivity::class.java)
                             intent.putExtra("room_id", createCallSocketDataClass.room_id)
                             intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                            intent.putExtra("audioStatus", SocketConstants.RECEIVER_AUDIO_STATUS)
+                            intent.putExtra("videoStatus", SocketConstants.RECEIVER_VIDEO_STATUS)
                             intent.putExtra(
                                 "receiver_name",
                                 createCallSocketDataClass.msg

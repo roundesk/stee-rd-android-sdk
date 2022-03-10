@@ -44,43 +44,40 @@ class BottomSheetUserListAdapter(
             holder.txtRinging.visibility = View.GONE
             holder.progressBar.visibility = View.GONE
             holder.imgCallRejected.visibility = View.GONE
+            holder.imgCallAccepted.visibility = View.GONE
         }
 
-//        holder.txtRinging.visibility = View.VISIBLE
-//        holder.progressBar.visibility = View.VISIBLE
-//        holder.imgCallRejected.visibility = View.GONE
-//        if (!mRoomDetailDataList[position].role.equals("paramedic", ignoreCase = true)) {
         holder.txtBottomUserName.text =
             firstLetterCaps(mRoomDetailDataList[position].name)
-//        }
 
         LogUtil.e(
             "list user id  " + position + mRoomDetailDataList[position].receiverId,
             "socket receiver id " + position + mCreateCallSocketData?.receiverId
         )
+        if (mCreateCallSocketData?.callerId != Constants.CALLER_SOCKET_ID) {
+            holder.txtRinging.visibility = View.GONE
+            holder.progressBar.visibility = View.GONE
+            holder.imgCallRejected.visibility = View.GONE
+            holder.imgCallAccepted.visibility = View.GONE
+        }
 
         if (mCreateCallSocketData?.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
             if (mRoomDetailDataList[position].receiverId == mCreateCallSocketData?.receiverId) {
                 holder.progressBar.visibility = View.GONE
                 holder.txtRinging.visibility = View.GONE
                 holder.imgCallRejected.visibility = View.GONE
-            }/*else{
-                holder.progressBar.visibility = View.VISIBLE
-                holder.txtRinging.visibility = View.VISIBLE
-                holder.imgCallRejected.visibility = View.GONE
-            }*/
+                holder.imgCallAccepted.visibility = View.VISIBLE
+            }
         }
 
         if (mCreateCallSocketData?.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
             if (mRoomDetailDataList[position].receiverId == mCreateCallSocketData?.receiverId) {
                 holder.progressBar.visibility = View.GONE
-                holder.txtRinging.visibility = View.GONE
-                holder.imgCallRejected.visibility = View.VISIBLE
-            }/*else{
-                holder.progressBar.visibility = View.VISIBLE
                 holder.txtRinging.visibility = View.VISIBLE
-                holder.imgCallRejected.visibility = View.GONE
-            }*/
+                holder.txtRinging.text = "Rejected"
+                holder.imgCallRejected.visibility = View.VISIBLE
+                holder.imgCallAccepted.visibility = View.GONE
+            }
         }
     }
 
@@ -108,6 +105,7 @@ class BottomSheetUserListAdapter(
         val txtRinging: TextView = itemView.findViewById(R.id.txtRinging)
         val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
         val imgCallRejected: ImageView = itemView.findViewById(R.id.imgCallRejected)
+        val imgCallAccepted: ImageView = itemView.findViewById(R.id.imgCallAccepted)
     }
 
 

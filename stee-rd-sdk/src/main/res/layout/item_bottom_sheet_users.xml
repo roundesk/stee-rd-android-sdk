@@ -7,44 +7,56 @@
     android:orientation="horizontal"
     android:padding="@dimen/dimen_15dp">
 
-    <TextView
-        android:id="@+id/txtBottomUserName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_weight="1"
-        android:fontFamily="@font/segoe_ui_semi_bold"
-        android:text="ALFREDO TRENTO"
-        android:textColor="@color/white_dark"
-        android:textSize="@dimen/dimen_18sp" />
+        <TextView
+            android:id="@+id/txtBottomUserName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="ALFREDO TRENTO"
+            android:textColor="@color/white_dark"
+            android:textSize="@dimen/dimen_18sp" />
 
-    <TextView
-        android:id="@+id/txtRinging"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_marginEnd="@dimen/dimen_10dp"
-        android:fontFamily="@font/segoe_ui_semi_bold"
-        android:text="Ringing...."
-        android:textColor="@color/white_dark"
-        android:textSize="@dimen/dimen_16sp"
-        android:visibility="visible" />
+        <TextView
+            android:id="@+id/txtRinging"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="@dimen/dimen_10dp"
+            android:fontFamily="@font/segoe_ui_semi_bold"
+            android:text="Ringing...."
+            android:layout_marginStart="@dimen/dimen_5dp"
+            android:textColor="@color/white_dark"
+            android:textSize="@dimen/dimen_16sp"
+            android:visibility="visible" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="@dimen/dimen_30dp"
-        android:layout_height="@dimen/dimen_30dp"
-        android:layout_gravity="center"
-        android:layout_marginEnd="@dimen/dimen_10dp"
-        android:visibility="visible" />
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="@dimen/dimen_30dp"
+            android:layout_height="@dimen/dimen_30dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/dimen_10dp"
+            android:visibility="visible" />
 
-    <ImageView
-        android:id="@+id/imgCallRejected"
-        android:layout_width="@dimen/dimen_20dp"
-        android:layout_height="@dimen/dimen_20dp"
-        android:layout_gravity="center"
-        android:layout_marginEnd="@dimen/dimen_10dp"
-        android:src="@drawable/ic_close"
-        android:visibility="gone"
-        app:tint="@color/decline_color" />
+        <ImageView
+            android:id="@+id/imgCallAccepted"
+            android:layout_width="@dimen/dimen_40dp"
+            android:layout_height="@dimen/dimen_30dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_check_mark"
+            android:visibility="gone"
+            app:tint="@color/accept_color" />
+
+        <ImageView
+            android:id="@+id/imgCallRejected"
+            android:layout_width="@dimen/dimen_20dp"
+            android:layout_height="@dimen/dimen_20dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/dimen_10dp"
+            android:src="@drawable/ic_close"
+            android:visibility="gone"
+            app:tint="@color/decline_color" />
+
 </LinearLayout>
+

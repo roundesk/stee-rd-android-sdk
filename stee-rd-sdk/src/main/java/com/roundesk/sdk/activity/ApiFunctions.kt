@@ -108,14 +108,22 @@ class ApiFunctions(private var mContext: Activity?) {
         isIncomingCall = isReceiver
     }
 
-    fun navigateToCallHistory(isIncomingCall: Boolean, showTopBarUI: Boolean) {
+    fun navigateToCallHistory(
+        isIncomingCall: Boolean,
+        showTopBarUI: Boolean,
+        audioStatus: String,
+        videoStatus: String
+    ) {
         val intent = Intent(mContext, CallHistoryActivity::class.java)
         intent.putExtra("isIncomingCall", isIncomingCall)
         intent.putExtra("showTopBarUI", showTopBarUI)
+        intent.putExtra("audioStatus", audioStatus)
+        intent.putExtra("videoStatus", videoStatus)
+
         mContext?.startActivity(intent)
     }
 
-    fun getSocketInstance(socketInstance : SocketConnection?) {
+    fun getSocketInstance(socketInstance: SocketConnection?) {
         Constants.InitializeSocket.socketConnection = socketInstance
     }
 }

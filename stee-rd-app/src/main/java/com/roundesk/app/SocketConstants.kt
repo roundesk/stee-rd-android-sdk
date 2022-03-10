@@ -3,6 +3,10 @@ package com.roundesk.app
 object SocketConstants {
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
+    const val CALLER_AUDIO_STATUS: String = "on"
+    const val CALLER_VIDEO_STATUS: String = "on"
+    const val RECEIVER_AUDIO_STATUS: String = "on"
+    const val RECEIVER_VIDEO_STATUS: String = "on"
 
     object UUIDs {
         const val USER_ROUNDESK_ADMIN: String = "rfhuzkfvodpajiletqss"
