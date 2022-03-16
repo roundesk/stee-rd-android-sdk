@@ -37,7 +37,7 @@
                 android:padding="@dimen/dimen_15dp">
 
                 <ImageView
-                    android:id="@+id/imgCamera"
+                    android:id="@+id/imgBottomCamera"
                     android:layout_width="@dimen/dimen_20dp"
                     android:layout_height="@dimen/dimen_25dp"
                     android:layout_gravity="center_vertical"
@@ -45,7 +45,7 @@
                     android:src="@drawable/ic_camera" />
 
                 <ImageView
-                    android:id="@+id/imgVideo"
+                    android:id="@+id/imgBottomVideo"
                     android:layout_width="@dimen/dimen_30dp"
                     android:layout_height="@dimen/dimen_20dp"
                     android:layout_gravity="center_vertical"

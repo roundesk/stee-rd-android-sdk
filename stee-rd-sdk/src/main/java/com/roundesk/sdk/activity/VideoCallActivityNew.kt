@@ -54,7 +54,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
-        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
         private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
@@ -76,8 +76,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var play_view_renderer3: SurfaceViewRenderer? = null
     private var play_view_renderer4: SurfaceViewRenderer? = null
     private var imgCallEnd: ImageView? = null
-    private var imgCamera: ImageView? = null
-    private var imgVideo: ImageView? = null
+    private var imgBottomCamera: ImageView? = null
+    private var imgBottomVideo: ImageView? = null
     private var imgAudio: ImageView? = null
     private var imgArrowUp: ImageView? = null
     private var imgBack: ImageView? = null
@@ -241,8 +241,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         layoutBottomSheet = findViewById(R.id.bottomSheet)
         sheetBehavior = BottomSheetBehavior.from(layoutBottomSheet)
         imgCallEnd = findViewById(R.id.imgCallEnd)
-        imgCamera = findViewById(R.id.imgCamera)
-        imgVideo = findViewById(R.id.imgVideo)
+        imgBottomCamera = findViewById(R.id.imgBottomCamera)
+        imgBottomVideo = findViewById(R.id.imgBottomVideo)
         imgAudio = findViewById(R.id.imgAudio)
         imgArrowUp = findViewById(R.id.imgArrowUp)
         imgBack = findViewById(R.id.imgBack)
@@ -275,8 +275,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         linLayUser34 = findViewById(R.id.linLayUser34)
 
         imgCallEnd?.isEnabled = false
-        imgCamera?.isEnabled = false
-        imgVideo?.isEnabled = false
+        imgBottomCamera?.isEnabled = false
+        imgBottomVideo?.isEnabled = false
         imgAudio?.isEnabled = false
         imgBack?.isEnabled = false
 
@@ -303,6 +303,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         conferenceDetails(publishViewRenderer, playViewRenderers)
         joinConference()
+
 
     }
 
@@ -355,8 +356,8 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun setListeners() {
         imgCallEnd?.setOnClickListener(this)
-        imgCamera?.setOnClickListener(this)
-        imgVideo?.setOnClickListener(this)
+        imgBottomCamera?.setOnClickListener(this)
+        imgBottomVideo?.setOnClickListener(this)
         imgAudio?.setOnClickListener(this)
         imgArrowUp?.setOnClickListener(this)
         imgBack?.setOnClickListener(this)
@@ -388,8 +389,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                 endCall()
             }
 
-            R.id.imgCamera -> {
-                Log.e("imgCamera", "imgCamera")
+            R.id.imgBottomCamera -> {
+                Log.e("imgBottomCamera", "imgBottomCamera")
                 runOnUiThread {
                     conferenceManager?.flipCamera()
                 }
@@ -399,7 +400,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                 controlAudio()
             }
 
-            R.id.imgVideo -> {
+            R.id.imgBottomVideo -> {
                 controlVideo()
             }
 
@@ -408,7 +409,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
 
             R.id.imgBack -> {
-                val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+                val aspectRatio = Rational(relLayoutMain!!.width, relLayoutMain!!.height)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
                     enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
@@ -472,12 +473,12 @@ class VideoCallActivityNew : AppCompatActivity(),
             if (conferenceManager != null) {
                 conferenceManager!!.disableVideo()
             }
-            imgVideo?.setImageResource(R.drawable.ic_video_mute)
+            imgBottomVideo?.setImageResource(R.drawable.ic_video_mute)
         } else {
             if (conferenceManager != null) {
                 conferenceManager!!.enableVideo()
             }
-            imgVideo?.setImageResource(R.drawable.ic_video)
+            imgBottomVideo?.setImageResource(R.drawable.ic_video)
         }
     }
 
@@ -565,8 +566,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     override fun onPublishStarted(streamId: String?) {
         LogUtil.e(TAG, "onPublishStarted streamId: $streamId")
         imgCallEnd?.isEnabled = true
-        imgCamera?.isEnabled = true
-        imgVideo?.isEnabled = true
+        imgBottomCamera?.isEnabled = true
+        imgBottomVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
         getRoomInfoDetails()
@@ -585,7 +586,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                 if (conferenceManager != null) {
                     conferenceManager!!.disableVideo()
                 }
-                imgVideo?.setImageResource(R.drawable.ic_video_mute)
+                imgBottomVideo?.setImageResource(R.drawable.ic_video_mute)
             }
         }
     }
@@ -1175,5 +1176,6 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
         })
     }
+
 
 }
