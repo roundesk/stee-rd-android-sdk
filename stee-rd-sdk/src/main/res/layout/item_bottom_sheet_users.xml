@@ -54,7 +54,7 @@
             android:layout_height="@dimen/dimen_20dp"
             android:layout_gravity="center"
             android:layout_marginEnd="@dimen/dimen_10dp"
-            android:src="@drawable/ic_close"
+            android:src="@drawable/ic_close_button"
             android:visibility="gone"
             app:tint="@color/decline_color" />
 

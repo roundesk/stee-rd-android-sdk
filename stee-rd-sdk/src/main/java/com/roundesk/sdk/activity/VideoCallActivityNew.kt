@@ -54,7 +54,9 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
-        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
+        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+
+        //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
         private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
@@ -115,6 +117,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
     private var initialView: Boolean = false
+    private var startTimer: Boolean = false
     private var isMultipleUsersConnected: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
@@ -133,48 +136,72 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     //    var tempConnectedUserSize: Int? = 0
     private var bottomSheetAdapter: BottomSheetUserListAdapter? = null
+    var joinedUserNamesList: ArrayList<String> = arrayListOf()
+    var userStreamIDList: ArrayList<String> = arrayListOf()
+    var tempValue: Int? = 0
 
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
             Log.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
             runOnUiThread {
-
-                if (conferenceManager?.connectedStreamList?.size == 1) {
-                    if (!initialView) {
-                        imgBack?.isEnabled = true
-                        startCallDurationTimer()
-                        linlayCallerDetails?.visibility = View.GONE
-                        switchView?.performClick()
-                        initialView = true
-                    }
-
-                    if (isMultipleUsersConnected) {
-                        showTwoUsersUI()
-                        isMultipleUsersConnected = false
-                    }
+                if (tempValue != conferenceManager?.connectedStreamList?.size) {
+                    tempValue = conferenceManager?.connectedStreamList?.size
+                    refreshRoomDetails()
                 }
-
-                if (conferenceManager?.connectedStreamList?.size == 2) {
-                    isMultipleUsersConnected = true
-                    showThreeUsersUI()
-                }
-
-                if (conferenceManager?.connectedStreamList?.size == 3) {
-                    isMultipleUsersConnected = true
-                    showFourUsersUI()
-                }
-
-                if (conferenceManager?.connectedStreamList?.size == 4) {
-                    isMultipleUsersConnected = true
-                    showFiveUsersUI()
-                }
-
-
             }
-            mainHandler.postDelayed(this, 1000)
+            mainHandler.postDelayed(this, 1500)
         }
     }
+
+    private fun refreshRoomDetails() {
+        if (conferenceManager?.connectedStreamList?.size == 1) {
+            userStreamIDList.clear()
+            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            if (!initialView) {
+                imgBack?.isEnabled = true
+                switchView?.performClick()
+                initialView = true
+            }
+
+            if (isMultipleUsersConnected) {
+                showTwoUsersUI()
+                isMultipleUsersConnected = false
+            }
+        }
+
+        if (conferenceManager!!.connectedStreamList != null) {
+            if (conferenceManager!!.connectedStreamList.size > 0) {
+                if (!startTimer) {
+                    startCallDurationTimer()
+                    linlayCallerDetails?.visibility = View.GONE
+                    startTimer = true
+                }
+            }
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 2) {
+            userStreamIDList.clear()
+            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            isMultipleUsersConnected = true
+            showThreeUsersUI()
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 3) {
+            userStreamIDList.clear()
+            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            isMultipleUsersConnected = true
+            showFourUsersUI()
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 4) {
+            userStreamIDList.clear()
+            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            isMultipleUsersConnected = true
+            showFiveUsersUI()
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -282,7 +309,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         linLayUser34?.visibility = View.GONE
         play_view_renderer4?.visibility = View.GONE
-        sheetBehavior.isHideable = true
+        sheetBehavior.isHideable = false
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
         playViewRenderers.add(findViewById(R.id.play_view_renderer2))
@@ -431,7 +458,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
 
             R.id.viewHideShowBottomSheet -> {
-                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED
+/*                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED
                     || sheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN
                 ) {
                     sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
@@ -440,7 +467,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                 if (sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
                     sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN)
-                }
+                }*/
             }
         }
     }
@@ -1002,6 +1029,10 @@ class VideoCallActivityNew : AppCompatActivity(),
         super.onDestroy()
         conferenceManager?.leaveFromConference()
         initialView = false
+        SocketManager(
+            this, Constants.InitializeSocket.socketConnection!!,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).offAllEvent()
     }
 
     private fun defaultView() {

@@ -105,7 +105,7 @@
             <ImageView
                 android:layout_width="@dimen/dimen_15dp"
                 android:layout_height="@dimen/dimen_15dp"
-                android:src="@drawable/ic_close" />
+                android:src="@drawable/ic_close_button" />
 
         </LinearLayout>
 

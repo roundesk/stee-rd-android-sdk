@@ -16,6 +16,7 @@ import org.webrtc.SurfaceViewRenderer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -204,7 +205,7 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
     public void streamIdInUse(String streamId) {
         Log.e("ConferenceManager", "streamIdInUse" + streamId);
 //        if (!streamId.equalsIgnoreCase("null") && streamId != null) {
-            peers.get(streamId).streamIdInUse(streamId);
+        peers.get(streamId).streamIdInUse(streamId);
 //        }
     }
 
@@ -329,7 +330,7 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
 
     @Override
     public void onStreamInfoList(String streamId, ArrayList<StreamInfo> streamInfoList) {
-
+        Log.e("ConferenceManager", "onStreamInfoList StreamId: " + streamId + "streamInfoList: " + streamInfoList.toString());
     }
 
     @Override
@@ -465,7 +466,16 @@ public class ConferenceManager implements AntMediaSignallingEvents, IDataChannel
     }
 
     public void flipCamera() {
-        webRTCClient.switchCamera();
+//        webRTCClient.switchCamera();
+        WebRTCClient publishStreamCameraSwitch = peers.get(streamId);
+        if (publishStreamCameraSwitch != null) {
+            if (publishStreamCameraSwitch.isStreaming()) {
+                publishStreamCameraSwitch.switchCamera();
+            }
+            sendNotificationEvent("CAM_FLIPPED");
+        } else {
+            Log.w(this.getClass().getSimpleName(), "Camera not able to flip ");
+        }
     }
 
     public String[] getConnectedStreamList() {

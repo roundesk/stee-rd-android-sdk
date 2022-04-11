@@ -14,7 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bottom_call_options"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:alpha="0.6">
 
         <LinearLayout
             android:id="@+id/lin_layBottomOptions"
@@ -27,6 +28,7 @@
                 android:layout_width="@dimen/dimen_30dp"
                 android:layout_height="@dimen/dimen_20dp"
                 android:layout_gravity="center"
+                android:visibility="gone"
                 android:layout_marginTop="@dimen/dimen_10dp"
                 android:src="@drawable/ic_arrow_up_white" />
 
@@ -34,20 +36,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="@dimen/dimen_15dp">
+                android:padding="@dimen/dimen_20dp">
 
                 <ImageView
                     android:id="@+id/imgBottomCamera"
-                    android:layout_width="@dimen/dimen_20dp"
-                    android:layout_height="@dimen/dimen_25dp"
+                    android:layout_width="@dimen/dimen_40dp"
+                    android:layout_height="@dimen/dimen_45dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
-                    android:src="@drawable/ic_camera" />
+                    android:src="@drawable/ic_camera_flip" />
 
                 <ImageView
                     android:id="@+id/imgBottomVideo"
-                    android:layout_width="@dimen/dimen_30dp"
-                    android:layout_height="@dimen/dimen_20dp"
+                    android:layout_width="@dimen/dimen_50dp"
+                    android:layout_height="@dimen/dimen_40dp"
                     android:layout_gravity="center_vertical"
                     android:layout_marginStart="@dimen/dimen_10dp"
                     android:layout_weight="1"
@@ -55,16 +57,16 @@
 
                 <ImageView
                     android:id="@+id/imgAudio"
-                    android:layout_width="@dimen/dimen_30dp"
-                    android:layout_height="@dimen/dimen_30dp"
+                    android:layout_width="@dimen/dimen_50dp"
+                    android:layout_height="@dimen/dimen_50dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
                     android:src="@drawable/ic_audio" />
 
                 <ImageView
                     android:id="@+id/imgCallEnd"
-                    android:layout_width="@dimen/dimen_30dp"
-                    android:layout_height="@dimen/dimen_30dp"
+                    android:layout_width="@dimen/dimen_50dp"
+                    android:layout_height="@dimen/dimen_50dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
                     android:src="@drawable/ic_call_end" />
@@ -155,7 +157,7 @@
                 android:layout_width="@dimen/dimen_20dp"
                 android:layout_height="@dimen/dimen_20dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_close"
+                android:src="@drawable/ic_close_button"
                 android:layout_marginEnd="@dimen/dimen_10dp"
                 android:visibility="gone"
                 app:tint="@color/decline_color" />
@@ -165,6 +167,7 @@
             android:id="@+id/recyclerview"
             android:layout_width="match_parent"
             android:layout_height="@dimen/dimen_200dp"
+            android:visibility="gone"
             tools:listitem="@layout/item_bottom_sheet_users" />
 
     </LinearLayout>

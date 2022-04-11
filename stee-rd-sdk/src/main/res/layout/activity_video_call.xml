@@ -158,7 +158,7 @@
                 android:layout_height="@dimen/dimen_25dp"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="1"
-                android:src="@drawable/ic_camera" />
+                android:src="@drawable/ic_camera_flip" />
 
             <ImageView
                 android:id="@+id/imgVideo"
