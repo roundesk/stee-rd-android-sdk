@@ -54,9 +54,10 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
-        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+//        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+//        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
+        private val SERVER_ADDRESS: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5080"
 
-        //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
         private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
