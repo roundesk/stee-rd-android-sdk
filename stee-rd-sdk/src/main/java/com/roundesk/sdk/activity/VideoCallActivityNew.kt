@@ -43,6 +43,8 @@ import org.webrtc.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -214,6 +216,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         )
         setContentView(R.layout.activity_video_call_new)
         mainHandler = Handler(Looper.getMainLooper())
+        storeDataLogsFile()
         initSocket()
         getIntentData()
         initView()
@@ -1209,5 +1212,50 @@ class VideoCallActivityNew : AppCompatActivity(),
         })
     }
 
+    private fun storeDataLogsFile() {
+        if (isExternalStorageWritable()) {
+//            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
+            val cDir: File? = applicationContext?.getExternalFilesDir(null);
+            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
+            val logDirectory = File("$appDirectory/logs")
+            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
+            // create app folder
+            if (!appDirectory.exists()) {
+                appDirectory.mkdir()
+            }
+
+            // create log folder
+            if (!logDirectory.exists()) {
+                logDirectory.mkdir()
+            }
+
+            // clear the previous logcat and then write the new one to the file
+            try {
+//                Process process = Runtime.getRuntime().exec("logcat -c");
+                val process = Runtime.getRuntime().exec("logcat -f $logFile")
+
+                Log.e("SocketConfig", "File Path $process");
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        } else if (isExternalStorageReadable()) {
+            // only readable
+        } else {
+            // not accessible
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    private fun isExternalStorageWritable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state
+    }
+
+    /* Checks if external storage is available to at least read */
+    private fun isExternalStorageReadable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
+    }
 
 }

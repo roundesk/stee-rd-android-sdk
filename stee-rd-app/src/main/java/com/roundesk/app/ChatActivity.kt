@@ -3,6 +3,7 @@ package com.roundesk.app
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -28,6 +29,8 @@ import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.IOException
 import java.util.ArrayList
 
 class ChatActivity : AppCompatActivity(), View.OnClickListener,
@@ -60,6 +63,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         initView()
 
         ApiFunctions(this).getCallerRole(SocketConstants.showIncomingCallUI)
+        storeDataLogsFile()
     }
 
     private fun initSocket() {
@@ -360,5 +364,52 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
 
     override fun handleSocketErrorResponse(error: Any) {
         LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+    }
+
+
+    private fun storeDataLogsFile() {
+        if (isExternalStorageWritable()) {
+//            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
+            val cDir: File? = applicationContext?.getExternalFilesDir(null);
+            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
+            val logDirectory = File("$appDirectory/logs")
+            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
+            // create app folder
+            if (!appDirectory.exists()) {
+                appDirectory.mkdir()
+            }
+
+            // create log folder
+            if (!logDirectory.exists()) {
+                logDirectory.mkdir()
+            }
+
+            // clear the previous logcat and then write the new one to the file
+            try {
+//                Process process = Runtime.getRuntime().exec("logcat -c");
+                val process = Runtime.getRuntime().exec("logcat -f $logFile")
+
+                Log.e("SocketConfig", "File Path $process");
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        } else if (isExternalStorageReadable()) {
+            // only readable
+        } else {
+            // not accessible
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    private fun isExternalStorageWritable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state
+    }
+
+    /* Checks if external storage is available to at least read */
+    private fun isExternalStorageReadable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
     }
 }

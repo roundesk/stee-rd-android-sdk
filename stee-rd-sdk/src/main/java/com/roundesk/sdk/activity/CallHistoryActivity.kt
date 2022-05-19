@@ -3,6 +3,7 @@ package com.roundesk.sdk.activity
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -25,6 +26,8 @@ import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.IOException
 
 class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
@@ -68,6 +71,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
         imgBack?.setOnClickListener(this)
 
         callAPI()
+        storeDataLogsFile()
     }
 
     private fun initSocket() {
@@ -347,5 +351,104 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 
     override fun onRationaleDenied(requestCode: Int) {
         LogUtil.d(TAG, "onRationaleDenied: $requestCode")
+    }
+
+
+    /*private fun callUploadLogAPI() {
+        val request = ServiceBuilder.buildServiceToUploadDataLogs(ApiInterface::class.java)
+
+        val call = request.uploadDataLogs(Constants.API_TOKEN,)
+
+        call.enqueue(object : Callback<BaseDataClassResponse?> {
+            override fun onResponse(
+                call: Call<BaseDataClassResponse?>,
+                response: Response<BaseDataClassResponse?>
+            ) {
+                if (response.isSuccessful) {
+                    progressBar?.visibility = View.GONE
+                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+
+                }
+            }
+
+            override fun onFailure(call: Call<BaseDataClassResponse?>, t: Throwable) {
+                Log.e(TAG, "onFailure : ${t.message}")
+            }
+        })
+    }*/
+
+    private fun getFilePath() {
+//        val m = packageManager
+//        var s = packageName
+//        val p = m.getPackageInfo(s, 0)
+//        s = p.applicationInfo.dataDir
+//        LogUtil.e(TAG, "filePath: $s")
+
+        val appPath: String = getApplicationContext().getFilesDir().getAbsolutePath() + "/STEE_APP_DATA_LOGS/logs"
+        LogUtil.e(TAG, "filePath: $appPath")
+        getAllFilesInAppPackage()
+    }
+
+    private fun getAllFilesInAppPackage() {
+/*
+        val listOfFiles: Array<String> = this.getFilesDir().list()
+        Log.d("Files", "Size: " + listOfFiles.size)
+*/
+
+/*        val path = Environment.getExternalStorageDirectory().toString() + "/files/STEE_APP_DATA_LOGS/logs"
+        Log.d("Files", "Path: $path")
+        val directory = File(path)
+        val files = directory.listFiles()
+        Log.d("Files", "Size: " + files.size)
+        for (i in files.indices) {
+            Log.d("Files", "FileName:" + files[i].name)
+        }*/
+    }
+
+
+    private fun storeDataLogsFile() {
+        if (isExternalStorageWritable()) {
+//            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
+            val cDir: File? = applicationContext?.getExternalFilesDir(null);
+            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
+            val logDirectory = File("$appDirectory/logs")
+            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
+            // create app folder
+            if (!appDirectory.exists()) {
+                appDirectory.mkdir()
+            }
+
+            // create log folder
+            if (!logDirectory.exists()) {
+                logDirectory.mkdir()
+            }
+
+            // clear the previous logcat and then write the new one to the file
+            try {
+//                Process process = Runtime.getRuntime().exec("logcat -c");
+                val process = Runtime.getRuntime().exec("logcat -f $logFile")
+
+                Log.e("SocketConfig", "File Path $process");
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        } else if (isExternalStorageReadable()) {
+            // only readable
+        } else {
+            // not accessible
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    private fun isExternalStorageWritable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state
+    }
+
+    /* Checks if external storage is available to at least read */
+    private fun isExternalStorageReadable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
     }
 }

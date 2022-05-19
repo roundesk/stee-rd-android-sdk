@@ -22,6 +22,7 @@ object Constants {
         const val API_KEY_END_CALL: String = "end-call"
         const val API_KEY_ALL_CALL: String = "all-calls"
         const val API_KEY_ROOM_DETAIL: String = "room-detail"
+        const val API_KEY_UPLOAD_DATA_LOG: String = "upload-file-content"
     }
 
     object UUIDs {
