@@ -142,6 +142,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     var joinedUserNamesList: ArrayList<String> = arrayListOf()
     var userStreamIDList: ArrayList<String> = arrayListOf()
     var tempValue: Int? = 0
+    var lastStreamSize: Int? = -1
+
 
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
@@ -159,6 +161,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun refreshRoomDetails() {
         if (conferenceManager?.connectedStreamList?.size == 1) {
+            lastStreamSize = 1
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
             if (!initialView) {
@@ -180,10 +183,17 @@ class VideoCallActivityNew : AppCompatActivity(),
                     linlayCallerDetails?.visibility = View.GONE
                     startTimer = true
                 }
+            }else{
+                if(lastStreamSize!= -1){
+                    if(conferenceManager!!.connectedStreamList.isEmpty()){
+                       finish()
+                    }
+                }
             }
         }
 
         if (conferenceManager?.connectedStreamList?.size == 2) {
+            lastStreamSize = 2
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
             isMultipleUsersConnected = true
@@ -191,6 +201,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         if (conferenceManager?.connectedStreamList?.size == 3) {
+            lastStreamSize = 3
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
             isMultipleUsersConnected = true
@@ -198,6 +209,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         if (conferenceManager?.connectedStreamList?.size == 4) {
+            lastStreamSize = 4
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
             isMultipleUsersConnected = true
@@ -215,8 +227,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                     or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         setContentView(R.layout.activity_video_call_new)
-        mainHandler = Handler(Looper.getMainLooper())
         storeDataLogsFile()
+        mainHandler = Handler(Looper.getMainLooper())
         initSocket()
         getIntentData()
         initView()
@@ -1033,10 +1045,10 @@ class VideoCallActivityNew : AppCompatActivity(),
         super.onDestroy()
         conferenceManager?.leaveFromConference()
         initialView = false
-        SocketManager(
+        /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).offAllEvent()
+        ).offAllEvent()*/
     }
 
     private fun defaultView() {
