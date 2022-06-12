@@ -298,6 +298,12 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
 
                     }
+
+                    if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
+//                        playSong()
+                        finish()
+                    }
+
                 }
             }
         }

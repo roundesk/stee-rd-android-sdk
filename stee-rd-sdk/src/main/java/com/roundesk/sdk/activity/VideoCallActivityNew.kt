@@ -124,6 +124,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var isMultipleUsersConnected: Boolean = false
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
+    var tempMeetingId: Int? = null
+    var tempRoomId: Int? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
@@ -183,16 +185,17 @@ class VideoCallActivityNew : AppCompatActivity(),
                     linlayCallerDetails?.visibility = View.GONE
                     startTimer = true
                 }
-            }else{
-                if(lastStreamSize!= -1){
-                    if(conferenceManager!!.connectedStreamList.isEmpty()){
-                       finish()
+            } else {
+                if (lastStreamSize != -1) {
+                    if (conferenceManager!!.connectedStreamList.isEmpty()) {
+                        finish()
                     }
                 }
             }
         }
 
         if (conferenceManager?.connectedStreamList?.size == 2) {
+            imgBack?.isEnabled = true
             lastStreamSize = 2
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
@@ -201,6 +204,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         if (conferenceManager?.connectedStreamList?.size == 3) {
+            imgBack?.isEnabled = true
             lastStreamSize = 3
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
@@ -209,6 +213,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         if (conferenceManager?.connectedStreamList?.size == 4) {
+            imgBack?.isEnabled = true
             lastStreamSize = 4
             userStreamIDList.clear()
             userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
@@ -428,7 +433,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             R.id.imgCallEnd -> {
                 conferenceManager?.leaveFromConference()
                 stopCallDurationTimer()
-                finish()
+//                finish()
                 endCall()
             }
 
@@ -470,7 +475,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
 
             R.id.btnDecline -> {
-                declineCall()
+                declineCall(false)
             }
 
             R.id.viewHideShowBottomSheet -> {
@@ -560,12 +565,19 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun endCall() {
+        var callTime: String = ""
+        if (txtTimer?.text.toString().isEmpty()) {
+            callTime = "00:00:00"
+        } else {
+            callTime = txtTimer?.text.toString()
+        }
+
         val endCallRequest = EndCallRequest(
             mMeetingId.toString(),
             Constants.CALLER_SOCKET_ID,
 //            Constants.UUIDs.USER_DEEPAK,
             Constants.API_TOKEN,
-            txtTimer?.text.toString()
+            callTime
         )
         val endCallJson = Gson().toJson(endCallRequest)
         LogUtil.e(TAG, "json : $endCallJson")
@@ -581,7 +593,8 @@ class VideoCallActivityNew : AppCompatActivity(),
                 LogUtil.e(TAG, "onSuccess: $response")
                 LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
                 if (response.isSuccessful) {
-                    finish()
+                    declineCall(true)
+//                    finish()
                 }
             }
 
@@ -776,29 +789,34 @@ class VideoCallActivityNew : AppCompatActivity(),
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration?
     ) {
+        Log.e("onPiPMode", "connectedStreamList" + tempValue)
         if (isInPictureInPictureMode) {
             isPictureInPictureMode = true
             layoutBottomSheet.visibility = View.GONE
             relLayToolbar?.visibility = View.GONE
-            val paramsReceiver: RelativeLayout.LayoutParams =
-                publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsReceiver.height = 210
-            paramsReceiver.width = 165
-            paramsReceiver.marginEnd = 10
-            paramsReceiver.topMargin = 10
-            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            publishViewRenderer?.layoutParams = paramsReceiver
+            if (tempValue == 1) {
+                val paramsReceiver: RelativeLayout.LayoutParams =
+                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+                paramsReceiver.height = 210
+                paramsReceiver.width = 165
+                paramsReceiver.marginEnd = 10
+                paramsReceiver.topMargin = 10
+                paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                publishViewRenderer?.layoutParams = paramsReceiver
+            }
         } else {
             layoutBottomSheet.visibility = View.VISIBLE
             relLayToolbar?.visibility = View.VISIBLE
-            val paramsReceiver: RelativeLayout.LayoutParams =
-                publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsReceiver.height = 510
-            paramsReceiver.width = 432
-            paramsReceiver.marginEnd = 48
-            paramsReceiver.topMargin = 48
-            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            publishViewRenderer?.layoutParams = paramsReceiver
+            if (tempValue == 1) {
+                val paramsReceiver: RelativeLayout.LayoutParams =
+                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+                paramsReceiver.height = 510
+                paramsReceiver.width = 432
+                paramsReceiver.marginEnd = 48
+                paramsReceiver.topMargin = 48
+                paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                publishViewRenderer?.layoutParams = paramsReceiver
+            }
         }
     }
 
@@ -916,8 +934,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
                         playSong()
-
-                        //                        imgCallEnd?.performClick()
+                        imgCallEnd?.performClick()
                         txtRinging2?.text = "Rejected"
                         progressBar2?.visibility = View.GONE
                         imgCallRejected?.visibility = View.VISIBLE
@@ -1004,14 +1021,21 @@ class VideoCallActivityNew : AppCompatActivity(),
         })
     }
 
-    private fun declineCall() {
+    private fun declineCall(endCall: Boolean) {
+        if (endCall) {
+            tempMeetingId = mMeetingId
+            tempRoomId = mRoomId
+        } else {
+            tempMeetingId = newMeetingId
+            tempRoomId = newRoomId
+        }
         val declineCallRequest = DeclineCallRequest(
             Constants.CALLER_SOCKET_ID,
             audioStatus.toString(),
             videoStatus.toString(),
             Constants.API_TOKEN,
-            newMeetingId!!,
-            newRoomId!!
+            tempMeetingId!!,
+            tempRoomId!!
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
         LogUtil.e(TAG, "json : $declineCallJson")
@@ -1029,6 +1053,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                 LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
                 if (response.isSuccessful) {
                     relLayTopNotification?.visibility = View.GONE
+                    if (endCall) {
+                        finish()
+                    }
                 }
             }
 
