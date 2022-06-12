@@ -103,7 +103,7 @@ object ServiceBuilder {
             throw RuntimeException(e)
         }
 
-    private fun getSSLSocketFactory(): SSLSocketFactory? {
+/*    private fun getSSLSocketFactory(): SSLSocketFactory? {
         return try {
             val cf: CertificateFactory
             cf = CertificateFactory.getInstance("X.509")
@@ -125,5 +125,5 @@ object ServiceBuilder {
         } catch (e: Exception) {
             null
         }
-    }
+    }*/
 }
