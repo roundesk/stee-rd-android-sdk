@@ -16,11 +16,12 @@ import java.security.cert.CertificateFactory
 import javax.net.ssl.*
 import javax.security.cert.Certificate
 import javax.security.cert.CertificateException
+import javax.security.cert.X509Certificate
 
 
 object ServiceBuilder {
 
-    val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient
     val gson: Gson
     val retrofit: Retrofit
 
@@ -59,18 +60,18 @@ object ServiceBuilder {
            return retrofitToUploadDataLogs.create(service)
        }*/
 
-    fun getOkHttpBuilder(): OkHttpClient.Builder =
+    private fun getOkHttpBuilder(): OkHttpClient.Builder =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             OkHttpClient().newBuilder()
         } else {
-            // Workaround for the error "Caused by: com.android.org.bouncycastle.jce.exception.ExtCertPathValidatorException: Could not validate certificate: Certificate expired at".
+            // Workaround for the error "Caused by: ExtCertPathValidatorException: Could not validate certificate".
             getOkHttpClient()
         }
 
     private fun getOkHttpClient(): OkHttpClient.Builder =
         try {
             // Create a trust manager that validate certificate chains
-            val trustCerts: Array<TrustManager> = arrayOf(
+            val trustAllSecuredCerts: Array<TrustManager> = arrayOf(
                 object : X509TrustManager {
                     @Throws(CertificateException::class)
                     override fun checkClientTrusted(
@@ -87,15 +88,27 @@ object ServiceBuilder {
                     override fun getAcceptedIssuers(): Array<out java.security.cert.X509Certificate> = arrayOf()
                 }
             )
+
+/*
+            val sslContext = SSLContext.getInstance("SSL")
+            sslContext.init(null, trustAllSecuredCerts, java.security.SecureRandom())
+            // Create an ssl socket factory with our all-trusting manager
+            val sslSocketFactory = sslContext.socketFactory
+
+            return OkHttpClient.Builder()
+                .sslSocketFactory(sslSocketFactory, trustAllSecuredCerts[0] as X509TrustManager)
+                .hostnameVerifier { _, _ -> true }.build()
+*/
+
             // Install only device trusted ssl certificates
             val sslContext: SSLContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, trustCerts, SecureRandom())
+            sslContext.init(null, trustAllSecuredCerts, SecureRandom())
             // Create an ssl socket factory with our all-trusting manager
             val sslSocketFactory: SSLSocketFactory = sslContext.socketFactory
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(
                 sslSocketFactory,
-                trustCerts[0] as X509TrustManager
+                trustAllSecuredCerts[0] as X509TrustManager
             )
             builder.hostnameVerifier { _, _ -> true }
             builder
