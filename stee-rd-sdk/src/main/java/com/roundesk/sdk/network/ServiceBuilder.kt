@@ -1,39 +1,36 @@
 package com.roundesk.sdk.network
 
 import android.os.Build
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.roundesk.sdk.R
 import com.roundesk.sdk.util.Constants
 import okhttp3.OkHttpClient
-import org.webrtc.ContextUtils
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.InputStream
-import java.security.KeyStore
 import java.security.SecureRandom
-import java.security.cert.CertificateFactory
 import javax.net.ssl.*
-import javax.security.cert.Certificate
 import javax.security.cert.CertificateException
-import javax.security.cert.X509Certificate
 
 
 object ServiceBuilder {
 
+/*
     private val okHttpClient: OkHttpClient
     val gson: Gson
     val retrofit: Retrofit
+*/
 
-/*    private val client = OkHttpClient.Builder().build()
+    //    private val client = OkHttpClient.Builder().build()
+    private val client = OkHttpClient.Builder().apply {
+        ignoreAllSSLCertificates()
+    }.build()
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(Constants.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .client(client)
-        .build()*/
+        .build()
 
-    init {
+/*    init {
         okHttpClient = getOkHttpBuilder()
         .build()
 //        okHttpClient.setSslSocketFactory(getSSLSocketFactory())
@@ -44,7 +41,7 @@ object ServiceBuilder {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
-    }
+    }*/
 
     fun <T> buildService(service: Class<T>): T {
         return retrofit.create(service)
@@ -85,20 +82,10 @@ object ServiceBuilder {
                         authType: String?
                     ) = Unit
 
-                    override fun getAcceptedIssuers(): Array<out java.security.cert.X509Certificate> = arrayOf()
+                    override fun getAcceptedIssuers(): Array<out java.security.cert.X509Certificate> =
+                        arrayOf()
                 }
             )
-
-/*
-            val sslContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, trustAllSecuredCerts, java.security.SecureRandom())
-            // Create an ssl socket factory with our all-trusting manager
-            val sslSocketFactory = sslContext.socketFactory
-
-            return OkHttpClient.Builder()
-                .sslSocketFactory(sslSocketFactory, trustAllSecuredCerts[0] as X509TrustManager)
-                .hostnameVerifier { _, _ -> true }.build()
-*/
 
             // Install only device trusted ssl certificates
             val sslContext: SSLContext = SSLContext.getInstance("SSL")
@@ -116,27 +103,29 @@ object ServiceBuilder {
             throw RuntimeException(e)
         }
 
-/*    private fun getSSLSocketFactory(): SSLSocketFactory? {
-        return try {
-            val cf: CertificateFactory
-            cf = CertificateFactory.getInstance("X.509")
-            val ca: Certificate
-            val cert: InputStream = ContextUtils.getApplicationContext().getResources().openRawResource(
-                R.raw.sslcert)
-//            ca = cf.generateCertificate(cert)
-            cert.close()
-            val keyStoreType: String = KeyStore.getDefaultType()
-            val keyStore: KeyStore = KeyStore.getInstance(keyStoreType)
-            keyStore.load(null, null)
-//            keyStore.setCertificateEntry("ca", ca)
-            val tmfAlgorithm: String = TrustManagerFactory.getDefaultAlgorithm()
-            val tmf: TrustManagerFactory = TrustManagerFactory.getInstance(tmfAlgorithm)
-            tmf.init(keyStore)
-            val sslContext = SSLContext.getInstance("TLS")
-            sslContext.init(null, tmf.getTrustManagers(), null)
-            sslContext.socketFactory
-        } catch (e: Exception) {
-            null
+    private fun OkHttpClient.Builder.ignoreAllSSLCertificates(): OkHttpClient.Builder {
+        val naiveTrustManager = object : X509TrustManager {
+            override fun checkClientTrusted(
+                p0: Array<out java.security.cert.X509Certificate>?,
+                p1: String?
+            ) = Unit
+
+            override fun checkServerTrusted(
+                p0: Array<out java.security.cert.X509Certificate>?,
+                p1: String?
+            ) = Unit
+
+            override fun getAcceptedIssuers(): Array<out java.security.cert.X509Certificate>? =
+                arrayOf()
         }
-    }*/
+
+        val insecureSocketFactory = SSLContext.getInstance("TLSv1.2").apply {
+            val trustAllCerts = arrayOf<TrustManager>(naiveTrustManager)
+            init(null, trustAllCerts, SecureRandom())
+        }.socketFactory
+
+        sslSocketFactory(insecureSocketFactory, naiveTrustManager)
+        hostnameVerifier(HostnameVerifier { _, _ -> true })
+        return this
+    }
 }
