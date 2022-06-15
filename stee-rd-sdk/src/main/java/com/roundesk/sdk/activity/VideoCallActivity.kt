@@ -340,7 +340,7 @@ class VideoCallActivity : AppBaseActivity(), IWebRTCListener, View.OnClickListen
         videoBitrate: Int,
         audioBitrate: Int
     ) {
-        Log.e(
+        LogUtil.e(
             javaClass.simpleName,
             "st:$streamId tb:$targetBitrate vb:$videoBitrate ab:$audioBitrate"
         )

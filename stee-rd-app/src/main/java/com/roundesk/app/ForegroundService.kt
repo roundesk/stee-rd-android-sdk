@@ -13,7 +13,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.socket.SocketConnection
-import com.roundesk.sdk.util.LogUtil
 
 class ForegroundService : Service() {
     private val CHANNEL_ID = "STEE-SDK SOCKET Service"
@@ -36,7 +35,7 @@ class ForegroundService : Service() {
         //do heavy work on a background thread
         val input = intent?.getStringExtra("inputExtra")
         initSocket()
-        LogUtil.e("ForegroundService", "socketConnection : ${socketConnection.toString()}")
+        Log.e("ForegroundService", "socketConnection : ${socketConnection.toString()}")
         createNotificationChannel()
         val notificationIntent = Intent(this, SettingsActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(

@@ -34,7 +34,7 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
         socketConnection = SocketConnection()
         socketConnection!!.connectSocket()
     }
@@ -43,15 +43,15 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
         if (++activityReferences == 1 && !isActivityChangingConfigurations) {
             // App enters foreground
         }
-        LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
     }
 
     override fun onActivityResumed(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityResumed")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityResumed")
     }
 
     override fun onActivityPaused(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityPaused")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityPaused")
     }
 
     override fun onActivityStopped(activity: Activity) {
@@ -59,14 +59,14 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
         if (--activityReferences == 0 && !isActivityChangingConfigurations) {
             // App enters background
         }
-        LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivitySaveInstanceState")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivitySaveInstanceState")
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
     }
 }

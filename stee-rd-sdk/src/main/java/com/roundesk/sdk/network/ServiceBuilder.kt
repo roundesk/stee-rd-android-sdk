@@ -1,6 +1,7 @@
 package com.roundesk.sdk.network
 
 import android.os.Build
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.roundesk.sdk.util.Constants
 import okhttp3.OkHttpClient
@@ -13,14 +14,12 @@ import javax.security.cert.CertificateException
 
 object ServiceBuilder {
 
-/*
     private val okHttpClient: OkHttpClient
     val gson: Gson
     val retrofit: Retrofit
-*/
 
-    //    private val client = OkHttpClient.Builder().build()
-    private val client = OkHttpClient.Builder().apply {
+//        private val client = OkHttpClient.Builder().build()
+    /*private val client = OkHttpClient.Builder().apply {
         ignoreAllSSLCertificates()
     }.build()
 
@@ -28,9 +27,9 @@ object ServiceBuilder {
         .baseUrl(Constants.BASE_URL)
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .client(client)
-        .build()
+        .build()*/
 
-/*    init {
+    init {
         okHttpClient = getOkHttpBuilder()
         .build()
 //        okHttpClient.setSslSocketFactory(getSSLSocketFactory())
@@ -41,7 +40,7 @@ object ServiceBuilder {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
-    }*/
+    }
 
     fun <T> buildService(service: Class<T>): T {
         return retrofit.create(service)

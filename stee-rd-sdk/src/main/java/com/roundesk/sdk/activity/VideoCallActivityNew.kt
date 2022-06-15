@@ -150,7 +150,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
-            Log.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
+            LogUtil.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
             runOnUiThread {
                 if (tempValue != conferenceManager?.connectedStreamList?.size) {
                     tempValue = conferenceManager?.connectedStreamList?.size
@@ -438,7 +438,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
 
             R.id.imgBottomCamera -> {
-                Log.e("imgBottomCamera", "imgBottomCamera")
+                LogUtil.e("imgBottomCamera", "imgBottomCamera")
                 runOnUiThread {
                     conferenceManager?.flipCamera()
                 }
@@ -580,21 +580,27 @@ class VideoCallActivityNew : AppCompatActivity(),
             callTime
         )
         val endCallJson = Gson().toJson(endCallRequest)
-        LogUtil.e(TAG, "json : $endCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val endCall = request.endCall(endCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_END_CALL}")
+        LogUtil.e(TAG, "Request Body : $endCallJson")
+        LogUtil.e(TAG, "-----------------------")
+
 
         endCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
-                    declineCall(true)
-//                    finish()
+                    if (response.body() != null) {
+                        declineCall(true)
+                    }
                 }
             }
 
@@ -602,7 +608,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -719,7 +727,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             val streamId = json.getString("streamId")
             Toast.makeText(this, "$eventType : $streamId", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Log.e(javaClass.simpleName, e.message!!)
+            LogUtil.e(javaClass.simpleName, e.message!!)
         }
     }
 
@@ -727,7 +735,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         val data = buffer!!.data
         val strDataJson = String(data.array(), StandardCharsets.UTF_8)
 
-        Log.e(javaClass.simpleName, "SentEvent: $strDataJson")
+        LogUtil.e(javaClass.simpleName, "SentEvent: $strDataJson")
     }
 
     private fun switchLayout(isCallerSmall: Boolean) {
@@ -789,7 +797,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration?
     ) {
-        Log.e("onPiPMode", "connectedStreamList" + tempValue)
+        LogUtil.e("onPiPMode", "connectedStreamList $tempValue")
         if (isInPictureInPictureMode) {
             isPictureInPictureMode = true
             layoutBottomSheet.visibility = View.GONE
@@ -903,7 +911,9 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
+        LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -946,7 +956,9 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun handleSocketErrorResponse(error: Any) {
+        LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        LogUtil.e(TAG, "-----------------------")
         ToastUtil.displayShortDurationToast(
             this,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
@@ -981,34 +993,39 @@ class VideoCallActivityNew : AppCompatActivity(),
             newRoomId!!
         )
         val acceptCallJson = Gson().toJson(acceptCallRequest)
-        LogUtil.e(TAG, "json : $acceptCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(TAG, "Request Body : $acceptCallJson")
+        LogUtil.e(TAG, "-----------------------")
 
         acceptCall.enqueue(object : Callback<AcceptCallDataClassResponse?> {
             override fun onResponse(
                 call: Call<AcceptCallDataClassResponse?>,
                 response: Response<AcceptCallDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
 
                 if (response.isSuccessful) {
-                    imgCallEnd?.performClick()
-                    relLayTopNotification?.visibility = View.GONE
-                    isOtherCallAccepted = true
-                    val intent =
-                        Intent(this@VideoCallActivityNew, VideoCallActivityNew::class.java)
-                    intent.putExtra("activity", "ChatActivity")
-                    intent.putExtra("room_id", response.body()?.roomId)
-                    intent.putExtra("meeting_id", response.body()?.meetingId)
-                    intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                    intent.putExtra("stream_id", response.body()?.streamId)
-                    intent.putExtra("audioStatus", audioStatus)
-                    intent.putExtra("videoStatus", videoStatus)
-                    startActivity(intent)
-
+                    if (response.body() != null) {
+                        imgCallEnd?.performClick()
+                        relLayTopNotification?.visibility = View.GONE
+                        isOtherCallAccepted = true
+                        val intent =
+                            Intent(this@VideoCallActivityNew, VideoCallActivityNew::class.java)
+                        intent.putExtra("activity", "ChatActivity")
+                        intent.putExtra("room_id", response.body()?.roomId)
+                        intent.putExtra("meeting_id", response.body()?.meetingId)
+                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                        intent.putExtra("stream_id", response.body()?.streamId)
+                        intent.putExtra("audioStatus", audioStatus)
+                        intent.putExtra("videoStatus", videoStatus)
+                        startActivity(intent)
+                    }
                 }
             }
 
@@ -1016,7 +1033,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<AcceptCallDataClassResponse?>,
                 t: Throwable
             ) {
-                Log.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -1038,10 +1057,14 @@ class VideoCallActivityNew : AppCompatActivity(),
             tempRoomId!!
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
-        LogUtil.e(TAG, "json : $declineCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(TAG, "Request Body : $declineCallJson")
+        LogUtil.e(TAG, "-----------------------")
+
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
@@ -1049,12 +1072,15 @@ class VideoCallActivityNew : AppCompatActivity(),
                 response: Response<BaseDataClassResponse?>
             ) {
                 isOtherCallAccepted = false
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
-                    relLayTopNotification?.visibility = View.GONE
-                    if (endCall) {
-                        finish()
+                    if (response.body() != null) {
+                        relLayTopNotification?.visibility = View.GONE
+                        if (endCall) {
+                            finish()
+                        }
                     }
                 }
             }
@@ -1063,7 +1089,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -1219,34 +1247,48 @@ class VideoCallActivityNew : AppCompatActivity(),
             Constants.API_TOKEN
         )
         val roomInfoJson = Gson().toJson(roomDetailRequest)
-        LogUtil.e(TAG, "json : $roomInfoJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val getRoomInfoDetail = request.getRoomDetail(roomDetailRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ROOM_DETAIL}")
+        LogUtil.e(TAG, "Request Body : $roomInfoJson")
+        LogUtil.e(TAG, "-----------------------")
+
 
         getRoomInfoDetail.enqueue(object : Callback<RoomDetailDataClassResponse?> {
             override fun onResponse(
                 call: Call<RoomDetailDataClassResponse?>,
                 response: Response<RoomDetailDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                if (response.isSuccessful) {
+                    if (response.body() != null) {
+                        recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
+                        bottomSheetAdapter =
+                            response.body()
+                                ?.let {
+                                    BottomSheetUserListAdapter(
+                                        this@VideoCallActivityNew,
+                                        it.success
+                                    )
+                                }
 
-                recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
-
-                bottomSheetAdapter =
-                    response.body()
-                        ?.let { BottomSheetUserListAdapter(this@VideoCallActivityNew, it.success) }
-
-                // Setting the Adapter with the recyclerview
-                recyclerview?.adapter = bottomSheetAdapter
+                        // Setting the Adapter with the recyclerview
+                        recyclerview?.adapter = bottomSheetAdapter
+                    }
+                }
             }
 
             override fun onFailure(
                 call: Call<RoomDetailDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -1273,7 +1315,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 //                Process process = Runtime.getRuntime().exec("logcat -c");
                 val process = Runtime.getRuntime().exec("logcat -f $logFile")
 
-                Log.e("SocketConfig", "File Path $process");
+                LogUtil.e("SocketConfig", "File Path $process");
 
             } catch (e: IOException) {
                 e.printStackTrace()

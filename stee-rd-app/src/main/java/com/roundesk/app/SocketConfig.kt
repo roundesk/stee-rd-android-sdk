@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import com.roundesk.sdk.socket.SocketConnection
-import com.roundesk.sdk.util.LogUtil
 import java.io.File
 import java.io.IOException
 
@@ -90,32 +89,32 @@ class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
         socketConnection = SocketConnection()
         socketConnection!!.connectSocket()
     }
 
     override fun onActivityStarted(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
     }
 
     override fun onActivityResumed(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityResumed")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityResumed")
     }
 
     override fun onActivityPaused(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityPaused")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityPaused")
     }
 
     override fun onActivityStopped(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivitySaveInstanceState")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivitySaveInstanceState")
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
+//        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
     }
 }

@@ -15,43 +15,74 @@ import com.roundesk.sdk.util.LogUtil
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CallHistoryAdapter(private val mContext: Context, private val mList: List<CallHistoryResponseDataClass?>) : RecyclerView.Adapter<CallHistoryAdapter.ViewHolder>() {
-  
+class CallHistoryAdapter(
+    private val mContext: Context,
+    private val mList: List<CallHistoryResponseDataClass?>
+) : RecyclerView.Adapter<CallHistoryAdapter.ViewHolder>() {
+
     // create new views
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // inflates the card_view_design view 
         // that is used to hold list item
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_call_history, parent, false)
-  
+
         return ViewHolder(view)
     }
-  
+
     // binds the list items to a view
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-
-        LogUtil.e("onBindViewHolder", "onBindViewHolder: ${mList.size}}")
 
         holder.txtCallerName.text = mList[position]!!.user[0].name
 //        holder.txtTimeStamp.text = convertToCustomFormat(mList[position]!!.date)
         holder.txtTimeStamp.text = mList[position]!!.date
 
-        if(mList[position]?.type.equals("outgoing", ignoreCase = true)){
+        if (mList[position]?.type.equals("outgoing", ignoreCase = true)) {
             holder.txtCallStatus.text = "Dial"
-            holder.txtCallStatus.setTextColor(ContextCompat.getColor(mContext, R.color.call_dial_color))
-            holder.txtCallerName.setTextColor(ContextCompat.getColor(mContext, R.color.call_dial_color))
+            holder.txtCallStatus.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_dial_color
+                )
+            )
+            holder.txtCallerName.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_dial_color
+                )
+            )
         }
 
-        if(mList[position]?.type.equals("incoming", ignoreCase = true)){
+        if (mList[position]?.type.equals("incoming", ignoreCase = true)) {
             holder.txtCallStatus.text = "Received"
-            holder.txtCallStatus.setTextColor(ContextCompat.getColor(mContext, R.color.call_received_color))
-            holder.txtCallerName.setTextColor(ContextCompat.getColor(mContext, R.color.call_received_color))
+            holder.txtCallStatus.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_received_color
+                )
+            )
+            holder.txtCallerName.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_received_color
+                )
+            )
         }
 
-        if(mList[position]?.type.equals("missed", ignoreCase = true)){
+        if (mList[position]?.type.equals("missed", ignoreCase = true)) {
             holder.txtCallStatus.text = "Missed"
-            holder.txtCallStatus.setTextColor(ContextCompat.getColor(mContext, R.color.call_missed_color))
-            holder.txtCallerName.setTextColor(ContextCompat.getColor(mContext, R.color.call_missed_color))
+            holder.txtCallStatus.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_missed_color
+                )
+            )
+            holder.txtCallerName.setTextColor(
+                ContextCompat.getColor(
+                    mContext,
+                    R.color.call_missed_color
+                )
+            )
         }
     }
 

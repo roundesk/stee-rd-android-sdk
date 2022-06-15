@@ -78,7 +78,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
 
             //The key argument here must match that used in the other activity
             LogUtil.e(
-                VideoCallActivityNew.TAG,
+                TAG,
                 " room_id : $room_id"
                         + " meeting_id : $meeting_id "
                         + " receiver_name : $receiver_name"
@@ -134,10 +134,13 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             room_id
         )
         val acceptCallJson = Gson().toJson(acceptCallRequest)
-        LogUtil.e(TAG, "json : $acceptCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(TAG, "Request Body : $acceptCallJson")
+        LogUtil.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -146,28 +149,30 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "onSuccess: $response")
-                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
 
                     if (response.isSuccessful) {
+                        if (response.body() != null) {
 //                            Handler(Looper.getMainLooper()).postDelayed({
-                        val intent =
-                            Intent(this@IncomingCallActivity, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "Incoming")
-                        intent.putExtra("room_id", response.body()?.roomId)
-                        intent.putExtra("meeting_id", response.body()?.meetingId)
-//                        intent.putExtra("receiver_stream_id", response.body()?.streamId)
-//                        intent.putExtra("stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("stream_id", response.body()?.streamId)
-                        intent.putExtra("isIncomingCall", true)
-                        intent.putExtra("caller_name", response.body()?.caller_name)
-                        intent.putExtra("receiver_name", response.body()?.receiver_name)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        startActivity(intent)
+                            val intent =
+                                Intent(this@IncomingCallActivity, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "Incoming")
+                            intent.putExtra("room_id", response.body()?.roomId)
+                            intent.putExtra("meeting_id", response.body()?.meetingId)
+//                            intent.putExtra("receiver_stream_id", response.body()?.streamId)
+//                            intent.putExtra("stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("stream_id", response.body()?.streamId)
+                            intent.putExtra("isIncomingCall", true)
+                            intent.putExtra("caller_name", response.body()?.caller_name)
+                            intent.putExtra("receiver_name", response.body()?.receiver_name)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            startActivity(intent)
 //                            }, 3000)
-
+                        }
                     }
                 }
 
@@ -175,7 +180,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "onFailure : ${t.message}")
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Failure Response : ${t.message}")
+                    LogUtil.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -219,18 +226,22 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             room_id
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
-        LogUtil.e(TAG, "json : $declineCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(TAG, "Request Body : $declineCallJson")
+        LogUtil.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
                     finish()
                 }
@@ -240,7 +251,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -288,7 +301,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
+        LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -310,7 +325,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun handleSocketErrorResponse(error: Any) {
+        LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        LogUtil.e(TAG, "-----------------------")
         ToastUtil.displayShortDurationToast(
             this,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +

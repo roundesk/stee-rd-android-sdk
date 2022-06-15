@@ -6,8 +6,8 @@
         <domain includeSubdomains="true">tele-omnii-lb.intranet.spfoneuat.gov.sg</domain>
         <trust-anchors>
 <!--            <certificates src="@raw/fullchain" />-->
-<!--            <certificates src="@raw/tele_omnii_lb_intranet" />-->
-            <certificates src="user" />
+            <certificates src="@raw/tele_omnii_lb_intranet" />
+<!--            <certificates src="user" />-->
         </trust-anchors>
     </domain-config>
 </network-security-config>

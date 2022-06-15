@@ -15,7 +15,6 @@ import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
 import com.roundesk.sdk.activity.VideoCallActivityNew
-import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
@@ -23,7 +22,6 @@ import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -31,7 +29,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.IOException
-import java.util.ArrayList
+import java.util.*
 
 class ChatActivity : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
@@ -173,10 +171,13 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
             newRoomId!!
         )
         val acceptCallJson = Gson().toJson(acceptCallRequest)
-        LogUtil.e(TAG, "json : $acceptCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        Log.e(TAG, "Request Body : $acceptCallJson")
+        Log.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -185,22 +186,25 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "onSuccess: $response")
-                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                    Log.e(TAG, "-----------------------")
+                    Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    Log.e(TAG, "-----------------------")
 
                     if (response.isSuccessful) {
-                        relLayTopNotification?.visibility = View.GONE
-                        val intent =
-                            Intent(this@ChatActivity, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "ChatActivity")
-                        intent.putExtra("room_id", response.body()?.roomId)
-                        intent.putExtra("meeting_id", response.body()?.meetingId)
-                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("stream_id", response.body()?.streamId)
-                        intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        startActivity(intent)
+                        if (response.body() != null) {
+                            relLayTopNotification?.visibility = View.GONE
+                            val intent =
+                                Intent(this@ChatActivity, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "ChatActivity")
+                            intent.putExtra("room_id", response.body()?.roomId)
+                            intent.putExtra("meeting_id", response.body()?.meetingId)
+                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("stream_id", response.body()?.streamId)
+                            intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            startActivity(intent)
+                        }
                     }
                 }
 
@@ -208,7 +212,9 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "onFailure : ${t.message}")
+                    Log.e(TAG, "-----------------------")
+                    Log.e(TAG, "Failure Response : ${t.message}")
+                    Log.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -252,20 +258,25 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
             newRoomId!!
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
-        LogUtil.e(TAG, "json : $declineCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        Log.e(TAG, "Request Body : $declineCallJson")
+        Log.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                Log.e(TAG, "-----------------------")
+                Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                Log.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
-                    relLayTopNotification?.visibility = View.GONE
+                    if (response.body() != null)
+                        relLayTopNotification?.visibility = View.GONE
                 }
             }
 
@@ -273,7 +284,9 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                Log.e(TAG, "-----------------------")
+                Log.e(TAG, "Failure Response : ${t.message}")
+                Log.e(TAG, "-----------------------")
             }
         })
     }
@@ -308,11 +321,11 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-        LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
+        Log.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-        LogUtil.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size)
+        Log.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size)
 
         if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
             AppSettingsDialog.Builder(this).build().show()
@@ -320,15 +333,17 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun onRationaleAccepted(requestCode: Int) {
-        LogUtil.d(TAG, "onRationaleAccepted: $requestCode")
+        Log.d(TAG, "onRationaleAccepted: $requestCode")
     }
 
     override fun onRationaleDenied(requestCode: Int) {
-        LogUtil.d(TAG, "onRationaleDenied: $requestCode")
+        Log.d(TAG, "onRationaleDenied: $requestCode")
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "handleSocketSuccessResponse: $response")
+        Log.e(TAG, "-----------------------")
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -365,7 +380,9 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        Log.e(TAG, "-----------------------")
     }
 
 

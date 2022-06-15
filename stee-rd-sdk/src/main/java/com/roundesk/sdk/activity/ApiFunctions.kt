@@ -18,6 +18,7 @@ import java.util.ArrayList
 
 class ApiFunctions(private var mContext: Activity?) {
 
+    private var TAG: String = "ApiFunctions"
     private lateinit var participants: CreateCallRequest.Participant
     private var participantsArrayList: ArrayList<CreateCallRequest.Participant> = arrayListOf()
     private var arraylistReceiverId: ArrayList<String> = arrayListOf()
@@ -62,42 +63,55 @@ class ApiFunctions(private var mContext: Activity?) {
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val call = request.getCreateCallSocketData(user)
 
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
+        LogUtil.e(TAG, "Request Body : $json")
+        LogUtil.e(TAG, "-----------------------")
+
+
         call.enqueue(object : Callback<CreateCallDataClassResponse?> {
             override fun onResponse(
                 call: Call<CreateCallDataClassResponse?>,
                 response: Response<CreateCallDataClassResponse?>
             ) {
                 if (response.isSuccessful) {
-                    val createCallDataClassResponse: CreateCallDataClassResponse? =
-                        response.body()
-                    roomId = createCallDataClassResponse?.roomId
-                    meetingId = createCallDataClassResponse?.meetingId
-                    streamId = createCallDataClassResponse?.streamId
-                    callerName = createCallDataClassResponse?.caller_name
-                    LogUtil.e(
-                        "getCreateCallSocketData",
-                        "onSuccess: ${Gson().toJson(response.body())}"
-                    )
+                    if (response.body() != null) {
+                        LogUtil.e(TAG, "-----------------------")
+                        LogUtil.e(
+                            "getCreateCallSocketData",
+                            "Success Response : ${Gson().toJson(response.body())}"
+                        )
+                        LogUtil.e(TAG, "-----------------------")
+                        val createCallDataClassResponse: CreateCallDataClassResponse? =
+                            response.body()
+                        roomId = createCallDataClassResponse?.roomId
+                        meetingId = createCallDataClassResponse?.meetingId
+                        streamId = createCallDataClassResponse?.streamId
+                        callerName = createCallDataClassResponse?.caller_name
 
-                    if (!isIncomingCall) {
-                        val intent =
-                            Intent(mContext, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "Outgoing")
-                        intent.putExtra("room_id", roomId)
-                        intent.putExtra("meeting_id", meetingId)
-                        intent.putExtra("stream_id", streamId)
-                        intent.putExtra("caller_name", callerName)
-                        intent.putExtra("isIncomingCall", isIncomingCall)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        mContext?.startActivity(intent)
+
+                        if (!isIncomingCall) {
+                            val intent =
+                                Intent(mContext, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "Outgoing")
+                            intent.putExtra("room_id", roomId)
+                            intent.putExtra("meeting_id", meetingId)
+                            intent.putExtra("stream_id", streamId)
+                            intent.putExtra("caller_name", callerName)
+                            intent.putExtra("isIncomingCall", isIncomingCall)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            mContext?.startActivity(intent)
+                        }
                     }
                 }
             }
 
 
             override fun onFailure(call: Call<CreateCallDataClassResponse?>, t: Throwable) {
-                Log.e("initiateCall", "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e("initiateCall", "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }

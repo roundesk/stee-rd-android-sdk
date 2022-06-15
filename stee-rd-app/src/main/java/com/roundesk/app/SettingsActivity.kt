@@ -23,7 +23,6 @@ import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -91,7 +90,9 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "handleSocketSuccessResponse: $response")
+        Log.e(TAG, "-----------------------")
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -129,7 +130,9 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        Log.e(TAG, "-----------------------")
     }
 
     override fun onClick(view: View?) {
@@ -173,10 +176,13 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
             newRoomId!!
         )
         val acceptCallJson = Gson().toJson(acceptCallRequest)
-        LogUtil.e(TAG, "json : $acceptCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        Log.e(TAG, "Request Body : $acceptCallJson")
+        Log.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -185,23 +191,25 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "onSuccess: $response")
-                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                    Log.e(TAG, "-----------------------")
+                    Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    Log.e(TAG, "-----------------------")
 
                     if (response.isSuccessful) {
-                        relLayTopNotification?.visibility = View.GONE
-                        val intent =
-                            Intent(this@SettingsActivity, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "ChatActivity")
-                        intent.putExtra("room_id", response.body()?.roomId)
-                        intent.putExtra("meeting_id", response.body()?.meetingId)
-                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("stream_id", response.body()?.streamId)
-                        intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        startActivity(intent)
-
+                        if (response.body() != null) {
+                            relLayTopNotification?.visibility = View.GONE
+                            val intent =
+                                Intent(this@SettingsActivity, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "ChatActivity")
+                            intent.putExtra("room_id", response.body()?.roomId)
+                            intent.putExtra("meeting_id", response.body()?.meetingId)
+                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("stream_id", response.body()?.streamId)
+                            intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            startActivity(intent)
+                        }
                     }
                 }
 
@@ -209,7 +217,9 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "onFailure : ${t.message}")
+                    Log.e(TAG, "-----------------------")
+                    Log.e(TAG, "Failure Response : ${t.message}")
+                    Log.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -253,20 +263,25 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
             newRoomId!!
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
-        LogUtil.e(TAG, "json : $declineCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
+        Log.e(TAG, "-----------------------")
+        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        Log.e(TAG, "Request Body : $declineCallJson")
+        Log.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                Log.e(TAG, "-----------------------")
+                Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                Log.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
-                    relLayTopNotification?.visibility = View.GONE
+                    if (response.body() != null)
+                        relLayTopNotification?.visibility = View.GONE
                 }
             }
 
@@ -274,7 +289,9 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                Log.e(TAG, "-----------------------")
+                Log.e(TAG, "Failure Response : ${t.message}")
+                Log.e(TAG, "-----------------------")
             }
         })
     }
@@ -302,11 +319,11 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-        LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
+        Log.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
-        LogUtil.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size)
+        Log.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size)
 
         if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
             AppSettingsDialog.Builder(this).build().show()
@@ -314,10 +331,10 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     override fun onRationaleAccepted(requestCode: Int) {
-        LogUtil.d(TAG, "onRationaleAccepted: $requestCode")
+        Log.d(TAG, "onRationaleAccepted: $requestCode")
     }
 
     override fun onRationaleDenied(requestCode: Int) {
-        LogUtil.d(TAG, "onRationaleDenied: $requestCode")
+        Log.d(TAG, "onRationaleDenied: $requestCode")
     }
 }

@@ -18,7 +18,6 @@ class SocketConnection {
             if (mSocket?.connected() == false) {
                 mSocket?.connect()
             }
-            LogUtil.e("SocketConnection", "getSocket : " + getSocket()?.connected())
         } catch (e: URISyntaxException) {
         } catch (e: UnsupportedEncodingException) {
             e.printStackTrace()

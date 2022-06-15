@@ -104,6 +104,17 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             Constants.CALLER_SOCKET_ID,
             "all"
         )
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ALL_CALL}")
+        LogUtil.e(
+            TAG,
+            "Request Parameters : ${
+                "apiToken : " + Constants.API_TOKEN
+                        + " uuid : " + Constants.CALLER_SOCKET_ID
+                        + " type : all"
+            }"
+        )
+        LogUtil.e(TAG, "-----------------------")
 
         call.enqueue(object : Callback<List<CallHistoryResponseDataClass?>> {
             override fun onResponse(
@@ -111,28 +122,39 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 response: Response<List<CallHistoryResponseDataClass?>>
             ) {
                 if (response.isSuccessful) {
-                    progressBar?.visibility = View.GONE
-                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
-                    val callHistoryResponseDataClass: List<CallHistoryResponseDataClass?> =
-                        response.body()!!
+                    if (response.body() != null) {
+                        progressBar?.visibility = View.GONE
+                        LogUtil.e(TAG, "-----------------------")
+                        LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                        LogUtil.e(TAG, "-----------------------")
+                        val callHistoryResponseDataClass: List<CallHistoryResponseDataClass?> =
+                            response.body()!!
 
-                    recyclerview?.layoutManager = LinearLayoutManager(this@CallHistoryActivity)
-                    val adapter =
-                        CallHistoryAdapter(this@CallHistoryActivity, callHistoryResponseDataClass)
+                        recyclerview?.layoutManager = LinearLayoutManager(this@CallHistoryActivity)
+                        val adapter =
+                            CallHistoryAdapter(
+                                this@CallHistoryActivity,
+                                callHistoryResponseDataClass
+                            )
 
-                    // Setting the Adapter with the recyclerview
-                    recyclerview?.adapter = adapter
+                        // Setting the Adapter with the recyclerview
+                        recyclerview?.adapter = adapter
+                    }
                 }
             }
 
             override fun onFailure(call: Call<List<CallHistoryResponseDataClass?>>, t: Throwable) {
-                Log.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        LogUtil.e(VideoCallActivityNew.TAG, "handleSocketSuccessResponse: $response")
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -169,7 +191,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        LogUtil.e(VideoCallActivityNew.TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
+        LogUtil.e(TAG, "-----------------------")
         ToastUtil.displayShortDurationToast(
             this,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
@@ -206,10 +230,13 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             newRoomId!!
         )
         val acceptCallJson = Gson().toJson(acceptCallRequest)
-        LogUtil.e(TAG, "json : $acceptCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(TAG, "Request Body : $acceptCallJson")
+        LogUtil.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -218,22 +245,24 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "onSuccess: $response")
-                    LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
 
                     if (response.isSuccessful) {
-                        relLayTopNotification?.visibility = View.GONE
-                        val intent =
-                            Intent(this@CallHistoryActivity, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "ChatActivity")
-                        intent.putExtra("room_id", response.body()?.roomId)
-                        intent.putExtra("meeting_id", response.body()?.meetingId)
-                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("stream_id", response.body()?.streamId)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        startActivity(intent)
-
+                        if (response.body() != null) {
+                            relLayTopNotification?.visibility = View.GONE
+                            val intent =
+                                Intent(this@CallHistoryActivity, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "ChatActivity")
+                            intent.putExtra("room_id", response.body()?.roomId)
+                            intent.putExtra("meeting_id", response.body()?.meetingId)
+                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("stream_id", response.body()?.streamId)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            startActivity(intent)
+                        }
                     }
                 }
 
@@ -241,7 +270,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "onFailure : ${t.message}")
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Failure Response : ${t.message}")
+                    LogUtil.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -285,20 +316,26 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             newRoomId!!
         )
         val declineCallJson = Gson().toJson(declineCallRequest)
-        LogUtil.e(TAG, "json : $declineCallJson")
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
+        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(TAG, "Request Body : $declineCallJson")
+        LogUtil.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "onSuccess: $response")
-                LogUtil.e(TAG, "onSuccess: ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                LogUtil.e(TAG, "-----------------------")
                 if (response.isSuccessful) {
-                    relLayTopNotification?.visibility = View.GONE
+                    if (response.body() != null) {
+                        relLayTopNotification?.visibility = View.GONE
+                    }
                 }
             }
 
@@ -306,7 +343,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "onFailure : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Failure Response : ${t.message}")
+                LogUtil.e(TAG, "-----------------------")
             }
         })
     }
@@ -384,7 +423,8 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 //        s = p.applicationInfo.dataDir
 //        LogUtil.e(TAG, "filePath: $s")
 
-        val appPath: String = getApplicationContext().getFilesDir().getAbsolutePath() + "/STEE_APP_DATA_LOGS/logs"
+        val appPath: String =
+            getApplicationContext().getFilesDir().getAbsolutePath() + "/STEE_APP_DATA_LOGS/logs"
         LogUtil.e(TAG, "filePath: $appPath")
         getAllFilesInAppPackage()
     }
@@ -428,7 +468,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 //                Process process = Runtime.getRuntime().exec("logcat -c");
                 val process = Runtime.getRuntime().exec("logcat -f $logFile")
 
-                Log.e("SocketConfig", "File Path $process");
+                LogUtil.e("SocketConfig", "File Path $process");
 
             } catch (e: IOException) {
                 e.printStackTrace()
