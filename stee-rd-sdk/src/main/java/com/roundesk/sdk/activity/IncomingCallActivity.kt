@@ -149,29 +149,39 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "-----------------------")
-                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    LogUtil.e(TAG, "-----------------------")
 
+                    LogUtil.e(TAG, "Server Response Details : $response")
+                    LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
+                        LogUtil.e(TAG, "-----------------------")
+                        LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                        LogUtil.e(TAG, "-----------------------")
                         if (response.body() != null) {
 //                            Handler(Looper.getMainLooper()).postDelayed({
-                            val intent =
-                                Intent(this@IncomingCallActivity, VideoCallActivityNew::class.java)
-                            intent.putExtra("activity", "Incoming")
-                            intent.putExtra("room_id", response.body()?.roomId)
-                            intent.putExtra("meeting_id", response.body()?.meetingId)
+                            if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
+                                val intent =
+                                    Intent(
+                                        this@IncomingCallActivity,
+                                        VideoCallActivityNew::class.java
+                                    )
+                                intent.putExtra("activity", "Incoming")
+                                intent.putExtra("room_id", response.body()?.roomId)
+                                intent.putExtra("meeting_id", response.body()?.meetingId)
 //                            intent.putExtra("receiver_stream_id", response.body()?.streamId)
 //                            intent.putExtra("stream_id", response.body()?.caller_streamId)
-                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                            intent.putExtra("stream_id", response.body()?.streamId)
-                            intent.putExtra("isIncomingCall", true)
-                            intent.putExtra("caller_name", response.body()?.caller_name)
-                            intent.putExtra("receiver_name", response.body()?.receiver_name)
-                            intent.putExtra("audioStatus", audioStatus)
-                            intent.putExtra("videoStatus", videoStatus)
-                            startActivity(intent)
+                                intent.putExtra(
+                                    "receiver_stream_id",
+                                    response.body()?.caller_streamId
+                                )
+                                intent.putExtra("stream_id", response.body()?.streamId)
+                                intent.putExtra("isIncomingCall", true)
+                                intent.putExtra("caller_name", response.body()?.caller_name)
+                                intent.putExtra("receiver_name", response.body()?.receiver_name)
+                                intent.putExtra("audioStatus", audioStatus)
+                                intent.putExtra("videoStatus", videoStatus)
+                                startActivity(intent)
 //                            }, 3000)
+                            }
                         }
                     }
                 }
@@ -239,10 +249,13 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                LogUtil.e(TAG, "-----------------------")
+
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
                     finish()
                 }
             }

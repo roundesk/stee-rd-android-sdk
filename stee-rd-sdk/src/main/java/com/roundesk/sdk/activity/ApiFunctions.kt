@@ -74,34 +74,39 @@ class ApiFunctions(private var mContext: Activity?) {
                 call: Call<CreateCallDataClassResponse?>,
                 response: Response<CreateCallDataClassResponse?>
             ) {
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     if (response.body() != null) {
-                        LogUtil.e(TAG, "-----------------------")
+                        if (response.body()?.meetingId != 0 && response.body()?.roomId != 0)
+                            LogUtil.e(TAG, "-----------------------")
                         LogUtil.e(
-                            "getCreateCallSocketData",
+                            TAG,
                             "Success Response : ${Gson().toJson(response.body())}"
                         )
                         LogUtil.e(TAG, "-----------------------")
                         val createCallDataClassResponse: CreateCallDataClassResponse? =
                             response.body()
+
                         roomId = createCallDataClassResponse?.roomId
                         meetingId = createCallDataClassResponse?.meetingId
                         streamId = createCallDataClassResponse?.streamId
                         callerName = createCallDataClassResponse?.caller_name
 
-
                         if (!isIncomingCall) {
-                            val intent =
-                                Intent(mContext, VideoCallActivityNew::class.java)
-                            intent.putExtra("activity", "Outgoing")
-                            intent.putExtra("room_id", roomId)
-                            intent.putExtra("meeting_id", meetingId)
-                            intent.putExtra("stream_id", streamId)
-                            intent.putExtra("caller_name", callerName)
-                            intent.putExtra("isIncomingCall", isIncomingCall)
-                            intent.putExtra("audioStatus", audioStatus)
-                            intent.putExtra("videoStatus", videoStatus)
-                            mContext?.startActivity(intent)
+                            if (roomId != 0 && meetingId != 0) {
+                                val intent =
+                                    Intent(mContext, VideoCallActivityNew::class.java)
+                                intent.putExtra("activity", "Outgoing")
+                                intent.putExtra("room_id", roomId)
+                                intent.putExtra("meeting_id", meetingId)
+                                intent.putExtra("stream_id", streamId)
+                                intent.putExtra("caller_name", callerName)
+                                intent.putExtra("isIncomingCall", isIncomingCall)
+                                intent.putExtra("audioStatus", audioStatus)
+                                intent.putExtra("videoStatus", videoStatus)
+                                mContext?.startActivity(intent)
+                            }
                         }
                     }
                 }

@@ -150,7 +150,10 @@ class VideoCallActivityNew : AppCompatActivity(),
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
-            LogUtil.e(TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size)
+            LogUtil.e(
+                TAG,
+                "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size
+            )
             runOnUiThread {
                 if (tempValue != conferenceManager?.connectedStreamList?.size) {
                     tempValue = conferenceManager?.connectedStreamList?.size
@@ -349,10 +352,10 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         // this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_FPS, 24);
 
-        conferenceDetails(publishViewRenderer, playViewRenderers)
-        joinConference()
-
-
+        if (mMeetingId != 0 && mRoomId != 0) {
+            conferenceDetails(publishViewRenderer, playViewRenderers)
+            joinConference()
+        }
     }
 
     private fun conferenceDetails(
@@ -594,10 +597,12 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
                         declineCall(true)
                     }
@@ -1006,25 +1011,29 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<AcceptCallDataClassResponse?>,
                 response: Response<AcceptCallDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                LogUtil.e(TAG, "-----------------------")
 
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
-                        imgCallEnd?.performClick()
-                        relLayTopNotification?.visibility = View.GONE
-                        isOtherCallAccepted = true
-                        val intent =
-                            Intent(this@VideoCallActivityNew, VideoCallActivityNew::class.java)
-                        intent.putExtra("activity", "ChatActivity")
-                        intent.putExtra("room_id", response.body()?.roomId)
-                        intent.putExtra("meeting_id", response.body()?.meetingId)
-                        intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                        intent.putExtra("stream_id", response.body()?.streamId)
-                        intent.putExtra("audioStatus", audioStatus)
-                        intent.putExtra("videoStatus", videoStatus)
-                        startActivity(intent)
+                        if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
+                            imgCallEnd?.performClick()
+                            relLayTopNotification?.visibility = View.GONE
+                            isOtherCallAccepted = true
+                            val intent =
+                                Intent(this@VideoCallActivityNew, VideoCallActivityNew::class.java)
+                            intent.putExtra("activity", "ChatActivity")
+                            intent.putExtra("room_id", response.body()?.roomId)
+                            intent.putExtra("meeting_id", response.body()?.meetingId)
+                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                            intent.putExtra("stream_id", response.body()?.streamId)
+                            intent.putExtra("audioStatus", audioStatus)
+                            intent.putExtra("videoStatus", videoStatus)
+                            startActivity(intent)
+                        }
                     }
                 }
             }
@@ -1072,10 +1081,12 @@ class VideoCallActivityNew : AppCompatActivity(),
                 response: Response<BaseDataClassResponse?>
             ) {
                 isOtherCallAccepted = false
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
                         relLayTopNotification?.visibility = View.GONE
                         if (endCall) {
@@ -1261,10 +1272,12 @@ class VideoCallActivityNew : AppCompatActivity(),
                 call: Call<RoomDetailDataClassResponse?>,
                 response: Response<RoomDetailDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
                         recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
                         bottomSheetAdapter =

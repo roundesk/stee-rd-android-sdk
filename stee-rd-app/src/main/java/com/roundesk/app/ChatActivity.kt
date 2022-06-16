@@ -22,6 +22,7 @@ import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
+import com.roundesk.sdk.util.LogUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -186,24 +187,33 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    Log.e(TAG, "-----------------------")
-                    Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    Log.e(TAG, "-----------------------")
-
+                    LogUtil.e(TAG, "Server Response Details : $response")
+                    LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
+                        Log.e(TAG, "-----------------------")
+                        Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                        Log.e(TAG, "-----------------------")
                         if (response.body() != null) {
                             relLayTopNotification?.visibility = View.GONE
-                            val intent =
-                                Intent(this@ChatActivity, VideoCallActivityNew::class.java)
-                            intent.putExtra("activity", "ChatActivity")
-                            intent.putExtra("room_id", response.body()?.roomId)
-                            intent.putExtra("meeting_id", response.body()?.meetingId)
-                            intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
-                            intent.putExtra("stream_id", response.body()?.streamId)
-                            intent.putExtra("isIncomingCall", SocketConstants.showIncomingCallUI)
-                            intent.putExtra("audioStatus", audioStatus)
-                            intent.putExtra("videoStatus", videoStatus)
-                            startActivity(intent)
+                            if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
+                                val intent =
+                                    Intent(this@ChatActivity, VideoCallActivityNew::class.java)
+                                intent.putExtra("activity", "ChatActivity")
+                                intent.putExtra("room_id", response.body()?.roomId)
+                                intent.putExtra("meeting_id", response.body()?.meetingId)
+                                intent.putExtra(
+                                    "receiver_stream_id",
+                                    response.body()?.caller_streamId
+                                )
+                                intent.putExtra("stream_id", response.body()?.streamId)
+                                intent.putExtra(
+                                    "isIncomingCall",
+                                    SocketConstants.showIncomingCallUI
+                                )
+                                intent.putExtra("audioStatus", audioStatus)
+                                intent.putExtra("videoStatus", videoStatus)
+                                startActivity(intent)
+                            }
                         }
                     }
                 }
@@ -271,10 +281,12 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                Log.e(TAG, "-----------------------")
-                Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                Log.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "Server Response Details : $response")
+                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
+                    Log.e(TAG, "-----------------------")
+                    Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    Log.e(TAG, "-----------------------")
                     if (response.body() != null)
                         relLayTopNotification?.visibility = View.GONE
                 }
