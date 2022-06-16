@@ -5,7 +5,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.roundesk.sdk.util.Constants
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.SecureRandom
@@ -31,11 +30,7 @@ object ServiceBuilder {
         .build()*/
 
     init {
-        val logging = HttpLoggingInterceptor()
-        logging.level = (HttpLoggingInterceptor.Level.BASIC)
-
         okHttpClient = getOkHttpBuilder()
-            .addInterceptor(logging)
         .build()
 //        okHttpClient.setSslSocketFactory(getSSLSocketFactory())
         gson = GsonBuilder().setLenient().create()
