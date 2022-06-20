@@ -2,8 +2,8 @@ package com.roundesk.sdk.activity
 
 import android.app.Activity
 import android.content.Intent
-import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.roundesk.sdk.dataclass.CreateCallDataClassResponse
 import com.roundesk.sdk.dataclass.CreateCallRequest
 import com.roundesk.sdk.network.ApiInterface
@@ -11,10 +11,12 @@ import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.ArrayList
+import java.util.*
+
 
 class ApiFunctions(private var mContext: Activity?) {
 
@@ -36,8 +38,6 @@ class ApiFunctions(private var mContext: Activity?) {
         videoStatus: String,
         caseId: String
     ) {
-//        arraylistReceiverId.clear()
-
         participants = CreateCallRequest.Participant("", "")
         participantsArrayList.clear()
         for (item in arraylistReceiverId.indices) {
@@ -68,14 +68,14 @@ class ApiFunctions(private var mContext: Activity?) {
         LogUtil.e(TAG, "Request Body : $json")
         LogUtil.e(TAG, "-----------------------")
 
-
         call.enqueue(object : Callback<CreateCallDataClassResponse?> {
             override fun onResponse(
                 call: Call<CreateCallDataClassResponse?>,
                 response: Response<CreateCallDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "Server Response Details : $response")
-                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                LogUtil.e(TAG, "Server Header Details : $response")
+                LogUtil.e(TAG, "Server Response : ${response.body()}")
+                LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     if (response.body() != null) {
                         if (response.body()?.meetingId != 0 && response.body()?.roomId != 0)

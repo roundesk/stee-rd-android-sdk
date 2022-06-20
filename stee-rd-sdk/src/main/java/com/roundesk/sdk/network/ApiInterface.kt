@@ -25,13 +25,17 @@ interface ApiInterface {
     fun getRoomDetail(@Body body: RoomDetailRequest?): Call<RoomDetailDataClassResponse?>
 
     @GET(Constants.ApiSuffix.API_KEY_ALL_CALL)
-    fun getCallHistoryData(@Query("apiToken") apiToken: String,
-                           @Query("uuid") uuid: String,
-                           @Query("type") type: String): Call<List<CallHistoryResponseDataClass?>>
+    fun getCallHistoryData(
+        @Query("apiToken") apiToken: String,
+        @Query("uuid") uuid: String,
+        @Query("type") type: String
+    ): Call<List<CallHistoryResponseDataClass?>>
 
     @Multipart
     @POST(Constants.ApiSuffix.API_KEY_UPLOAD_DATA_LOG)
-    fun uploadDataLogs(@Part("content") dataLogFile: MultipartBody.Part,
-                       @Part("apiToken") apiToken: String): Call<BaseDataClassResponse?>
+    fun uploadDataLogs(
+        @Part("content") dataLogFile: MultipartBody.Part,
+        @Part("apiToken") apiToken: String
+    ): Call<BaseDataClassResponse?>
 
 }

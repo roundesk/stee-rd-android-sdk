@@ -149,9 +149,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-
-                    LogUtil.e(TAG, "Server Response Details : $response")
-                    LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                    LogUtil.e(TAG, "Server Header Details : $response")
+                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+                    LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
                         LogUtil.e(TAG, "-----------------------")
                         LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
@@ -249,9 +249,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-
-                LogUtil.e(TAG, "Server Response Details : $response")
-                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                LogUtil.e(TAG, "Server Header Details : $response")
+                LogUtil.e(TAG, "Server Response : ${response.body()}")
+                LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     LogUtil.e(TAG, "-----------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")

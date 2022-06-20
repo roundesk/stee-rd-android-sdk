@@ -121,8 +121,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 call: Call<List<CallHistoryResponseDataClass?>>,
                 response: Response<List<CallHistoryResponseDataClass?>>
             ) {
-                LogUtil.e(TAG, "Server Response Details : $response")
-                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                LogUtil.e(TAG, "Server Header Details : $response")
+                LogUtil.e(TAG, "Server Response : ${response.body()}")
+                LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     if (response.body() != null) {
                         progressBar?.visibility = View.GONE
@@ -247,8 +248,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "Server Response Details : $response")
-                    LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                    LogUtil.e(TAG, "Server Header Details : $response")
+                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+                    LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
                         if (response.body() != null) {
                             LogUtil.e(TAG, "-----------------------")
@@ -341,8 +343,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "Server Response Details : $response")
-                LogUtil.e(TAG, "Server Response : " + Gson().toJson(response.body()))
+                LogUtil.e(TAG, "Server Header Details : $response")
+                LogUtil.e(TAG, "Server Response : ${response.body()}")
+                LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     LogUtil.e(TAG, "-----------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")

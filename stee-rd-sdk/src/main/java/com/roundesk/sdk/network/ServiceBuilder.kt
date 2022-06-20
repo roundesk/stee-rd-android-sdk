@@ -5,9 +5,11 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.roundesk.sdk.util.Constants
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.*
 import javax.security.cert.CertificateException
 
@@ -17,6 +19,12 @@ object ServiceBuilder {
     private val okHttpClient: OkHttpClient
     val gson: Gson
     val retrofit: Retrofit
+    private val interceptor = run {
+        val httpLoggingInterceptor = HttpLoggingInterceptor()
+        httpLoggingInterceptor.apply {
+            httpLoggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
+        }
+    }
 
 //        private val client = OkHttpClient.Builder().build()
     /*private val client = OkHttpClient.Builder().apply {
@@ -30,8 +38,13 @@ object ServiceBuilder {
         .build()*/
 
     init {
+
         okHttpClient = getOkHttpBuilder()
-        .build()
+            .addInterceptor(interceptor)
+            .connectTimeout(30, TimeUnit.SECONDS) //Backend is really slow
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
 //        okHttpClient.setSslSocketFactory(getSSLSocketFactory())
         gson = GsonBuilder().setLenient().create()
 
@@ -46,6 +59,8 @@ object ServiceBuilder {
     fun <T> buildService(service: Class<T>): T {
         return retrofit.create(service)
     }
+
+
 
     /*   private val retrofitToUploadDataLogs = Retrofit.Builder()
            .baseUrl("http://test.roundesk.io/stee-server/public/api/")

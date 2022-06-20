@@ -16,6 +16,7 @@ object SocketConstants {
         const val USER_HIMANSHU: String = "wqhuzkfvodpajiletqst"
         const val USER_PRIYANKA: String = "gihuzkfvodpajiletlmn"
         const val USER_VASU: String = "cvdbzfjiouhqkaegcvtl"
+        const val USER_MASHUK: String = "mashuk"
     }
 
     const val showIncomingCallUI: Boolean = false

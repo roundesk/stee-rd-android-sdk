@@ -6,7 +6,6 @@ object Constants {
 
 //    const val BASE_URL: String = "http://test.roundesk.io/stee-server/public/api/"
 //    const val SOCKET_URL: String = "http://socket.roundesk.io:3000"
-//    const val SOCKET_URL: String = "http://test.roundesk.io:3000--"
 
 //    const val BASE_URL: String = "https://stee-rd-uat.roundesk.io/api/"
 //    const val SOCKET_URL: String = "https://stee-rd-uat.roundesk.io:3000"
