@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+//import retrofit2.converter.moshi.MoshiConverterFactory
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.*
@@ -53,13 +54,13 @@ object ServiceBuilder {
             .baseUrl(Constants.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
+//            .addConverterFactory(MoshiConverterFactory.create())
             .build()
     }
 
     fun <T> buildService(service: Class<T>): T {
         return retrofit.create(service)
     }
-
 
 
     /*   private val retrofitToUploadDataLogs = Retrofit.Builder()

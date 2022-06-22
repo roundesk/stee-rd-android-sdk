@@ -1113,6 +1113,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         super.onDestroy()
         conferenceManager?.leaveFromConference()
         initialView = false
+        stopSong()
         /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
