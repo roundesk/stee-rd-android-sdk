@@ -2,18 +2,21 @@ package com.roundesk.sdk.dataclass
 
 
 import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class AcceptCallRequest(
-    @SerializedName("receiver_id")
-    var receiver_id: String,
-    @SerializedName("audio")
-    var audio: String,
-    @SerializedName("video")
-    var video: String,
-    @SerializedName("apiToken")
-    var apiToken: String,
-    @SerializedName("meeting_id")
-    var meeting_id: Int,
-    @SerializedName("roomId")
-    var roomId: Int
+    @field:Json(name = "receiver_id")
+    var receiver_id: String? = null,
+    @field:Json(name = "audio")
+    var audio: String? = null,
+    @field:Json(name = "video")
+    var video: String? = null,
+    @field:Json(name = "apiToken")
+    var apiToken: String? = null,
+    @field:Json(name = "meeting_id")
+    var meeting_id: Int? = 0,
+    @field:Json(name = "roomId")
+    var roomId: Int? = 0
 )

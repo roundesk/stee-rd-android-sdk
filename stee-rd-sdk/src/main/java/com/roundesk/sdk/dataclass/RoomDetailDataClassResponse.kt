@@ -5,14 +5,16 @@ import com.google.gson.annotations.SerializedName
 
 data class RoomDetailDataClassResponse(
     @SerializedName("success")
-    var success: List<Success>
+    var success: List<Success> = listOf(),
+    @SerializedName("error")
+    var error: String? = null
 ) {
     data class Success(
         @SerializedName("name")
-        var name: String,
+        var name: String? = null,
         @SerializedName("receiver_id")
-        var receiverId: String,
+        var receiverId: String? = null,
         @SerializedName("role")
-        var role: String
+        var role: String? = null
     )
 }

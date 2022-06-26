@@ -2,10 +2,13 @@ package com.roundesk.sdk.dataclass
 
 
 import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class RoomDetailRequest(
-    @SerializedName("roomId")
+    @field:Json(name = "roomId")
     var roomId: String,
-    @SerializedName("apiToken")
+    @field:Json(name = "apiToken")
     var apiToken: String
 )

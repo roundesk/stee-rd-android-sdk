@@ -48,7 +48,7 @@ class BottomSheetUserListAdapter(
         }
 
         holder.txtBottomUserName.text =
-            firstLetterCaps(mRoomDetailDataList[position].name)
+            mRoomDetailDataList[position].name?.let { firstLetterCaps(it) }
 
         LogUtil.e(
             "list user id  " + position + mRoomDetailDataList[position].receiverId,

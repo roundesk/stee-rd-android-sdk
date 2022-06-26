@@ -1,28 +1,30 @@
 package com.roundesk.sdk.dataclass
 
-
 import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class CallHistoryResponseDataClass(
-    @SerializedName("type")
-    var type: String,
-    @SerializedName("case_id")
-    var case_id: String,
-    @SerializedName("user")
-    var user: List<User>,
-    @SerializedName("date")
-    var date: String
+    @field:Json(name = "type")
+    var type: String? = null,
+    @field:Json(name = "case_id")
+    var case_id: String? = null,
+    @field:Json(name = "user")
+    var user: List<User> = listOf(),
+    @field:Json(name = "date")
+    var date: String? = null
 ) {
     data class User(
-        @SerializedName("name")
-        var name: String,
-        @SerializedName("uuid")
-        var uuid: String,
-        @SerializedName("receiver_role")
-        var receiver_role: String,
-        @SerializedName("duration")
-        var duration: String,
-        @SerializedName("recording_video_url")
-        var recording_video_url: String
+        @field:Json(name = "name")
+        var name: String? = null,
+        @field:Json(name = "uuid")
+        var uuid: String? = null,
+        @field:Json(name = "receiver_role")
+        var receiver_role: String? = null,
+        @field:Json(name = "duration")
+        var duration: String? = null,
+        @field:Json(name = "recording_video_url")
+        var recording_video_url: String? = null
     )
 }

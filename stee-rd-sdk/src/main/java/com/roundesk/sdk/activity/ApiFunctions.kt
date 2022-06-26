@@ -119,6 +119,39 @@ class ApiFunctions(private var mContext: Activity?) {
                 LogUtil.e(TAG, "-----------------------")
             }
         })
+
+
+        // This method is for manual parsing the model class
+        /* val request = ServiceBuilder.buildService(ApiInterface::class.java)
+         val call = request.sampleManualParsing(user)
+
+         LogUtil.e(TAG, "-----------------------")
+         LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
+         LogUtil.e(TAG, "Request Body : $json")
+         LogUtil.e(TAG, "-----------------------")
+
+         call.enqueue(object : Callback<Any?> {
+             override fun onResponse(
+                 call: Call<Any?>,
+                 response: Response<Any?>
+             ) {
+                 LogUtil.e(TAG, "Server Header Details : $response")
+                 LogUtil.e(TAG, "Server Response : ${response.body()}")
+                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
+
+
+                 val createCallDataClassResponse: CreateCallDataClassResponse? =
+                     Gson().toJson(response.body())
+
+                 LogUtil.e(TAG, "convertToJson : " + convertToJson)
+             }
+
+             override fun onFailure(call: Call<Any?>, t: Throwable) {
+                 LogUtil.e(TAG, "-----------------------")
+                 LogUtil.e("initiateCall", "Failure Response : ${t.message}")
+                 LogUtil.e(TAG, "-----------------------")
+             }
+         })*/
     }
 
     fun getCallerRole(

@@ -2,18 +2,21 @@ package com.roundesk.sdk.dataclass
 
 
 import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class DeclineCallRequest(
-    @SerializedName("receiver_id")
+    @field:Json(name = "receiver_id")
     var receiver_id: String,
-    @SerializedName("audio")
+    @field:Json(name = "audio")
     var audio: String,
-    @SerializedName("video")
+    @field:Json(name = "video")
     var video: String,
-    @SerializedName("apiToken")
+    @field:Json(name = "apiToken")
     var apiToken: String,
-    @SerializedName("meeting_id")
+    @field:Json(name = "meeting_id")
     var meeting_id: Int,
-    @SerializedName("roomId")
+    @field:Json(name = "roomId")
     var roomId: Int
 )
