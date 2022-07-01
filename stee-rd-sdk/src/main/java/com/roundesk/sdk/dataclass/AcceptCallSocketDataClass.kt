@@ -1,8 +1,10 @@
 package com.roundesk.sdk.dataclass
 
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 
+@Keep
 data class AcceptCallSocketDataClass(
     @SerializedName("type")
     var type: String,

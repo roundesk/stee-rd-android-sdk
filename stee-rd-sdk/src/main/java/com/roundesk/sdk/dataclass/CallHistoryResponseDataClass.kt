@@ -1,9 +1,11 @@
 package com.roundesk.sdk.dataclass
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+@Keep
 @JsonClass(generateAdapter = true)
 data class CallHistoryResponseDataClass(
     @field:Json(name = "type")
@@ -15,6 +17,7 @@ data class CallHistoryResponseDataClass(
     @field:Json(name = "date")
     var date: String? = null
 ) {
+    @JsonClass(generateAdapter = true)
     data class User(
         @field:Json(name = "name")
         var name: String? = null,

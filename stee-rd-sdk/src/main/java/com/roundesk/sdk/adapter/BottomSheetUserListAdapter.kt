@@ -40,7 +40,7 @@ class BottomSheetUserListAdapter(
             "mCreateCallSocketData: ${Gson().toJson(mCreateCallSocketData)}}"
         )
 
-        if (mRoomDetailDataList[position].receiverId == Constants.CALLER_SOCKET_ID) {
+        if (mRoomDetailDataList[position].receiver_id == Constants.CALLER_SOCKET_ID) {
             holder.txtRinging.visibility = View.GONE
             holder.progressBar.visibility = View.GONE
             holder.imgCallRejected.visibility = View.GONE
@@ -51,7 +51,7 @@ class BottomSheetUserListAdapter(
             mRoomDetailDataList[position].name?.let { firstLetterCaps(it) }
 
         LogUtil.e(
-            "list user id  " + position + mRoomDetailDataList[position].receiverId,
+            "list user id  " + position + mRoomDetailDataList[position].receiver_id,
             "socket receiver id " + position + mCreateCallSocketData?.receiverId
         )
         if (mCreateCallSocketData?.callerId != Constants.CALLER_SOCKET_ID) {
@@ -62,7 +62,7 @@ class BottomSheetUserListAdapter(
         }
 
         if (mCreateCallSocketData?.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
-            if (mRoomDetailDataList[position].receiverId == mCreateCallSocketData?.receiverId) {
+            if (mRoomDetailDataList[position].receiver_id == mCreateCallSocketData?.receiverId) {
                 holder.progressBar.visibility = View.GONE
                 holder.txtRinging.visibility = View.GONE
                 holder.imgCallRejected.visibility = View.GONE
@@ -71,7 +71,7 @@ class BottomSheetUserListAdapter(
         }
 
         if (mCreateCallSocketData?.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
-            if (mRoomDetailDataList[position].receiverId == mCreateCallSocketData?.receiverId) {
+            if (mRoomDetailDataList[position].receiver_id == mCreateCallSocketData?.receiverId) {
                 holder.progressBar.visibility = View.GONE
                 holder.txtRinging.visibility = View.VISIBLE
                 holder.txtRinging.text = "Rejected"

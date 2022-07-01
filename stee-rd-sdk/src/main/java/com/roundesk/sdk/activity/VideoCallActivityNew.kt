@@ -25,7 +25,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
-import com.roundesk.sdk.adapter.CallHistoryAdapter
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
@@ -36,8 +35,8 @@ import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.Stopwatch
 import com.roundesk.sdk.util.ToastUtil
 import de.tavendo.autobahn.WebSocket
-import io.antmedia.webrtcandroidframework.*
-import io.antmedia.webrtcandroidframework.apprtc.CallActivity
+import io.webrtc.webrtcandroidframework.*
+import io.webrtc.webrtcandroidframework.apprtc.CallActivity
 import org.json.JSONObject
 import org.webrtc.*
 import retrofit2.Call

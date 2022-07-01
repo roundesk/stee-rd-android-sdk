@@ -29,7 +29,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import org.webrtc.ThreadUtils.ThreadChecker;
 
-import io.antmedia.webrtcandroidframework.WebRTCClient;
+import io.webrtc.webrtcandroidframework.WebRTCClient;
 
 /**
  * Android hardware video decoder.

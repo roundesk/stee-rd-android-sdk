@@ -19,3 +19,23 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep public class com.roundesk.sdk.**{
+    public private protected *;
+}
+
+-keep public class io.webrtc.webrtcandroidframework.**{
+    public private protected *;
+}
+
+-keepclassmembers class com.roundesk.sdk.**{
+    public private protected *;
+}
+
+-keepclassmembers class io.webrtc.webrtcandroidframework.**{
+    public private protected *;
+}
+
+-dontshrink
+-dontoptimize
+

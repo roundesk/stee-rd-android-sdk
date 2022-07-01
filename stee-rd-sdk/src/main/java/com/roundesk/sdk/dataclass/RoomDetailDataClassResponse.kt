@@ -1,20 +1,26 @@
 package com.roundesk.sdk.dataclass
 
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@Keep
+@JsonClass(generateAdapter = true)
 data class RoomDetailDataClassResponse(
-    @SerializedName("success")
+    @field:Json(name = "success")
     var success: List<Success> = listOf(),
-    @SerializedName("error")
+    @field:Json(name = "error")
     var error: String? = null
 ) {
+    @JsonClass(generateAdapter = true)
     data class Success(
-        @SerializedName("name")
+        @field:Json(name = "name")
         var name: String? = null,
-        @SerializedName("receiver_id")
-        var receiverId: String? = null,
-        @SerializedName("role")
+        @field:Json(name = "receiver_id")
+        var receiver_id: String? = null,
+        @field:Json(name = "role")
         var role: String? = null
     )
 }
