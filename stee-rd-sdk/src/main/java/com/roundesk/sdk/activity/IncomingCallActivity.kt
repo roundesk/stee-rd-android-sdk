@@ -169,10 +169,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                                 intent.putExtra("meeting_id", response.body()?.meetingId)
 //                            intent.putExtra("receiver_stream_id", response.body()?.streamId)
 //                            intent.putExtra("stream_id", response.body()?.caller_streamId)
-                                intent.putExtra(
-                                    "receiver_stream_id",
-                                    response.body()?.caller_streamId
-                                )
+                                intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
                                 intent.putExtra("stream_id", response.body()?.streamId)
                                 intent.putExtra("isIncomingCall", true)
                                 intent.putExtra("caller_name", response.body()?.caller_name)
