@@ -129,7 +129,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private WebSocketHandler wsHandler;
 //    private String stunServerUri = "stun:stun.l.google.com:19302";
 //    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:3478";
-    private String stunServerUri = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
+    private String stunServerUri = "stun:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
     List<PeerConnection.IceServer> iceServers = new ArrayList();
     private boolean videoOn = true;
     private boolean audioOn = true;
