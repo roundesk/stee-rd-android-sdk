@@ -94,6 +94,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         if (wsHandler == null) {
             wsHandler = new WebSocketHandler(this, handler);
             wsHandler.connect(serverUrl);
+            Log.i("ConferenceManager", "initWebSocketHandler() wsHandler : " + wsHandler);
         }
     }
 
@@ -131,6 +132,13 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         }
 
         webRTCClient.init(serverUrl, streamId, mode, tokenId, intent);
+        Log.i("ConferenceManager",
+                "createPeer() serverUrl : " + serverUrl
+                        + " streamId : " + streamId
+                        + " mode : " + mode
+                        + " tokenId : " + tokenId
+                        + " intent : " + intent.getExtras()
+        );
 
         return webRTCClient;
     }
@@ -158,6 +166,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     //MediaSignallingEvents
     @Override
     public void onPublishStarted(String streamId) {
+        Log.i("ConferenceManager", "onPublishStarted() streamId : " + streamId);
         peers.get(streamId).onPublishStarted(streamId);
     }
 
@@ -173,6 +182,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     @Override
     public void onPublishFinished(String streamId) {
+        Log.i("ConferenceManager", "onPublishFinished() streamId : " + streamId);
         peers.get(streamId).onPublishFinished(streamId);
     }
 
@@ -225,14 +235,20 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             this.streamId = streamId;
             peers.put(streamId, publisher);
             publisher.startStream();
+            Log.i("ConferenceManager",
+                    "publishStream() serverUrl : " + serverUrl
+                            + " streamId : " + streamId
+                            + " publisher : " + publisher.toString());
         } else {
-            Log.i(getClass().getSimpleName(), "Play only mode. No publishing");
+            Log.i("ConferenceManager", "Play only mode. No publishing");
         }
     }
 
     @Override
     public void onJoinedTheRoom(String streamId, String[] streams) {
-        Log.w(this.getClass().getSimpleName(), "On Joined the Room ");
+        Log.w("ConferenceManager", "On Joined the Room ");
+        Log.i("ConferenceManager", "onJoinedTheRoom() streamId : " + streamId
+                + " streams size : " + streams.length);
         publishStream(streamId);
 
         if (streams != null) {
@@ -305,9 +321,9 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         if (peer != null) {
             deallocateRenderer(peer);
             peer.stopStream();
-            Log.i(ConferenceManager.class.getSimpleName(), "Stream left: " + streamId);
+            Log.i("ConferenceManager", "Stream left: " + streamId);
         } else {
-            Log.w(ConferenceManager.class.getSimpleName(), "Stream left (" + streamId + ") but there is no associated peer ");
+            Log.w("ConferenceManager", "Stream left (" + streamId + ") but there is no associated peer ");
         }
     }
 
@@ -344,7 +360,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         if (publishStream != null) {
             publishStream.sendMessageViaDataChannel(buffer);
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
         }
     }
 
@@ -360,7 +376,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             DataChannel.Buffer buf = new DataChannel.Buffer(buffer, false);
             sendMessageViaDataChannel(buf);
         } catch (JSONException e) {
-            Log.e(this.getClass().getSimpleName(), "JSON write error when creating notification event");
+            Log.e("ConferenceManager", "JSON write error when creating notification event");
         }
     }
 
@@ -374,7 +390,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
             sendNotificationEvent("CAM_TURNED_OFF");
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
         }
     }
 
@@ -387,7 +403,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             }
             sendNotificationEvent("CAM_TURNED_ON");
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
         }
     }
 
@@ -401,7 +417,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
             sendNotificationEvent("MIC_MUTED");
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
         }
     }
 
@@ -414,7 +430,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             }
             sendNotificationEvent("MIC_UNMUTED");
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
         }
     }
 
@@ -423,7 +439,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         if (publishStream != null) {
             return publishStream.isAudioOn();
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
             return false;
         }
     }
@@ -433,7 +449,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         if (publishStream != null) {
             return publishStream.isVideoOn();
         } else {
-            Log.w(this.getClass().getSimpleName(), "It did not joined to the conference room yet ");
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
             return false;
         }
     }
@@ -473,7 +489,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             }
             sendNotificationEvent("CAM_FLIPPED");
         } else {
-            Log.w(this.getClass().getSimpleName(), "Camera not able to flip ");
+            Log.w("ConferenceManager", "Camera not able to flip ");
         }
     }
 

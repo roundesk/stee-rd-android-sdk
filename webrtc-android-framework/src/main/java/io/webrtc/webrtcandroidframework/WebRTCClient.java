@@ -127,9 +127,10 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private Intent intent = new Intent();
     private Handler handler = new Handler();
     private WebSocketHandler wsHandler;
-//    private String stunServerUri = "stun:stun.l.google.com:19302";
+    private String stunServerUri = "stun:stun.l.google.com:19302";
 //    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:3478";
-    private String stunServerUri = "stun:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
+//    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:5443";
+//    private String stunServerUri = "stun:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
     List<PeerConnection.IceServer> iceServers = new ArrayList();
     private boolean videoOn = true;
     private boolean audioOn = true;
@@ -254,7 +255,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
             fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
             fullscreenRenderer.setEnableHardwareScaler(false /* enabled */);
-            Log.i(getClass().getSimpleName(), "Initializing the full screen renderer");
+            Log.i("WebRTCClient", "Initializing the full screen renderer");
         }
 
         if (pipRenderer != null) {
@@ -708,7 +709,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         }
 
         if (fullscreenRenderer != null) {
-            Log.i(getClass().getSimpleName(), "Releasing full screen renderer");
+            Log.i("WebRTCClient", "Releasing full screen renderer");
             fullscreenRenderer.release();
            // fullscreenRenderer = null; Do not make renderer null, we can re-use
         }
@@ -978,7 +979,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onConnected() {
-        Log.w(getClass().getSimpleName(), "onConnected");
+        Log.w("WebRTCClient", "onConnected");
     }
 
     @Override
