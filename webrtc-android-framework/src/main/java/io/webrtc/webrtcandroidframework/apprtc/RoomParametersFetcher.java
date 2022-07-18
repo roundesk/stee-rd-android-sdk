@@ -39,6 +39,8 @@ public class RoomParametersFetcher {
   private final RoomParametersFetcherEvents events;
   private final String roomUrl;
   private final String roomMessage;
+//  String pcConfigJson = "{iceServers:[{urls:\"turn:stee-rd-uat.roundesk.io:5443\",username:\"username\",credential:\"password\",}]}";
+  String pcConfigJson = "{iceServers:[{urls:\"turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443\",username:\"username\",credential:\"password\",}]}";
 
   /**
    * Room parameters fetcher callbacks.
@@ -126,8 +128,8 @@ public class RoomParametersFetcher {
       Log.d(TAG, "WSS url: " + wssUrl);
       Log.d(TAG, "WSS POST url: " + wssPostUrl);
 
-      List<PeerConnection.IceServer> iceServers =
-          iceServersFromPCConfigJSON(roomJson.getString("pc_config"));
+//      List<PeerConnection.IceServer> iceServers = iceServersFromPCConfigJSON(roomJson.getString("pc_config"));
+      List<PeerConnection.IceServer> iceServers = iceServersFromPCConfigJSON(pcConfigJson);
       boolean isTurnPresent = false;
       for (PeerConnection.IceServer server : iceServers) {
         Log.d(TAG, "IceServer: " + server);
@@ -140,8 +142,8 @@ public class RoomParametersFetcher {
       }
       // Request TURN servers.
       if (!isTurnPresent && !roomJson.optString("ice_server_url").isEmpty()) {
-        List<PeerConnection.IceServer> turnServers =
-            requestTurnServers(roomJson.getString("ice_server_url"));
+//        List<PeerConnection.IceServer> turnServers = requestTurnServers(roomJson.getString("ice_server_url"));
+        List<PeerConnection.IceServer> turnServers = requestTurnServers(pcConfigJson);
         for (PeerConnection.IceServer turnServer : turnServers) {
           Log.d(TAG, "TurnServer: " + turnServer);
           iceServers.add(turnServer);
@@ -202,6 +204,7 @@ public class RoomParametersFetcher {
   // configuration string.
   private List<PeerConnection.IceServer> iceServersFromPCConfigJSON(String pcConfig)
       throws JSONException {
+
     JSONObject json = new JSONObject(pcConfig);
     JSONArray servers = json.getJSONArray("iceServers");
     List<PeerConnection.IceServer> ret = new ArrayList<>();
