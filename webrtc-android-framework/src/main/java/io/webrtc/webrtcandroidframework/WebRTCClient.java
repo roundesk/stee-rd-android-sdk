@@ -127,10 +127,11 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private Intent intent = new Intent();
     private Handler handler = new Handler();
     private WebSocketHandler wsHandler;
-//    private String stunServerUri = "stun:stun.l.google.com:19302";
+    private String googleStunServerUri = "stun:stun.l.google.com:19302";
 //    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:3478";
 //    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:5443";
-    private String stunServerUri = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
+    private String spfoneUATStunServerUri_with_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443?transport=tcp";
+    private String spfoneUATStunServerUri_without_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
     List<PeerConnection.IceServer> iceServers = new ArrayList();
     private boolean videoOn = true;
     private boolean audioOn = true;
@@ -216,7 +217,9 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         iceConnected = false;
         signalingParameters = null;
 
-        iceServers.add(new PeerConnection.IceServer(stunServerUri));
+        iceServers.add(new PeerConnection.IceServer(googleStunServerUri));
+        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_with_TCP, "username", "password"));
+        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_without_TCP, "username", "password"));
 
 
 
