@@ -128,8 +128,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private Handler handler = new Handler();
     private WebSocketHandler wsHandler;
     private String googleStunServerUri = "stun:stun.l.google.com:19302";
-//    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:3478";
-//    private String stunServerUri = "stun:stee-rd-uat.roundesk.io:5443";
+    private String stunServerUri3478 = "stun:stee-rd-uat.roundesk.io:3478";
+    private String stunServerUri5443 = "stun:stee-rd-uat.roundesk.io:5443";
     private String spfoneUATStunServerUri_with_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443?transport=tcp";
     private String spfoneUATStunServerUri_without_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
     List<PeerConnection.IceServer> iceServers = new ArrayList();
@@ -140,9 +140,9 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private IDataChannelObserver dataChannelObserver;
 
     private String streamId;
-	private String url;
-	private String token;
-	private boolean dataChannelOnly = false;
+    private String url;
+    private String token;
+    private boolean dataChannelOnly = false;
     private String subscriberId = "";
     private String subscriberCode = "";
     private String streamName = "";
@@ -217,21 +217,29 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         iceConnected = false;
         signalingParameters = null;
 
-        iceServers.add(new PeerConnection.IceServer(googleStunServerUri));
-        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_with_TCP, "username", "password"));
-        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_without_TCP, "username", "password"));
+//        iceServers.add(new PeerConnection.IceServer(googleStunServerUri));
+//        iceServers.add(new PeerConnection.IceServer(stunServerUri3478));
+//        iceServers.add(new PeerConnection.IceServer(stunServerUri5443));
+//        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_with_TCP, "username", "password"));
+//        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_without_TCP, "username", "password"));
 
-
+        iceServers.add(PeerConnection.IceServer.builder(googleStunServerUri).createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
 
         if (remoteRendererList != null) {
             int size = remoteRendererList.size();
-            for (int i = 0; i < size; i++)
-            {
+            for (int i = 0; i < size; i++) {
                 CallActivity.ProxyVideoSink remoteVideoSink = new CallActivity.ProxyVideoSink();
                 remoteSinks.add(remoteVideoSink);
             }
-        }
-        else {
+        } else {
             remoteSinks.add(remoteProxyRenderer);
         }
         eglBase = EglBase.create();
@@ -254,7 +262,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                         "Failed to open video file for output: " + saveRemoteVideoToFile, e);
             }
         }
-        if(fullscreenRenderer != null) {
+        if (fullscreenRenderer != null) {
             fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
             fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
             fullscreenRenderer.setEnableHardwareScaler(false /* enabled */);
@@ -352,9 +360,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         String urlParameters = intent.getStringExtra(EXTRA_URLPARAMETERS);
 
 
-
         roomConnectionParameters =
-                new AppRTCClient.RoomConnectionParameters(url, streamId, loopback, urlParameters, mode ,token);
+                new AppRTCClient.RoomConnectionParameters(url, streamId, loopback, urlParameters, mode, token);
 
 
         // For command line execution run connection for <runTimeMs> and exit.
@@ -384,16 +391,14 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
             if (videoFileAsCamera != null) {
                 source = SOURCE_FILE;
-            }
-            else if(screencaptureEnabled) {
+            } else if (screencaptureEnabled) {
                 source = SOURCE_SCREEN;
-            }
-            else if(useCamera2()) {
+            } else if (useCamera2()) {
                 source = SOURCE_FRONT;
             }
 
             videoCapturer = createVideoCapturer(source);
-            
+
             currentSource = source;
         }
 
@@ -495,7 +500,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         this.openFrontCamera = openFrontCamera;
     }
 
-    private @Nullable VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
+    private @Nullable
+    VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
         final String[] deviceNames = enumerator.getDeviceNames();
 
 
@@ -544,7 +550,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     @TargetApi(21)
-    private @Nullable VideoCapturer createScreenCapturer() {
+    private @Nullable
+    VideoCapturer createScreenCapturer() {
         if (mediaProjectionPermissionResultCode != Activity.RESULT_OK) {
             reportError("User didn't give permission to capture the screen.");
             return null;
@@ -647,14 +654,11 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         logAndToast(this.context.getString(R.string.connecting_to, roomConnectionParameters.roomUrl));
         if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_PUBLISH)) {
             publish(roomConnectionParameters.roomId, roomConnectionParameters.token, peerConnectionParameters.videoCallEnabled, peerConnectionParameters.audioCallEnabled, subscriberId, subscriberCode, streamName);
-        }
-        else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_PLAY)) {
+        } else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_PLAY)) {
             play(roomConnectionParameters.roomId, roomConnectionParameters.token, null, subscriberId, subscriberCode, viewerInfo);
-        }
-        else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_JOIN)) {
+        } else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_JOIN)) {
             wsHandler.joinToPeer(roomConnectionParameters.roomId, roomConnectionParameters.token);
-        }
-        else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_MULTI_TRACK_PLAY)) {
+        } else if (roomConnectionParameters.mode.equals(IWebRTCClient.MODE_MULTI_TRACK_PLAY)) {
             wsHandler.getTrackList(roomConnectionParameters.roomId, roomConnectionParameters.token);
         }
     }
@@ -667,12 +671,12 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         play(streamId, token, tracks, "", "", "");
     }
 
-    public void play(String streamId, String token, String[] tracks,  String subscriberId, String subscriberCode, String viewerInfo) {
+    public void play(String streamId, String token, String[] tracks, String subscriberId, String subscriberCode, String viewerInfo) {
         wsHandler.startPlay(streamId, token, tracks, subscriberId, subscriberCode, viewerInfo);
     }
 
     public void enableTrack(String streamId, String trackId, boolean enabled) {
-        wsHandler.enableTrack(streamId,trackId, enabled);
+        wsHandler.enableTrack(streamId, trackId, enabled);
     }
 
     // Should be called from UI thread
@@ -708,17 +712,17 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         }
         if (pipRenderer != null) {
             pipRenderer.release();
-           // pipRenderer = null; Do not make renderer null, we can re-use
+            // pipRenderer = null; Do not make renderer null, we can re-use
         }
 
         if (fullscreenRenderer != null) {
             Log.i("WebRTCClient", "Releasing full screen renderer");
             fullscreenRenderer.release();
-           // fullscreenRenderer = null; Do not make renderer null, we can re-use
+            // fullscreenRenderer = null; Do not make renderer null, we can re-use
         }
         if (videoFileRenderer != null) {
             videoFileRenderer.release();
-           // videoFileRenderer = null; Do not make renderer null, we can re-use
+            // videoFileRenderer = null; Do not make renderer null, we can re-use
         }
 
         if (peerConnectionClient != null) {
@@ -784,8 +788,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     public void changeVideoSource(String newSource) {
-        if(!currentSource.equals(newSource)) {
-            if(newSource.equals(SOURCE_SCREEN) && screenPersmisonNeeded) {
+        if (!currentSource.equals(newSource)) {
+            if (newSource.equals(SOURCE_SCREEN) && screenPersmisonNeeded) {
                 startScreenCapture();
                 return;
             }
@@ -806,7 +810,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         }
     }
 
-    private @Nullable VideoCapturer createVideoCapturer(String source) {
+    private @Nullable
+    VideoCapturer createVideoCapturer(String source) {
         final VideoCapturer videoCapturer;
         if (source.equals(SOURCE_FILE)) {
             String videoFileAsCamera = this.intent.getStringExtra(CallActivity.EXTRA_VIDEO_FILE_AS_CAMERA);
@@ -843,18 +848,13 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         Logging.d(TAG, "setSwappedFeeds: " + isSwappedFeeds);
         if (this.streamMode.equals(MODE_PUBLISH)) {
             localProxyVideoSink.setTarget(fullscreenRenderer);
-        }
-        else if (this.streamMode.equals(MODE_PLAY)) {
+        } else if (this.streamMode.equals(MODE_PLAY)) {
             remoteProxyRenderer.setTarget(fullscreenRenderer);
-        }
-        else if (this.streamMode.equals(MODE_MULTI_TRACK_PLAY))
-        {
-            for (int i = 0; i < remoteSinks.size(); i++)
-            {
-                ((CallActivity.ProxyVideoSink)remoteSinks.get(i)).setTarget(remoteRendererList.get(i));
+        } else if (this.streamMode.equals(MODE_MULTI_TRACK_PLAY)) {
+            for (int i = 0; i < remoteSinks.size(); i++) {
+                ((CallActivity.ProxyVideoSink) remoteSinks.get(i)).setTarget(remoteRendererList.get(i));
             }
-        }
-        else {
+        } else {
             this.isSwappedFeeds = isSwappedFeeds;
             localProxyVideoSink.setTarget(isSwappedFeeds ? fullscreenRenderer : pipRenderer);
             remoteProxyRenderer.setTarget(isSwappedFeeds ? pipRenderer : fullscreenRenderer);
@@ -909,7 +909,6 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     public static int getMediaProjectionPermissionResultCode() {
         return mediaProjectionPermissionResultCode;
     }
-
 
 
     // -----Implementation of PeerConnectionClient.PeerConnectionEvents.---------
@@ -986,7 +985,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     @Override
-    public void onPeerConnectionClosed() {}
+    public void onPeerConnectionClosed() {
+    }
 
     @Override
     public void onPeerConnectionStatsReady(RTCStatsReport reports) {
@@ -1035,14 +1035,12 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                             peerConnectionClient.addRemoteIceCandidate(iceCandidate);
                         }
                     }
-                }
-                else {
+                } else {
                     if (webRTCListener != null) {
                         webRTCListener.onError("peerConnectionClient is null when offer sdp received", streamId);
                     }
                 }
-            }
-            else {
+            } else {
                 peerConnectionClient.setRemoteDescription(sdp);
             }
         });
@@ -1069,8 +1067,6 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             disconnect();
         });
     }
-
-
 
 
     @Override
@@ -1128,8 +1124,9 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             }
         });
     }
+
     @Override
-    public void streamIdInUse(String streamId){
+    public void streamIdInUse(String streamId) {
         this.handler.post(() -> {
             if (webRTCListener != null) {
                 webRTCListener.streamIdInUse(streamId);
@@ -1159,7 +1156,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onTrackList(String[] tracks) {
-        this.handler.post(()-> {
+        this.handler.post(() -> {
             if (webRTCListener != null) {
                 webRTCListener.onTrackList(tracks);
             }
@@ -1168,7 +1165,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onBitrateMeasurement(String streamId, int targetBitrate, int videoBitrate, int audioBitrate) {
-        this.handler.post(()-> {
+        this.handler.post(() -> {
             if (webRTCListener != null) {
                 webRTCListener.onBitrateMeasurement(streamId, targetBitrate, videoBitrate, audioBitrate);
             }
@@ -1177,7 +1174,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onStreamInfoList(String streamId, ArrayList<StreamInfo> streamInfoList) {
-        this.handler.post(()-> {
+        this.handler.post(() -> {
             if (webRTCListener != null) {
                 webRTCListener.onStreamInfoList(streamId, streamInfoList);
             }
@@ -1186,7 +1183,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onError(String streamId, String definition) {
-        this.handler.post(()-> {
+        this.handler.post(() -> {
             if (webRTCListener != null) {
                 webRTCListener.onError(definition, streamId);
             }
@@ -1199,14 +1196,14 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void sendMessageViaDataChannel(DataChannel.Buffer buffer) {
-        if(isDataChannelEnabled()) {
+        if (isDataChannelEnabled()) {
             peerConnectionClient.sendMessageViaDataChannel(buffer);
         }
     }
 
     @Override
     public boolean isDataChannelEnabled() {
-        if (peerConnectionClient != null ) {
+        if (peerConnectionClient != null) {
             DataChannel dataChannel = peerConnectionClient.getDataChannel();
             return dataChannel != null && dataChannel.state() == DataChannel.State.OPEN;
         }
@@ -1241,7 +1238,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onBufferedAmountChange(long previousAmount, String dataChannelLabel) {
-        if(dataChannelObserver == null) return;
+        if (dataChannelObserver == null) return;
         this.handler.post(() -> {
             dataChannelObserver.onBufferedAmountChange(previousAmount, dataChannelLabel);
         });
@@ -1249,7 +1246,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onStateChange(DataChannel.State state, String dataChannelLabel) {
-        if(dataChannelObserver == null) return;
+        if (dataChannelObserver == null) return;
         this.handler.post(() -> {
             dataChannelObserver.onStateChange(state, dataChannelLabel);
         });
@@ -1257,7 +1254,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     @Override
     public void onMessage(DataChannel.Buffer buffer, String dataChannelLabel) {
-        if(dataChannelObserver == null) return;
+        if (dataChannelObserver == null) return;
         // byte[] data = new byte[buffer.data.capacity()];
         // buffer.data.get(data);
         // ByteBuffer.wrap(data)
