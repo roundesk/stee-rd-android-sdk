@@ -132,6 +132,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private String stunServerUri5443 = "stun:stee-rd-uat.roundesk.io:5443";
     private String spfoneUATStunServerUri_with_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443?transport=tcp";
     private String spfoneUATStunServerUri_without_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
+    private String spfoneUATStunServerUri_with_TCP_3478 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:3478?transport=tcp";
+    private String spfoneUATStunServerUri_without_TCP_3478 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:3478";
     List<PeerConnection.IceServer> iceServers = new ArrayList();
     private boolean videoOn = true;
     private boolean audioOn = true;
@@ -229,6 +231,14 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                 .setPassword("password")
                 .createIceServer());
         iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP_3478)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP_3478)
                 .setUsername("username")
                 .setPassword("password")
                 .createIceServer());
