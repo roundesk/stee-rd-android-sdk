@@ -25,6 +25,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
+import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
@@ -138,9 +139,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     var mpCallReject: MediaPlayer? = null
 
-    //    var tempConnectedUserSize: Int? = 0
     private var bottomSheetAdapter: BottomSheetUserListAdapter? = null
-    var joinedUserNamesList: ArrayList<String> = arrayListOf()
     var userStreamIDList: ArrayList<String> = arrayListOf()
     var tempValue: Int? = 0
     var lastStreamSize: Int? = -1
@@ -224,7 +223,6 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -239,7 +237,6 @@ class VideoCallActivityNew : AppCompatActivity(),
         initSocket()
         getIntentData()
         initView()
-
     }
 
     private fun getIntentData() {
