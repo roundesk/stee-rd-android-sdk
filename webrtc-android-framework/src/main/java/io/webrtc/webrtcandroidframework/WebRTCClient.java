@@ -132,9 +132,15 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 //    private String stunServerUri5443 = "stun:stee-rd-uat.roundesk.io:5443";
 //    private String spfoneUATStunServerUri_with_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443?transport=tcp";
 //    private String spfoneUATStunServerUri_without_TCP = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5443";
-    private String spfoneUATStunServerUri_with_TCP_3478 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:3478?transport=tcp";
-    private String spfoneUATStunServerUri_without_TCP_3478 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:3478";
-    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:3478";
+//    private String spfoneUATStunServerUri_with_TCP_3478 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:3478?transport=tcp";
+
+    // Turn Server URL for UAT
+    private String spfoneUATStunServerUri_without_TCP_5080 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5080";
+
+    // Turn Server URL for Dev
+    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:5080";
+
+
     List<PeerConnection.IceServer> iceServers = new ArrayList();
     private boolean videoOn = true;
     private boolean audioOn = true;
@@ -231,6 +237,12 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                 .setUsername("username")
                 .setPassword("password")
                 .createIceServer());
+
+        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP_5080)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+
 /*
         iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP)
                 .setUsername("username")
@@ -242,15 +254,11 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                 .createIceServer());
 */
 
-        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP_3478)
+/*        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP_3478)
                 .setUsername("username")
                 .setPassword("password")
                 .createIceServer());
-        iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP_3478)
-                .setUsername("username")
-                .setPassword("password")
-                .createIceServer());
-
+*/
         if (remoteRendererList != null) {
             int size = remoteRendererList.size();
             for (int i = 0; i < size; i++) {
@@ -716,7 +724,6 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             final AppRTCAudioManager.AudioDevice device, final Set<AppRTCAudioManager.AudioDevice> availableDevices) {
         Log.d(TAG, "onAudioManagerDevicesChanged: " + availableDevices + ", "
                 + "selected: " + device);
-        // TODO(henrika): add callback handler.
     }
 
     // Disconnect from remote resources, dispose of local resources, and exit.
