@@ -11,6 +11,8 @@ import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.NetworkUtils
+import com.roundesk.sdk.util.ToastUtil
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -95,17 +97,24 @@ class ApiFunctions(private var mContext: Activity?) {
 
                         if (!isIncomingCall) {
                             if (roomId != 0 && meetingId != 0) {
-                                val intent =
-                                    Intent(mContext, VideoCallActivityNew::class.java)
-                                intent.putExtra("activity", "Outgoing")
-                                intent.putExtra("room_id", roomId)
-                                intent.putExtra("meeting_id", meetingId)
-                                intent.putExtra("stream_id", streamId)
-                                intent.putExtra("caller_name", callerName)
-                                intent.putExtra("isIncomingCall", isIncomingCall)
-                                intent.putExtra("audioStatus", audioStatus)
-                                intent.putExtra("videoStatus", videoStatus)
-                                mContext?.startActivity(intent)
+                                if (mContext?.let { NetworkUtils.isConnectedFast(it) } == true) {
+                                    val intent = Intent(mContext, VideoCallActivityNew::class.java)
+                                    intent.putExtra("activity", "Outgoing")
+                                    intent.putExtra("room_id", roomId)
+                                    intent.putExtra("meeting_id", meetingId)
+                                    intent.putExtra("stream_id", streamId)
+                                    intent.putExtra("caller_name", callerName)
+                                    intent.putExtra("isIncomingCall", isIncomingCall)
+                                    intent.putExtra("audioStatus", audioStatus)
+                                    intent.putExtra("videoStatus", videoStatus)
+                                    mContext?.startActivity(intent)
+                                } else {
+                                    mContext?.let {
+                                        ToastUtil.displayLongDurationToast(
+                                            it, "Your Connection is not Stable. For video calling your connection should be stable"
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

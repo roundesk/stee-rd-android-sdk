@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/relLayoutMain"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relLayoutMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.VideoCallActivityNew">
@@ -26,16 +26,52 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true" />
 
-            <org.webrtc.SurfaceViewRenderer
-                android:id="@+id/play_view_renderer1"
+            <RelativeLayout
+                android:id="@+id/relLayParticipant2"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="visible" />
+                android:layout_height="wrap_content">
 
-            <org.webrtc.SurfaceViewRenderer
-                android:id="@+id/publish_view_renderer"
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/play_view_renderer1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/txtParticipant2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:padding="@dimen/dimen_10dp"
+                    android:layout_alignStart="@id/play_view_renderer1"
+                    android:layout_alignTop="@id/play_view_renderer1"
+                    android:text="Participant 2"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dimen_16sp" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relLayParticipant1"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="wrap_content">
+
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/publish_view_renderer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/txtParticipant1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:padding="@dimen/dimen_10dp"
+                    android:text="Participant 1"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dimen_16sp" />
+
+            </RelativeLayout>
 
         </RelativeLayout>
 
@@ -47,29 +83,77 @@
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <org.webrtc.SurfaceViewRenderer
-                android:id="@+id/play_view_renderer2"
+            <RelativeLayout
+                android:id="@+id/relLayParticipant3"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="center"
-                />
+                android:visibility="gone">
 
-            <org.webrtc.SurfaceViewRenderer
-                android:id="@+id/play_view_renderer3"
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/play_view_renderer2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/txtParticipant3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:padding="@dimen/dimen_10dp"
+                    android:text="Participant 3"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dimen_16sp" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relLayParticipant4"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                 />
+                android:visibility="gone">
+
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/play_view_renderer3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/txtParticipant4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@color/black"
+                    android:padding="@dimen/dimen_10dp"
+                    android:text="Participant 4"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/dimen_16sp" />
+            </RelativeLayout>
         </LinearLayout>
 
-        <org.webrtc.SurfaceViewRenderer
-            android:id="@+id/play_view_renderer4"
+        <RelativeLayout
+            android:id="@+id/relLayParticipant5"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:padding="@dimen/dimen_10dp"
-            android:visibility="gone" />
+            android:visibility="gone">
+
+            <org.webrtc.SurfaceViewRenderer
+                android:id="@+id/play_view_renderer4"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/txtParticipant5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/black"
+                android:padding="@dimen/dimen_10dp"
+                android:text="Participant 5"
+                android:textColor="@color/white"
+                android:textSize="@dimen/dimen_16sp" />
+        </RelativeLayout>
     </LinearLayout>
 
     <View
@@ -139,9 +223,9 @@
             android:layout_marginTop="@dimen/dimen_10dp"
             android:fontFamily="@font/segoe_ui_semi_bold"
             android:text="@string/str_outgoing_caller_name"
-            android:visibility="gone"
             android:textColor="@color/white_dark"
-            android:textSize="@dimen/dimen_16sp" />
+            android:textSize="@dimen/dimen_16sp"
+            android:visibility="gone" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -160,5 +244,5 @@
         android:id="@+id/viewHideShowBottomSheet"
         android:layout_width="@dimen/dimen_200dp"
         android:layout_height="@dimen/dimen_200dp"
-        android:layout_centerInParent="true"/>
+        android:layout_centerInParent="true" />
 </RelativeLayout>

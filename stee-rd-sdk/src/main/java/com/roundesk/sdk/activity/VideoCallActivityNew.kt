@@ -31,10 +31,7 @@ import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
-import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
-import com.roundesk.sdk.util.Stopwatch
-import com.roundesk.sdk.util.ToastUtil
+import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.*
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
@@ -56,12 +53,13 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
-//        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+
+        //        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
 //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
 //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5443"
         private val SERVER_ADDRESS: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
 
-//        private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
+        //        private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
         private val SERVER_URL = "wss://$SERVER_ADDRESS/WebRTCAppEE/websocket"
     }
 
@@ -114,6 +112,17 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var btnDecline: Button? = null
     private var recyclerview: RecyclerView? = null
 
+    private var relLayParticipant1: RelativeLayout? = null
+    private var relLayParticipant2: RelativeLayout? = null
+    private var relLayParticipant3: RelativeLayout? = null
+    private var relLayParticipant4: RelativeLayout? = null
+    private var relLayParticipant5: RelativeLayout? = null
+    private var txtParticipant1: TextView? = null
+    private var txtParticipant2: TextView? = null
+    private var txtParticipant3: TextView? = null
+    private var txtParticipant4: TextView? = null
+    private var txtParticipant5: TextView? = null
+
     private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
 
@@ -145,19 +154,27 @@ class VideoCallActivityNew : AppCompatActivity(),
     var userStreamIDList: ArrayList<String> = arrayListOf()
     var tempValue: Int? = 0
     var lastStreamSize: Int? = -1
-
+    private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> =
+        arrayListOf()
 
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
         override fun run() {
             LogUtil.e(
-                TAG,
-                "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size
+                TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size
             )
             runOnUiThread {
-                if (tempValue != conferenceManager?.connectedStreamList?.size) {
-                    tempValue = conferenceManager?.connectedStreamList?.size
-                    refreshRoomDetails()
+                if (NetworkUtils.isConnectedFast(this@VideoCallActivityNew)) {
+                    if (tempValue != conferenceManager?.connectedStreamList?.size) {
+                        tempValue = conferenceManager?.connectedStreamList?.size
+                        refreshRoomDetails()
+                    }
+                } else {
+                    ToastUtil.displayLongDurationToast(
+                        this@VideoCallActivityNew,
+                        "Your Connection is not Stable. For video calling your connection should be stable"
+                    )
+                    finish()
                 }
             }
             mainHandler.postDelayed(this, 1500)
@@ -323,6 +340,18 @@ class VideoCallActivityNew : AppCompatActivity(),
         relLayUser12 = findViewById(R.id.relLayUser12)
         linLayUser34 = findViewById(R.id.linLayUser34)
 
+        relLayParticipant1 = findViewById(R.id.relLayParticipant1)
+        relLayParticipant2 = findViewById(R.id.relLayParticipant2)
+        relLayParticipant3 = findViewById(R.id.relLayParticipant3)
+        relLayParticipant4 = findViewById(R.id.relLayParticipant4)
+        relLayParticipant5 = findViewById(R.id.relLayParticipant5)
+
+        txtParticipant1 = findViewById(R.id.txtParticipant1)
+        txtParticipant2 = findViewById(R.id.txtParticipant2)
+        txtParticipant3 = findViewById(R.id.txtParticipant3)
+        txtParticipant4 = findViewById(R.id.txtParticipant4)
+        txtParticipant5 = findViewById(R.id.txtParticipant5)
+
         imgCallEnd?.isEnabled = false
         imgBottomCamera?.isEnabled = false
         imgBottomVideo?.isEnabled = false
@@ -330,7 +359,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgBack?.isEnabled = false
 
         linLayUser34?.visibility = View.GONE
-        play_view_renderer4?.visibility = View.GONE
+        displayParticipant5View(false)
+//        play_view_renderer4?.visibility = View.GONE
         sheetBehavior.isHideable = false
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
@@ -1141,7 +1171,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun showDefaultView() {
         relLayUser12?.visibility = View.VISIBLE
         linLayUser34?.visibility = View.GONE
-        play_view_renderer4?.visibility = View.GONE
+        displayParticipant5View(false)
         dividerView?.visibility = View.GONE
 
         val paramsCaller: RelativeLayout.LayoutParams =
@@ -1166,9 +1196,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun showTwoUsersUI() {
         relLayUser12?.visibility = View.VISIBLE
         linLayUser34?.visibility = View.GONE
-        play_view_renderer2?.visibility = View.GONE
-        play_view_renderer3?.visibility = View.GONE
-        play_view_renderer4?.visibility = View.GONE
+//        play_view_renderer2?.visibility = View.GONE
+        displayParticipant3View(false)
+//        play_view_renderer3?.visibility = View.GONE
+        displayParticipant4View(false)
+//        play_view_renderer4?.visibility = View.GONE
+        displayParticipant5View(false)
         dividerView?.visibility = View.GONE
 
         val paramsCaller: RelativeLayout.LayoutParams =
@@ -1190,28 +1223,6 @@ class VideoCallActivityNew : AppCompatActivity(),
         paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_END);
         publishViewRenderer?.layoutParams = paramsReceiver
         publishViewRenderer?.elevation = 2F
-    }
-
-    private fun showThreeUsersUI() {
-        twoUsersTopView()
-        linLayUser34?.visibility = View.VISIBLE
-        play_view_renderer2?.visibility = View.VISIBLE
-        play_view_renderer3?.visibility = View.GONE
-        play_view_renderer4?.visibility = View.GONE
-    }
-
-    private fun showFourUsersUI() {
-        twoUsersTopView()
-        linLayUser34?.visibility = View.VISIBLE
-        play_view_renderer3?.visibility = View.VISIBLE
-        play_view_renderer4?.visibility = View.GONE
-    }
-
-    private fun showFiveUsersUI() {
-        twoUsersTopView()
-        linLayUser34?.visibility = View.VISIBLE
-        play_view_renderer3?.visibility = View.VISIBLE
-        play_view_renderer4?.visibility = View.VISIBLE
     }
 
     private fun twoUsersTopView() {
@@ -1237,6 +1248,71 @@ class VideoCallActivityNew : AppCompatActivity(),
         paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_START)
         play_view_renderer1?.layoutParams = paramsReceiver
         play_view_renderer1?.elevation = 2F
+    }
+
+    private fun showThreeUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+//        play_view_renderer2?.visibility = View.VISIBLE
+        displayParticipant3View(true)
+//        play_view_renderer3?.visibility = View.GONE
+        displayParticipant4View(false)
+//        play_view_renderer4?.visibility = View.GONE
+        displayParticipant5View(false)
+    }
+
+    private fun showFourUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+//        play_view_renderer3?.visibility = View.VISIBLE
+        displayParticipant4View(true)
+//        play_view_renderer4?.visibility = View.GONE
+        displayParticipant5View(false)
+    }
+
+    private fun showFiveUsersUI() {
+        twoUsersTopView()
+        linLayUser34?.visibility = View.VISIBLE
+//        play_view_renderer3?.visibility = View.VISIBLE
+        displayParticipant4View(true)
+//        play_view_renderer4?.visibility = View.VISIBLE
+        displayParticipant5View(true)
+    }
+
+    private fun displayParticipant3View(visible: Boolean) {
+        if (!visible) {
+            relLayParticipant3?.visibility = View.GONE
+            play_view_renderer2?.visibility = View.GONE
+            txtParticipant3?.visibility = View.GONE
+        } else {
+            relLayParticipant3?.visibility = View.VISIBLE
+            play_view_renderer2?.visibility = View.VISIBLE
+            txtParticipant3?.visibility = View.VISIBLE
+        }
+    }
+
+    private fun displayParticipant4View(visible: Boolean) {
+        if (!visible) {
+            relLayParticipant4?.visibility = View.GONE
+            play_view_renderer3?.visibility = View.GONE
+            txtParticipant4?.visibility = View.GONE
+        } else {
+            relLayParticipant4?.visibility = View.VISIBLE
+            play_view_renderer3?.visibility = View.VISIBLE
+            txtParticipant4?.visibility = View.VISIBLE
+        }
+    }
+
+    private fun displayParticipant5View(visible: Boolean) {
+        if (!visible) {
+            relLayParticipant5?.visibility = View.GONE
+            play_view_renderer4?.visibility = View.GONE
+            txtParticipant5?.visibility = View.GONE
+        } else {
+            relLayParticipant5?.visibility = View.VISIBLE
+            play_view_renderer4?.visibility = View.VISIBLE
+            txtParticipant5?.visibility = View.VISIBLE
+        }
     }
 
     private fun playSong() {
@@ -1293,6 +1369,9 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                         // Setting the Adapter with the recyclerview
                         recyclerview?.adapter = bottomSheetAdapter
+
+                        participantsList.clear()
+                        response.body()?.let { participantsList.addAll(it.success) }
                     }
                 }
             }

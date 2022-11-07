@@ -1,9 +1,14 @@
 package com.roundesk.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.PowerManager
+import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -23,6 +28,8 @@ import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.NetworkUtils
+import com.roundesk.sdk.util.ToastUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -109,15 +116,29 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
-                    // Below line will initiate the call
-                    ApiFunctions(this).initiateCall(
-                        arraylistReceiverId,
-                        "paramedic",
-                        SocketConstants.CALLER_SOCKET_ID,
-                        SocketConstants.CALLER_AUDIO_STATUS,
-                        SocketConstants.CALLER_VIDEO_STATUS,
-                        "a3dt3ffdd"
-                    )
+                    if (isNetworkConnected(this)) {
+                        // Below line will initiate the call
+                        if (isConnectedConnectionFast(this)) {
+                            ApiFunctions(this).initiateCall(
+                                arraylistReceiverId,
+                                "paramedic",
+                                SocketConstants.CALLER_SOCKET_ID,
+                                SocketConstants.CALLER_AUDIO_STATUS,
+                                SocketConstants.CALLER_VIDEO_STATUS,
+                                "a3dt3ffdd"
+                            )
+                        }else{
+                            ToastUtil.displayLongDurationToast(
+                                this,
+                                "Your Connection is not Stable. For video calling your connection should be stable"
+                            )
+                        }
+                    } else {
+                        ToastUtil.displayLongDurationToast(
+                            this,
+                            "Please check your internet Connection"
+                        )
+                    }
                 } else {
                     if (!hasCameraPermission()) {
                         EasyPermissions.requestPermissions(
@@ -444,5 +465,73 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     private fun isExternalStorageReadable(): Boolean {
         val state = Environment.getExternalStorageState()
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
+    }
+
+    private fun isNetworkConnected(context: Context): Boolean {
+        return try {
+            val connectivityManager =
+                context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val networkInfo = connectivityManager.activeNetworkInfo
+            networkInfo?.isConnected ?: isPowerSaveMode(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun isPowerSaveMode(context: Context): Boolean {
+        return if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            pm.isPowerSaveMode
+        } else {
+            false
+        }
+    }
+
+    fun isConnectedConnectionFast(context: Context): Boolean {
+        val info = NetworkUtils.getNetworkInfo(context)
+        return info != null && info.isConnected && checkConnectionSpeed(
+            info.type,
+            info.subtype
+        )
+    }
+
+
+    private fun checkConnectionSpeed(type: Int, subType: Int): Boolean {
+        return if (type == ConnectivityManager.TYPE_WIFI) {
+            true
+        } else if (type == ConnectivityManager.TYPE_MOBILE) {
+            when (subType) {
+                TelephonyManager.NETWORK_TYPE_1xRTT -> false // ~ 50-100 kbps
+                TelephonyManager.NETWORK_TYPE_CDMA -> false // ~ 14-64 kbps
+                TelephonyManager.NETWORK_TYPE_EDGE -> false // ~ 50-100 kbps
+                TelephonyManager.NETWORK_TYPE_EVDO_0 -> true // ~ 400-1000 kbps
+                TelephonyManager.NETWORK_TYPE_EVDO_A -> true // ~ 600-1400 kbps
+                TelephonyManager.NETWORK_TYPE_GPRS -> false // ~ 100 kbps
+                TelephonyManager.NETWORK_TYPE_HSDPA -> true // ~ 2-14 Mbps
+                TelephonyManager.NETWORK_TYPE_HSPA -> true // ~ 700-1700 kbps
+                TelephonyManager.NETWORK_TYPE_HSUPA -> true // ~ 1-23 Mbps
+                TelephonyManager.NETWORK_TYPE_UMTS -> true // ~ 400-7000 kbps
+                /*
+         * Above API level 7, make sure to set android:targetSdkVersion
+         * to appropriate level to use these
+         */
+                TelephonyManager.NETWORK_TYPE_EHRPD // API level 11
+                -> true // ~ 1-2 Mbps
+                TelephonyManager.NETWORK_TYPE_EVDO_B // API level 9
+                -> true // ~ 5 Mbps
+                TelephonyManager.NETWORK_TYPE_HSPAP // API level 13
+                -> true // ~ 10-20 Mbps
+                TelephonyManager.NETWORK_TYPE_IDEN // API level 8
+                -> false // ~25 kbps
+                TelephonyManager.NETWORK_TYPE_LTE // API level 11
+                -> true // ~ 10+ Mbps
+                // Unknown
+                TelephonyManager.NETWORK_TYPE_UNKNOWN -> false
+                else -> false
+            }
+        } else {
+            false
+        }
     }
 }
