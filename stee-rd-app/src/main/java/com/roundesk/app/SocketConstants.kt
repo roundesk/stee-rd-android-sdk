@@ -9,14 +9,9 @@ object SocketConstants {
     const val RECEIVER_VIDEO_STATUS: String = "on"
 
     object UUIDs {
-        const val USER_ROUNDESK_ADMIN: String = "rfhuzkfvodpajiletqss"
-        const val USER_DEEPAK_YAHOO: String = "crhuzkfvodpajiletqgb"
-        const val USER_DEEPAK_OUTLOOK: String = "agjqticlbhvredpouzkf"
-        const val USER_DEEPAK: String = "drpbzfjiouhqkaegcvtl"
-        const val USER_HIMANSHU: String = "wqhuzkfvodpajiletqst"
-        const val USER_PRIYANKA: String = "gihuzkfvodpajiletlmn"
-        const val USER_VASU: String = "cvdbzfjiouhqkaegcvtl"
-        const val USER_MASHUK: String = "mashuk"
+        const val USER_DEEPAK: String = "deepak@evvoiot.com"
+        const val USER_HIMANSHU: String = "himanshu@evvoiot.com"
+        const val USER_PRIYANKA: String = "priyanka@evvoiot.com"
     }
 
     const val showIncomingCallUI: Boolean = false
@@ -32,6 +27,4 @@ object SocketConstants {
         const val SOCKET_TYPE_NEW_CALL: String = "new"
         const val SOCKET_TYPE_REJECT_CALL: String = "rejected"
     }
-
-
 }

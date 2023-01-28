@@ -8,9 +8,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.media.MediaPlayer
+import android.nfc.Tag
 import android.os.*
+import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
+import android.view.Gravity
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
@@ -42,9 +45,12 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.IOException
+import java.lang.Character.toString
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.Arrays.toString
 import java.util.concurrent.TimeUnit
+import kotlin.Unit.toString
 
 
 class VideoCallActivityNew : AppCompatActivity(),
@@ -54,13 +60,14 @@ class VideoCallActivityNew : AppCompatActivity(),
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
 
-        //        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
+//        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
 //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
 //        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5443"
-        private val SERVER_ADDRESS: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
+        private val SERVER_ADDRESS: String = "stee-prod.roundesk.io:5443"
+//        private val SERVER_ADDRESS: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
 
         //        private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
-        private val SERVER_URL = "wss://$SERVER_ADDRESS/WebRTCAppEE/websocket"
+        private val SERVER_URL = "wss://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
     private var mRoomId: Int = 0
@@ -89,7 +96,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var switchView: View? = null
     private var dividerView: View? = null
     private var viewHideShowBottomSheet: View? = null
-    private var relLayUser12: RelativeLayout? = null
+
+    private var frameLaySurfaceViews: FrameLayout? = null
     private var linLayUser34: LinearLayout? = null
     private var relLayToolbar: RelativeLayout? = null
     private var relLayoutMain: RelativeLayout? = null
@@ -117,11 +125,20 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var relLayParticipant3: RelativeLayout? = null
     private var relLayParticipant4: RelativeLayout? = null
     private var relLayParticipant5: RelativeLayout? = null
+    private var txtInitialViewParticipant1: TextView? = null
+    private var txtInitialViewParticipant2: TextView? = null
     private var txtParticipant1: TextView? = null
     private var txtParticipant2: TextView? = null
     private var txtParticipant3: TextView? = null
     private var txtParticipant4: TextView? = null
     private var txtParticipant5: TextView? = null
+    private var dividerView1: View? = null
+    private var dividerView2: View? = null
+    private var relLayNames12: RelativeLayout? = null
+    private var relLayNames34: RelativeLayout? = null
+    private var relLayNames5: RelativeLayout? = null
+    private var relLay2ParticipantsName: RelativeLayout? = null
+    private var linLayMultipleParticipantsName: LinearLayout? = null
 
     private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
@@ -137,6 +154,11 @@ class VideoCallActivityNew : AppCompatActivity(),
     var newMeetingId: Int? = null
     var tempMeetingId: Int? = null
     var tempRoomId: Int? = null
+    private val displayMetrics = DisplayMetrics()
+
+    var screenWidth = displayMetrics.widthPixels
+    var screenHeight = displayMetrics.heightPixels
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
@@ -151,11 +173,19 @@ class VideoCallActivityNew : AppCompatActivity(),
     var mpCallReject: MediaPlayer? = null
 
     private var bottomSheetAdapter: BottomSheetUserListAdapter? = null
-    var userStreamIDList: ArrayList<String> = arrayListOf()
-    var tempValue: Int? = 0
-    var lastStreamSize: Int? = -1
-    private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> =
-        arrayListOf()
+    private var userStreamIDList: ArrayList<String> = arrayListOf()
+    private var tempUserStreamIDList: ArrayList<String> = arrayListOf()
+    private var joinedUserStreamIds: ArrayList<String> = arrayListOf()
+    private var allJoinedUserArray: ArrayList<String> = arrayListOf()
+    private var tempValue: Int? = 0
+    private var lastStreamSize: Int? = -1
+    private var addedOrRemovedStreamId: String? = ""
+    var strParticipant1Name: String? = ""
+    var strParticipant2Name: String? = ""
+    var strParticipant3Name: String? = ""
+    var strParticipant4Name: String? = ""
+    var strParticipant5Name: String? = ""
+    private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> = arrayListOf()
 
     lateinit var mainHandler: Handler
     private val updateTextTask = object : Runnable {
@@ -183,12 +213,16 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun refreshRoomDetails() {
         if (conferenceManager?.connectedStreamList?.size == 1) {
+            switchView?.isClickable = true
+            switchView?.isFocusable = true
             lastStreamSize = 1
             userStreamIDList.clear()
-            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
             if (!initialView) {
                 imgBack?.isEnabled = true
-                switchView?.performClick()
+                switchLayout(isCallerSmall)
                 initialView = true
             }
 
@@ -196,10 +230,49 @@ class VideoCallActivityNew : AppCompatActivity(),
                 showTwoUsersUI()
                 isMultipleUsersConnected = false
             }
+
+            if (tempUserStreamIDList.isEmpty()) {
+                tempUserStreamIDList.addAll(userStreamIDList)
+                joinedUserStreamIds.add(tempUserStreamIDList[0])
+                allJoinedUserArray.addAll(joinedUserStreamIds)
+
+                relLay2ParticipantsName?.visibility = View.VISIBLE
+                linLayMultipleParticipantsName?.visibility = View.GONE
+                txtInitialViewParticipant1?.text = callerName
+                txtParticipant1?.text = callerName
+                txtInitialViewParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
+                txtParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
+
+                strParticipant1Name = callerName
+                strParticipant2Name = getJoinedUserName(joinedUserStreamIds[0])
+            } else {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                    relLay2ParticipantsName?.visibility = View.VISIBLE
+                    linLayMultipleParticipantsName?.visibility = View.GONE
+                    relLayNames34?.visibility = View.GONE
+                    txtParticipant3?.visibility = View.GONE
+                }
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            }
         }
 
         if (conferenceManager!!.connectedStreamList != null) {
-            if (conferenceManager!!.connectedStreamList.size > 0) {
+            if (conferenceManager!!.connectedStreamList.isNotEmpty()) {
                 if (!startTimer) {
                     startCallDurationTimer()
                     linlayCallerDetails?.visibility = View.GONE
@@ -215,36 +288,128 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         if (conferenceManager?.connectedStreamList?.size == 2) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
             imgBack?.isEnabled = true
             lastStreamSize = 2
             userStreamIDList.clear()
-            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
+            if (tempUserStreamIDList.isNotEmpty()) {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                } else {
+                    userStreamIDList.removeAll(tempUserStreamIDList)
+                    joinedUserStreamIds.add(userStreamIDList[0])
+                    allJoinedUserArray.clear()
+                    allJoinedUserArray.addAll(joinedUserStreamIds)
+                    showThreeUsersUI()
+                    relLay2ParticipantsName?.visibility = View.GONE
+                    linLayMultipleParticipantsName?.visibility = View.VISIBLE
+                    relLayNames34?.visibility = View.VISIBLE
+                    txtParticipant3?.visibility = View.VISIBLE
+                    txtParticipant3?.text = getJoinedUserName(joinedUserStreamIds[1])
+
+                    strParticipant3Name = getJoinedUserName(joinedUserStreamIds[1])
+                }
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            }
+
             isMultipleUsersConnected = true
-            showThreeUsersUI()
         }
 
         if (conferenceManager?.connectedStreamList?.size == 3) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
             imgBack?.isEnabled = true
             lastStreamSize = 3
             userStreamIDList.clear()
-            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
             isMultipleUsersConnected = true
-            showFourUsersUI()
+            if (tempUserStreamIDList.isNotEmpty()) {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                } else {
+                    userStreamIDList.removeAll(tempUserStreamIDList)
+                    joinedUserStreamIds.add(userStreamIDList[0])
+                    allJoinedUserArray.clear()
+                    allJoinedUserArray.addAll(joinedUserStreamIds)
+                    showFourUsersUI()
+                    dividerView1?.visibility = View.VISIBLE
+                    txtParticipant4?.visibility = View.VISIBLE
+                    txtParticipant4?.text = getJoinedUserName(joinedUserStreamIds[2])
+
+                    strParticipant4Name = getJoinedUserName(joinedUserStreamIds[2])
+                }
+
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            }
         }
 
         if (conferenceManager?.connectedStreamList?.size == 4) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
             imgBack?.isEnabled = true
             lastStreamSize = 4
             userStreamIDList.clear()
-            userStreamIDList.add(conferenceManager?.connectedStreamList.toString())
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
             isMultipleUsersConnected = true
-            showFiveUsersUI()
+            if (tempUserStreamIDList.isNotEmpty()) {
+                userStreamIDList.removeAll(tempUserStreamIDList)
+                joinedUserStreamIds.add(userStreamIDList[0])
+                allJoinedUserArray.clear()
+                allJoinedUserArray.addAll(joinedUserStreamIds)
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+                showFiveUsersUI()
+                relLayNames5?.visibility = View.VISIBLE
+                txtParticipant5?.text = getJoinedUserName(joinedUserStreamIds[3])
+                strParticipant5Name = getJoinedUserName(joinedUserStreamIds[3])
+            }
         }
+
+//        Log.e("$TAG Connected Users", "participantsList : " + Gson().toJson(participantsList))
+        Log.e("$TAG Connected Users", "joinedUserStreamIds : " + Gson().toJson(joinedUserStreamIds))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
         window.addFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                     or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
@@ -282,7 +447,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     + " receiver_stream_id : $mReceiver_stream_id"
                     + " callerName : $callerName"
                     + " receiverName : $receiverName"
-                    + " isReceiverID : $isReceiverID"
+//                    + " isReceiverID : $isReceiverID"
                     + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
                     + " audioStatus : $audioStatus"
                     + " videoStatus : $videoStatus"
@@ -337,7 +502,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         btnDecline = findViewById(R.id.btnDecline)
         recyclerview = findViewById(R.id.recyclerview)
 
-        relLayUser12 = findViewById(R.id.relLayUser12)
+        frameLaySurfaceViews = findViewById(R.id.frameLaySurfaceViews)
         linLayUser34 = findViewById(R.id.linLayUser34)
 
         relLayParticipant1 = findViewById(R.id.relLayParticipant1)
@@ -346,11 +511,22 @@ class VideoCallActivityNew : AppCompatActivity(),
         relLayParticipant4 = findViewById(R.id.relLayParticipant4)
         relLayParticipant5 = findViewById(R.id.relLayParticipant5)
 
+        txtInitialViewParticipant1 = findViewById(R.id.txtInitialViewParticipant1)
+        txtInitialViewParticipant2 = findViewById(R.id.txtInitialViewParticipant2)
         txtParticipant1 = findViewById(R.id.txtParticipant1)
         txtParticipant2 = findViewById(R.id.txtParticipant2)
         txtParticipant3 = findViewById(R.id.txtParticipant3)
         txtParticipant4 = findViewById(R.id.txtParticipant4)
         txtParticipant5 = findViewById(R.id.txtParticipant5)
+
+        dividerView1 = findViewById(R.id.dividerView1)
+        dividerView2 = findViewById(R.id.dividerView2)
+
+        relLay2ParticipantsName = findViewById(R.id.relLay2ParticipantsName)
+        linLayMultipleParticipantsName = findViewById(R.id.linLayMultipleParticipantsName)
+        relLayNames12 = findViewById(R.id.relLayNames12)
+        relLayNames34 = findViewById(R.id.relLayNames34)
+        relLayNames5 = findViewById(R.id.relLayNames5)
 
         imgCallEnd?.isEnabled = false
         imgBottomCamera?.isEnabled = false
@@ -360,7 +536,6 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         linLayUser34?.visibility = View.GONE
         displayParticipant5View(false)
-//        play_view_renderer4?.visibility = View.GONE
         sheetBehavior.isHideable = false
 
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
@@ -372,7 +547,6 @@ class VideoCallActivityNew : AppCompatActivity(),
 
         bottomSheetAdapter = BottomSheetUserListAdapter(this, listOf())
 
-//        defaultView()
         showDefaultView()
         setListeners()
         sheetBehaviour()
@@ -404,17 +578,6 @@ class VideoCallActivityNew : AppCompatActivity(),
             progressBar2?.visibility = View.VISIBLE
             txtRinging2?.visibility = View.VISIBLE
         }
-
-        /*if (Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_HIMANSHU) {
-            txtBottomCallerName?.text = "Himanshu"
-            txtBottomReceiverName?.text = "Deepak"
-            txtDoctorName?.text = "Deepak"
-        } else {
-            txtBottomCallerName?.text = "Deepak"
-            txtBottomReceiverName?.text = "Himanshu"
-            txtDoctorName?.text = "Himanshu"
-        }*/
-
 
         LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
         conferenceManager = ConferenceManager(
@@ -455,7 +618,6 @@ class VideoCallActivityNew : AppCompatActivity(),
                 return
             }
         }
-
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -464,7 +626,6 @@ class VideoCallActivityNew : AppCompatActivity(),
             R.id.imgCallEnd -> {
                 conferenceManager?.leaveFromConference()
                 stopCallDurationTimer()
-//                finish()
                 endCall()
             }
 
@@ -493,7 +654,6 @@ class VideoCallActivityNew : AppCompatActivity(),
                     pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
                     enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
                 }
-//                enterPictureInPictureMode()
             }
 
             R.id.switchView -> {
@@ -773,58 +933,98 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun switchLayout(isCallerSmall: Boolean) {
-//        dividerView?.visibility = View.GONE
+        val paramsRemoteVideo: RelativeLayout.LayoutParams =
+            play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+        val paramsLocalVideo: RelativeLayout.LayoutParams =
+            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+
+        val paramsRelLayLocal: FrameLayout.LayoutParams =
+            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
+        val paramsRelLayRemote: FrameLayout.LayoutParams =
+            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+
+        publishViewRenderer.visibility = View.GONE
+        play_view_renderer1?.visibility = View.GONE
+        relLayParticipant1?.removeView(publishViewRenderer)
+        relLayParticipant2?.removeView(play_view_renderer1)
+        publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
+        play_view_renderer1?.setZOrderMediaOverlay(!isCallerSmall)
 
         if (isCallerSmall) {
-            val paramsReceiver: RelativeLayout.LayoutParams =
-                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsReceiver.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsReceiver.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsReceiver.marginEnd = 0
-            paramsReceiver.topMargin = 0
-            play_view_renderer1?.layoutParams = paramsReceiver
+            setSmallLocalVideoView(true, paramsLocalVideo)
+            setSmallRemoteVideoView(false, paramsRemoteVideo)
 
-            val paramsCaller: RelativeLayout.LayoutParams =
-                publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsCaller.height = 510
-            paramsCaller.width = 432
-            paramsCaller.marginEnd = 48
-            paramsCaller.topMargin = 48
-            paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_END);
-            publishViewRenderer.layoutParams = paramsCaller
-            publishViewRenderer.elevation = 2F
+            paramsRelLayLocal.height = 510
+            paramsRelLayLocal.width = 432
+            paramsRelLayLocal.marginEnd = 48
+            paramsRelLayLocal.topMargin = 48
+            paramsRelLayLocal.gravity = Gravity.END
 
-//            publishViewRenderer.bringToFront()
+            paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayRemote.marginEnd = 0
+            paramsRelLayRemote.topMargin = 0
 
-//            publishViewRenderer.invalidate()
-//            play_view_renderer1?.invalidate()
+            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
 
-
+            txtInitialViewParticipant2?.text = strParticipant1Name
+            txtInitialViewParticipant1?.text = strParticipant2Name
         } else {
-            val paramsCaller: RelativeLayout.LayoutParams =
-                publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsCaller.marginEnd = 0
-            paramsCaller.topMargin = 0
-            publishViewRenderer.layoutParams = paramsCaller
+            setSmallLocalVideoView(false, paramsLocalVideo)
+            setSmallRemoteVideoView(true, paramsRemoteVideo)
 
-            val paramsReceiver: RelativeLayout.LayoutParams =
-                play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
-            paramsReceiver.height = 510
-            paramsReceiver.width = 432
-            paramsReceiver.marginEnd = 48
-            paramsReceiver.topMargin = 48
-            paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            play_view_renderer1?.layoutParams = paramsReceiver
-            play_view_renderer1?.elevation = 2F
+            paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayLocal.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayLocal.marginEnd = 0
+            paramsRelLayLocal.topMargin = 0
 
-//            play_view_renderer1?.bringToFront()
+            paramsRelLayRemote.height = 510
+            paramsRelLayRemote.width = 432
+            paramsRelLayRemote.marginEnd = 48
+            paramsRelLayRemote.topMargin = 48
+            paramsRelLayRemote.gravity = Gravity.END
 
-//            publishViewRenderer.invalidate()
-//            play_view_renderer1?.invalidate()
+            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+
+            txtInitialViewParticipant1?.text = strParticipant1Name
+            txtInitialViewParticipant2?.text = strParticipant2Name
 
         }
+
+        publishViewRenderer.visibility = View.VISIBLE
+        play_view_renderer1?.visibility = View.VISIBLE
+    }
+
+    private fun setSmallLocalVideoView(
+        enableSmallView: Boolean,
+        paramsLocalVideo: RelativeLayout.LayoutParams
+    ) {
+        if (enableSmallView) {
+            paramsLocalVideo.height = 510
+            paramsLocalVideo.width = 432
+        } else {
+            paramsLocalVideo.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsLocalVideo.width = FrameLayout.LayoutParams.MATCH_PARENT
+        }
+
+        publishViewRenderer.layoutParams = paramsLocalVideo
+    }
+
+    private fun setSmallRemoteVideoView(
+        enableSmallView: Boolean,
+        paramsRemoteVideo: RelativeLayout.LayoutParams
+    ) {
+        if (enableSmallView) {
+            paramsRemoteVideo.height = 510
+            paramsRemoteVideo.width = 432
+        } else {
+            paramsRemoteVideo.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRemoteVideo.width = FrameLayout.LayoutParams.MATCH_PARENT
+        }
+
+        play_view_renderer1?.layoutParams = paramsRemoteVideo
     }
 
     override fun onPictureInPictureModeChanged(
@@ -1142,15 +1342,24 @@ class VideoCallActivityNew : AppCompatActivity(),
         conferenceManager?.leaveFromConference()
         initialView = false
         stopSong()
+        allJoinedUserArray.clear()
+        tempUserStreamIDList.clear()
+        userStreamIDList.clear()
+        joinedUserStreamIds.clear()
         /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).offAllEvent()*/
     }
 
-    private fun defaultView() {
+    private fun showDefaultView() {
+        frameLaySurfaceViews?.visibility = View.VISIBLE
+        linLayUser34?.visibility = View.GONE
+        displayParticipant5View(false)
+        dividerView?.visibility = View.GONE
+
         val paramsCaller: RelativeLayout.LayoutParams =
-            publishViewRenderer.getLayoutParams() as RelativeLayout.LayoutParams
+            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
         paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
         paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
         paramsCaller.marginEnd = 0
@@ -1158,32 +1367,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         publishViewRenderer.layoutParams = paramsCaller
 
         val paramsReceiver: RelativeLayout.LayoutParams =
-            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsReceiver.height = 510
-        paramsReceiver.width = 432
-        paramsReceiver.marginEnd = 48
-        paramsReceiver.topMargin = 48
-        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        play_view_renderer1?.layoutParams = paramsReceiver
-        play_view_renderer1?.elevation = 2F
-    }
-
-    private fun showDefaultView() {
-        relLayUser12?.visibility = View.VISIBLE
-        linLayUser34?.visibility = View.GONE
-        displayParticipant5View(false)
-        dividerView?.visibility = View.GONE
-
-        val paramsCaller: RelativeLayout.LayoutParams =
-            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.marginEnd = 0
-        paramsCaller.topMargin = 0
-        publishViewRenderer?.layoutParams = paramsCaller
-
-        val paramsReceiver: RelativeLayout.LayoutParams =
-            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
+            play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
         paramsReceiver.height = 510
         paramsReceiver.width = 432
         paramsReceiver.marginEnd = 48
@@ -1194,88 +1378,89 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun showTwoUsersUI() {
-        relLayUser12?.visibility = View.VISIBLE
+        frameLaySurfaceViews?.visibility = View.VISIBLE
         linLayUser34?.visibility = View.GONE
-//        play_view_renderer2?.visibility = View.GONE
         displayParticipant3View(false)
-//        play_view_renderer3?.visibility = View.GONE
         displayParticipant4View(false)
-//        play_view_renderer4?.visibility = View.GONE
         displayParticipant5View(false)
         dividerView?.visibility = View.GONE
 
-        val paramsCaller: RelativeLayout.LayoutParams =
-            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.marginEnd = 0
-        paramsCaller.topMargin = 0
-        play_view_renderer1?.layoutParams = paramsCaller
-
-        val paramsReceiver: RelativeLayout.LayoutParams =
-            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsReceiver.height = 510
-        paramsReceiver.width = 432
-        paramsReceiver.marginEnd = 48
-        paramsReceiver.marginStart = 48
-        paramsReceiver.topMargin = 48
-        paramsReceiver.addRule(RelativeLayout.END_OF, R.id.dividerView);
-        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_END);
-        publishViewRenderer?.layoutParams = paramsReceiver
-        publishViewRenderer?.elevation = 2F
+        switchLayout(isCallerSmall)
     }
 
-    private fun twoUsersTopView() {
+    private fun manageTopTwoUsersView() {
+        val paramsLocalVideo: RelativeLayout.LayoutParams =
+            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+        val paramsRemoteVideo: RelativeLayout.LayoutParams =
+            play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+        val paramsRelLayLocal: FrameLayout.LayoutParams =
+            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
+        val paramsRelLayRemote: FrameLayout.LayoutParams =
+            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+
         dividerView?.visibility = View.VISIBLE
-        val paramsCaller: RelativeLayout.LayoutParams =
-            publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsCaller.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.width = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsCaller.marginEnd = 0
-        paramsCaller.topMargin = 0
-        paramsCaller.addRule(RelativeLayout.END_OF, R.id.dividerView);
-        paramsCaller.addRule(RelativeLayout.ALIGN_PARENT_END);
-        publishViewRenderer?.layoutParams = paramsCaller
 
-        val paramsReceiver: RelativeLayout.LayoutParams =
-            play_view_renderer1?.getLayoutParams() as RelativeLayout.LayoutParams
-        paramsReceiver.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsReceiver.width = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsReceiver.marginEnd = 0
-        paramsReceiver.topMargin = 0
+        publishViewRenderer.visibility = View.GONE
+        play_view_renderer1?.visibility = View.GONE
+        relLayParticipant1?.removeView(publishViewRenderer)
+        relLayParticipant2?.removeView(play_view_renderer1)
 
-        paramsReceiver.addRule(RelativeLayout.START_OF, R.id.dividerView)
-        paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_START)
-        play_view_renderer1?.layoutParams = paramsReceiver
-        play_view_renderer1?.elevation = 2F
+        // set Local Video View Params
+        paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+        paramsLocalVideo.width = displayMetrics.widthPixels / 2
+        paramsLocalVideo.marginEnd = 0
+        paramsLocalVideo.topMargin = 0
+
+        // set Remote Video View Params
+        paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+        paramsRemoteVideo.width = displayMetrics.widthPixels / 2
+        paramsRemoteVideo.marginEnd = 0
+        paramsRemoteVideo.topMargin = 0
+
+        publishViewRenderer.layoutParams = paramsLocalVideo
+        play_view_renderer1?.layoutParams = paramsRemoteVideo
+
+
+        // set Relative Layout Local Video View Params
+        paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsRelLayLocal.width = displayMetrics.widthPixels / 2
+        paramsRelLayLocal.marginEnd = 0
+        paramsRelLayLocal.topMargin = 0
+        paramsRelLayLocal.gravity = Gravity.START
+
+        // set Relative Layout Remote Video View Params
+        paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+        paramsRelLayRemote.width = displayMetrics.widthPixels / 2
+        paramsRelLayRemote.marginEnd = 0
+        paramsRelLayRemote.topMargin = 0
+        paramsRelLayRemote.gravity = Gravity.END
+
+        relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+        relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+
+        publishViewRenderer.visibility = View.VISIBLE
+        play_view_renderer1?.visibility = View.VISIBLE
     }
 
     private fun showThreeUsersUI() {
-        twoUsersTopView()
+        manageTopTwoUsersView()
         linLayUser34?.visibility = View.VISIBLE
-//        play_view_renderer2?.visibility = View.VISIBLE
         displayParticipant3View(true)
-//        play_view_renderer3?.visibility = View.GONE
         displayParticipant4View(false)
-//        play_view_renderer4?.visibility = View.GONE
         displayParticipant5View(false)
     }
 
     private fun showFourUsersUI() {
-        twoUsersTopView()
+        manageTopTwoUsersView()
         linLayUser34?.visibility = View.VISIBLE
-//        play_view_renderer3?.visibility = View.VISIBLE
         displayParticipant4View(true)
-//        play_view_renderer4?.visibility = View.GONE
         displayParticipant5View(false)
     }
 
     private fun showFiveUsersUI() {
-        twoUsersTopView()
+        manageTopTwoUsersView()
         linLayUser34?.visibility = View.VISIBLE
-//        play_view_renderer3?.visibility = View.VISIBLE
         displayParticipant4View(true)
-//        play_view_renderer4?.visibility = View.VISIBLE
         displayParticipant5View(true)
     }
 
@@ -1283,11 +1468,9 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (!visible) {
             relLayParticipant3?.visibility = View.GONE
             play_view_renderer2?.visibility = View.GONE
-            txtParticipant3?.visibility = View.GONE
         } else {
             relLayParticipant3?.visibility = View.VISIBLE
             play_view_renderer2?.visibility = View.VISIBLE
-            txtParticipant3?.visibility = View.VISIBLE
         }
     }
 
@@ -1295,11 +1478,9 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (!visible) {
             relLayParticipant4?.visibility = View.GONE
             play_view_renderer3?.visibility = View.GONE
-            txtParticipant4?.visibility = View.GONE
         } else {
             relLayParticipant4?.visibility = View.VISIBLE
             play_view_renderer3?.visibility = View.VISIBLE
-            txtParticipant4?.visibility = View.VISIBLE
         }
     }
 
@@ -1307,11 +1488,99 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (!visible) {
             relLayParticipant5?.visibility = View.GONE
             play_view_renderer4?.visibility = View.GONE
-            txtParticipant5?.visibility = View.GONE
         } else {
             relLayParticipant5?.visibility = View.VISIBLE
             play_view_renderer4?.visibility = View.VISIBLE
-            txtParticipant5?.visibility = View.VISIBLE
+        }
+    }
+
+    private fun manageParticipantsUIVisibility(participantNumber: Int) {
+        Log.e(TAG, "participantNumber : $participantNumber")
+        when (participantNumber) {
+            0 -> {
+                val paramsRemoteVideo: RelativeLayout.LayoutParams =
+                    play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+                val paramsRelLayRemote: FrameLayout.LayoutParams =
+                    relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+
+                dividerView?.visibility = View.GONE
+
+                play_view_renderer1?.visibility = View.GONE
+                relLayParticipant2?.removeView(play_view_renderer1)
+
+                // set Remote Video View Params
+                paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                paramsRemoteVideo.width = displayMetrics.widthPixels / 2
+                paramsRemoteVideo.marginEnd = 0
+                paramsRemoteVideo.topMargin = 0
+
+                play_view_renderer1?.layoutParams = paramsRemoteVideo
+
+                // set Relative Layout Remote Video View Params
+                paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+                paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
+                paramsRelLayRemote.marginEnd = 0
+                paramsRelLayRemote.topMargin = 0
+                paramsRelLayRemote.gravity = Gravity.END
+
+                relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+
+                publishViewRenderer.visibility = View.GONE
+                relLayParticipant1?.visibility = View.GONE
+                play_view_renderer1?.visibility = View.VISIBLE
+            }
+            1 -> {
+                displayParticipant3View(false)
+                txtParticipant3?.visibility = View.GONE
+                dividerView2?.visibility = View.GONE
+                if (relLayParticipant5?.visibility == View.VISIBLE) {
+                    displayParticipant5View(true)
+                } else {
+                    displayParticipant5View(false)
+                }
+
+                if (relLayParticipant4?.visibility == View.VISIBLE) {
+                    displayParticipant4View(true)
+                } else {
+                    displayParticipant4View(false)
+                    linLayUser34?.visibility = View.GONE
+                }
+
+            }
+            2 -> {
+                displayParticipant4View(false)
+                txtParticipant4?.visibility = View.GONE
+                if (relLayParticipant3?.visibility == View.VISIBLE) {
+                    displayParticipant3View(true)
+                } else {
+                    displayParticipant3View(false)
+                    linLayUser34?.visibility = View.GONE
+                }
+
+                if (relLayParticipant5?.visibility == View.VISIBLE) {
+                    displayParticipant5View(true)
+                } else {
+                    displayParticipant5View(false)
+                }
+
+            }
+            3 -> {
+                displayParticipant5View(false)
+                txtParticipant5?.visibility = View.GONE
+
+                if (relLayParticipant3?.visibility == View.VISIBLE) {
+                    displayParticipant3View(true)
+                } else {
+                    displayParticipant3View(false)
+                }
+
+                if (relLayParticipant4?.visibility == View.VISIBLE) {
+                    displayParticipant4View(true)
+                } else {
+                    displayParticipant4View(false)
+                }
+
+            }
         }
     }
 
@@ -1431,6 +1700,19 @@ class VideoCallActivityNew : AppCompatActivity(),
     private fun isExternalStorageReadable(): Boolean {
         val state = Environment.getExternalStorageState()
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
+    }
+
+    private fun getJoinedUserName(participantStreamID: String): String {
+        var strParticipantName = ""
+        for (item in participantsList.indices) {
+            strParticipantName =
+                if (participantStreamID.contains(participantsList[item].receiver_id.toString())) {
+                    return participantsList[item].name.toString()
+                } else {
+                    participantStreamID
+                }
+        }
+        return strParticipantName
     }
 
 }

@@ -104,11 +104,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_OUTLOOK)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK_YAHOO)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_ROUNDESK_ADMIN)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_VASU)
+//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
+//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
+
                 if (SocketConstants.CALLER_SOCKET_ID == SocketConstants.UUIDs.USER_HIMANSHU)
                     arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
                 else

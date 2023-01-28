@@ -12,8 +12,8 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/relLayUser12"
+        <FrameLayout
+            android:id="@+id/frameLaySurfaceViews"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -24,12 +24,26 @@
                 android:id="@+id/dividerView"
                 android:layout_width=".1dp"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true" />
+                android:layout_gravity="center" />
+
+            <RelativeLayout
+                android:id="@+id/relLayParticipant1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/publish_view_renderer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </RelativeLayout>
 
             <RelativeLayout
                 android:id="@+id/relLayParticipant2"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:gravity="end">
 
                 <org.webrtc.SurfaceViewRenderer
                     android:id="@+id/play_view_renderer1"
@@ -37,43 +51,9 @@
                     android:layout_height="match_parent"
                     android:visibility="visible" />
 
-                <TextView
-                    android:id="@+id/txtParticipant2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@color/black"
-                    android:padding="@dimen/dimen_10dp"
-                    android:layout_alignStart="@id/play_view_renderer1"
-                    android:layout_alignTop="@id/play_view_renderer1"
-                    android:text="Participant 2"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/dimen_16sp" />
-
             </RelativeLayout>
 
-            <RelativeLayout
-                android:id="@+id/relLayParticipant1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.webrtc.SurfaceViewRenderer
-                    android:id="@+id/publish_view_renderer"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-                <TextView
-                    android:id="@+id/txtParticipant1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@color/black"
-                    android:padding="@dimen/dimen_10dp"
-                    android:text="Participant 1"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/dimen_16sp" />
-
-            </RelativeLayout>
-
-        </RelativeLayout>
+        </FrameLayout>
 
         <LinearLayout
             android:id="@+id/linLayUser34"
@@ -86,31 +66,21 @@
             <RelativeLayout
                 android:id="@+id/relLayParticipant3"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:visibility="gone">
 
                 <org.webrtc.SurfaceViewRenderer
                     android:id="@+id/play_view_renderer2"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center" />
+                    android:layout_height="match_parent" />
 
-                <TextView
-                    android:id="@+id/txtParticipant3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@color/black"
-                    android:padding="@dimen/dimen_10dp"
-                    android:text="Participant 3"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/dimen_16sp" />
             </RelativeLayout>
 
             <RelativeLayout
                 android:id="@+id/relLayParticipant4"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:visibility="gone">
 
@@ -119,22 +89,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
 
-                <TextView
-                    android:id="@+id/txtParticipant4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@color/black"
-                    android:padding="@dimen/dimen_10dp"
-                    android:text="Participant 4"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/dimen_16sp" />
             </RelativeLayout>
         </LinearLayout>
 
         <RelativeLayout
             android:id="@+id/relLayParticipant5"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:visibility="gone">
 
@@ -144,15 +105,6 @@
                 android:layout_height="match_parent"
                 android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/txtParticipant5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@color/black"
-                android:padding="@dimen/dimen_10dp"
-                android:text="Participant 5"
-                android:textColor="@color/white"
-                android:textSize="@dimen/dimen_16sp" />
         </RelativeLayout>
     </LinearLayout>
 
@@ -161,7 +113,9 @@
         android:layout_width="144dp"
         android:layout_height="170dp"
         android:layout_alignParentEnd="true"
-        android:layout_margin="16dp" />
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:focusable="true" />
 
     <RelativeLayout
         android:id="@+id/relLayToolbar"

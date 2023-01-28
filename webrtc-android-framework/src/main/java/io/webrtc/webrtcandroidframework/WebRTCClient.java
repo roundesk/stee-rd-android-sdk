@@ -138,7 +138,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private String spfoneUATStunServerUri_without_TCP_5080 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5080";
 
     // Turn Server URL for Dev
-    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:5080";
+//    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:3478";
+    private String turnServerURI = "turn:stee-prod.roundesk.io:3478";
 
 
     List<PeerConnection.IceServer> iceServers = new ArrayList();

@@ -10,8 +10,12 @@ object Constants {
 //    const val BASE_URL: String = "https://stee-rd-uat.roundesk.io/api/"
 //    const val SOCKET_URL: String = "https://stee-rd-uat.roundesk.io:3000"
 
-    const val BASE_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
-    const val SOCKET_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
+    // Use this for UAT
+    const val BASE_URL: String = "https://stee-prod.roundesk.io/api/"
+    const val SOCKET_URL: String = "https://stee-prod.roundesk.io:3000"
+
+//    const val BASE_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
+//    const val SOCKET_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 
@@ -26,13 +30,9 @@ object Constants {
     }
 
     object UUIDs {
-        const val USER_ROUNDESK_ADMIN: String = "rfhuzkfvodpajiletqss"
-        const val USER_DEEPAK_YAHOO: String = "crhuzkfvodpajiletqgb"
-        const val USER_DEEPAK_OUTLOOK: String = "agjqticlbhvredpouzkf"
-        const val USER_DEEPAK: String = "drpbzfjiouhqkaegcvtl"
-        const val USER_HIMANSHU: String = "wqhuzkfvodpajiletqst"
-        const val USER_PRIYANKA: String = "gihuzkfvodpajiletlmn"
-        const val USER_VASU: String = "cvdbzfjiouhqkaegcvtl"
+        const val USER_DEEPAK: String = "deepak@evvoiot.com"
+        const val USER_HIMANSHU: String = "himanshu@evvoiot.com"
+        const val USER_PRIYANKA: String = "priyanka@evvoiot.com"
     }
 
     object InitializeSocket {
