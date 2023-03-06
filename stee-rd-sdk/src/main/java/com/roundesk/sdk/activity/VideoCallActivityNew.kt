@@ -59,15 +59,6 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
-
-//        private val SERVER_ADDRESS: String = "stee-dev.roundesk.io:5080"
-//        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5080"
-//        private val SERVER_ADDRESS: String = "stee-rd-uat.roundesk.io:5443"
-        private val SERVER_ADDRESS: String = "stee-prod.roundesk.io:5443"
-//        private val SERVER_ADDRESS: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
-
-        //        private val SERVER_URL = "ws://$SERVER_ADDRESS/LiveApp/websocket"
-        private val SERVER_URL = "wss://$SERVER_ADDRESS/LiveApp/websocket"
     }
 
     private var mRoomId: Int = 0
@@ -238,12 +229,12 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                 relLay2ParticipantsName?.visibility = View.VISIBLE
                 linLayMultipleParticipantsName?.visibility = View.GONE
-                txtInitialViewParticipant1?.text = callerName
-                txtParticipant1?.text = callerName
+                txtInitialViewParticipant1?.text = mStreamId
+                txtParticipant1?.text = mStreamId
                 txtInitialViewParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
                 txtParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
 
-                strParticipant1Name = callerName
+                strParticipant1Name = mStreamId
                 strParticipant2Name = getJoinedUserName(joinedUserStreamIds[0])
             } else {
                 if (tempUserStreamIDList.size > userStreamIDList.size) {
@@ -321,9 +312,10 @@ class VideoCallActivityNew : AppCompatActivity(),
                     relLay2ParticipantsName?.visibility = View.GONE
                     linLayMultipleParticipantsName?.visibility = View.VISIBLE
                     relLayNames34?.visibility = View.VISIBLE
+                    txtParticipant3?.alightParentRightIs(true)
+                    dividerView1?.visibility = View.GONE
                     txtParticipant3?.visibility = View.VISIBLE
                     txtParticipant3?.text = getJoinedUserName(joinedUserStreamIds[1])
-
                     strParticipant3Name = getJoinedUserName(joinedUserStreamIds[1])
                 }
                 tempUserStreamIDList.clear()
@@ -366,6 +358,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     allJoinedUserArray.clear()
                     allJoinedUserArray.addAll(joinedUserStreamIds)
                     showFourUsersUI()
+                    txtParticipant3?.alightParentRightIs(false)
                     dividerView1?.visibility = View.VISIBLE
                     txtParticipant4?.visibility = View.VISIBLE
                     txtParticipant4?.text = getJoinedUserName(joinedUserStreamIds[2])
@@ -553,6 +546,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         checkPermissions()
 
         // this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_FPS, 24);
+//         this.getIntent().putExtra(CallActivity.EXTRA_DATA_CHANNEL_ENABLED, true);
 
         if (mMeetingId != 0 && mRoomId != 0) {
             conferenceDetails(publishViewRenderer, playViewRenderers)
@@ -579,12 +573,12 @@ class VideoCallActivityNew : AppCompatActivity(),
             txtRinging2?.visibility = View.VISIBLE
         }
 
-        LogUtil.e(TAG, "SERVER_URL : $SERVER_URL")
+        LogUtil.e(TAG, "SERVER_URL : ${URLConfigurationUtil.getServerURL()}")
         conferenceManager = ConferenceManager(
             this,
             this,
             intent,
-            SERVER_URL,
+            URLConfigurationUtil.getServerURL(),
             mRoomId.toString(),
             publishViewRenderer,
             playViewRenderers,
@@ -626,7 +620,11 @@ class VideoCallActivityNew : AppCompatActivity(),
             R.id.imgCallEnd -> {
                 conferenceManager?.leaveFromConference()
                 stopCallDurationTimer()
-                endCall()
+                if (conferenceManager?.connectedStreamList?.size == 1) {
+                    endCall(true)
+                } else {
+                    endCall(false)
+                }
             }
 
             R.id.imgBottomCamera -> {
@@ -686,7 +684,7 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private fun joinConference() {
         if (conferenceManager?.isJoined == false) {
-            Log.w(javaClass.simpleName, "Joining Conference")
+            Log.w(TAG, "Joining Conference")
             conferenceManager?.joinTheConference()
         } else {
             conferenceManager?.leaveFromConference()
@@ -755,58 +753,61 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
     }
 
-    private fun endCall() {
+    private fun endCall(endCallForAllUsers: Boolean) {
         var callTime: String = ""
-        if (txtTimer?.text.toString().isEmpty()) {
-            callTime = "00:00:00"
-        } else {
-            callTime = txtTimer?.text.toString()
-        }
+        if (endCallForAllUsers) {
+            callTime = if (txtTimer?.text.toString().isEmpty()) {
+                "00:00:00"
+            } else {
+                txtTimer?.text.toString()
+            }
 
-        val endCallRequest = EndCallRequest(
-            mMeetingId.toString(),
-            Constants.CALLER_SOCKET_ID,
-//            Constants.UUIDs.USER_DEEPAK,
-            Constants.API_TOKEN,
-            callTime
-        )
-        val endCallJson = Gson().toJson(endCallRequest)
+            val endCallRequest = EndCallRequest(
+                mMeetingId.toString(),
+                Constants.CALLER_SOCKET_ID,
+                Constants.API_TOKEN,
+                callTime
+            )
 
-        val request = ServiceBuilder.buildService(ApiInterface::class.java)
-        val endCall = request.endCall(endCallRequest)
-        LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_END_CALL}")
-        LogUtil.e(TAG, "Request Body : $endCallJson")
-        LogUtil.e(TAG, "-----------------------")
+            val endCallJson = Gson().toJson(endCallRequest)
+            val request = ServiceBuilder.buildService(ApiInterface::class.java)
+            val endCall = request.endCall(endCallRequest)
+            LogUtil.e(TAG, "-----------------------")
+            LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_END_CALL}")
+            LogUtil.e(TAG, "Request Body : $endCallJson")
+            LogUtil.e(TAG, "-----------------------")
 
-
-        endCall.enqueue(object : Callback<BaseDataClassResponse?> {
-            override fun onResponse(
-                call: Call<BaseDataClassResponse?>,
-                response: Response<BaseDataClassResponse?>
-            ) {
-                LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
-                LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
-                if (response.isSuccessful) {
-                    LogUtil.e(TAG, "-----------------------")
-                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    LogUtil.e(TAG, "-----------------------")
-                    if (response.body() != null) {
-                        declineCall(true)
+            endCall.enqueue(object : Callback<BaseDataClassResponse?> {
+                override fun onResponse(
+                    call: Call<BaseDataClassResponse?>,
+                    response: Response<BaseDataClassResponse?>
+                ) {
+                    LogUtil.e(TAG, "Server Header Details : $response")
+                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+                    LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
+                    if (response.isSuccessful) {
+                        LogUtil.e(TAG, "-----------------------")
+                        LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                        LogUtil.e(TAG, "-----------------------")
+                        if (response.body() != null) {
+                            finish()
+//                        declineCall(true)
+                        }
                     }
                 }
-            }
 
-            override fun onFailure(
-                call: Call<BaseDataClassResponse?>,
-                t: Throwable
-            ) {
-                LogUtil.e(TAG, "-----------------------")
-                LogUtil.e(TAG, "Failure Response : ${t.message}")
-                LogUtil.e(TAG, "-----------------------")
-            }
-        })
+                override fun onFailure(
+                    call: Call<BaseDataClassResponse?>,
+                    t: Throwable
+                ) {
+                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "Failure Response : ${t.message}")
+                    LogUtil.e(TAG, "-----------------------")
+                }
+            })
+        } else {
+            finish()
+        }
     }
 
     override fun onDisconnected(streamId: String?) {
@@ -921,7 +922,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             val streamId = json.getString("streamId")
             Toast.makeText(this, "$eventType : $streamId", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            LogUtil.e(javaClass.simpleName, e.message!!)
+            LogUtil.e(TAG, e.message!!)
         }
     }
 
@@ -929,7 +930,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         val data = buffer!!.data
         val strDataJson = String(data.array(), StandardCharsets.UTF_8)
 
-        LogUtil.e(javaClass.simpleName, "SentEvent: $strDataJson")
+        LogUtil.e(TAG, "SentEvent: $strDataJson")
     }
 
     private fun switchLayout(isCallerSmall: Boolean) {
@@ -1231,7 +1232,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -1299,10 +1300,9 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
         LogUtil.e(TAG, "Request Body : $declineCallJson")
         LogUtil.e(TAG, "-----------------------")
-
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
@@ -1608,7 +1608,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val getRoomInfoDetail = request.getRoomDetail(roomDetailRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ROOM_DETAIL}")
+        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ROOM_DETAIL}")
         LogUtil.e(TAG, "Request Body : $roomInfoJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -1715,4 +1715,13 @@ class VideoCallActivityNew : AppCompatActivity(),
         return strParticipantName
     }
 
+    infix fun View.alightParentRightIs(aligned: Boolean) {
+        val layoutParams = this.layoutParams as? RelativeLayout.LayoutParams
+        if (aligned) {
+            (this.layoutParams as? RelativeLayout.LayoutParams)?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        } else {
+            (this.layoutParams as? RelativeLayout.LayoutParams)?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0)
+        }
+        this.layoutParams = layoutParams
+    }
 }

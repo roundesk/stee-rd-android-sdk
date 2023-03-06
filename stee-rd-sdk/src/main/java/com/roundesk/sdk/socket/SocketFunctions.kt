@@ -1,17 +1,9 @@
 package com.roundesk.sdk.socket
 
-import android.app.Activity
-import android.content.Intent
-import android.widget.Toast
-import androidx.core.content.ContextCompat.startActivity
 //import com.github.nkzawa.emitter.Emitter
 //import com.github.nkzawa.socketio.client.IO
 //import com.github.nkzawa.socketio.client.Socket
-import com.google.gson.Gson
-import com.roundesk.sdk.activity.IncomingCallActivity
-import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.dataclass.CreateCallSocketDataClass
-import com.roundesk.sdk.util.LogUtil
+import android.app.Activity
 
 class SocketFunctions(private var mContext: Activity?) {
 

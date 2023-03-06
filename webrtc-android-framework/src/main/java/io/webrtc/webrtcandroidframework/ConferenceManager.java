@@ -371,6 +371,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             jsonObject.put("eventType", eventType);
 
             String notificationEventText = jsonObject.toString();
+            Log.e("ConferenceManager", "notificationEventText : " + notificationEventText);
 
             final ByteBuffer buffer = ByteBuffer.wrap(notificationEventText.getBytes(StandardCharsets.UTF_8));
             DataChannel.Buffer buf = new DataChannel.Buffer(buffer, false);

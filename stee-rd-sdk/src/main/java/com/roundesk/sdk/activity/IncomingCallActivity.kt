@@ -23,6 +23,7 @@ import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
+import com.roundesk.sdk.util.URLConfigurationUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -46,6 +47,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     private var receiver_name: String? = null
     private var audioStatus: String = ""
     private var videoStatus: String = ""
+    private var activityName: String = ""
 
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
@@ -75,6 +77,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
             receiver_name = extras.getString("receiver_name")
             audioStatus = extras.getString("audioStatus").toString()
             videoStatus = extras.getString("videoStatus").toString()
+            activityName = extras.getString("activity_name").toString()
 
             //The key argument here must match that used in the other activity
             LogUtil.e(
@@ -83,6 +86,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                         + " meeting_id : $meeting_id "
                         + " receiver_name : $receiver_name"
                         + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
+                        + " activityName : $activityName"
             )
         }
         initSocket()
@@ -138,7 +142,10 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -169,7 +176,10 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                                 intent.putExtra("meeting_id", response.body()?.meetingId)
 //                                intent.putExtra("receiver_stream_id", response.body()?.streamId)
 //                                intent.putExtra("stream_id", response.body()?.caller_streamId)
-                                intent.putExtra("receiver_stream_id", response.body()?.caller_streamId)
+                                intent.putExtra(
+                                    "receiver_stream_id",
+                                    response.body()?.caller_streamId
+                                )
                                 intent.putExtra("stream_id", response.body()?.streamId)
                                 intent.putExtra("isIncomingCall", true)
                                 intent.putExtra("caller_name", response.body()?.caller_name)
@@ -237,7 +247,10 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $declineCallJson")
         LogUtil.e(TAG, "-----------------------")
 

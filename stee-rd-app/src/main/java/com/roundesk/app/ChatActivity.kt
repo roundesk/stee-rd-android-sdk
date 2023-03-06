@@ -26,10 +26,7 @@ import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
-import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
-import com.roundesk.sdk.util.NetworkUtils
-import com.roundesk.sdk.util.ToastUtil
+import com.roundesk.sdk.util.*
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -57,6 +54,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
+    var isChatScreenOpened: Boolean? = false
 
     //    private var isIncomingCall: Boolean = false
     private var socketConnection: SocketConnection? = null
@@ -64,8 +62,8 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
+        isChatScreenOpened = true
         initSocket()
-
         initView()
 
         ApiFunctions(this).getCallerRole(SocketConstants.showIncomingCallUI)
@@ -126,7 +124,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
                                 SocketConstants.CALLER_VIDEO_STATUS,
                                 "a3dt3ffdd"
                             )
-                        }else{
+                        } else {
                             ToastUtil.displayLongDurationToast(
                                 this,
                                 "Your Connection is not Stable. For video calling your connection should be stable"
@@ -196,7 +194,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         Log.e(TAG, "-----------------------")
-        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        Log.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
+        )
         Log.e(TAG, "Request Body : $acceptCallJson")
         Log.e(TAG, "-----------------------")
 
@@ -293,7 +294,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         Log.e(TAG, "-----------------------")
-        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        Log.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+        )
         Log.e(TAG, "Request Body : $declineCallJson")
         Log.e(TAG, "-----------------------")
 
@@ -385,18 +389,24 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
 
                 runOnUiThread {
                     if (createCallSocketDataClass.type == SocketConstants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-//                        if (SocketConstants.showIncomingCallUI) {
-                        if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
-                            val intent = Intent(this@ChatActivity, IncomingCallActivity::class.java)
-                            intent.putExtra("room_id", createCallSocketDataClass.room_id)
-                            intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
-                            intent.putExtra("audioStatus", SocketConstants.RECEIVER_AUDIO_STATUS)
-                            intent.putExtra("videoStatus", SocketConstants.RECEIVER_VIDEO_STATUS)
-                            intent.putExtra(
-                                "receiver_name",
-                                createCallSocketDataClass.msg
-                            )
-                            startActivity(intent)
+                        if (isChatScreenOpened == true) {
+                            if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
+                                val intent =
+                                    Intent(this@ChatActivity, IncomingCallActivity::class.java)
+                                intent.putExtra("room_id", createCallSocketDataClass.room_id)
+                                intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                                intent.putExtra(
+                                    "audioStatus", SocketConstants.RECEIVER_AUDIO_STATUS
+                                )
+                                intent.putExtra(
+                                    "videoStatus", SocketConstants.RECEIVER_VIDEO_STATUS
+                                )
+                                intent.putExtra("activity_name", "ChatActivity")
+                                intent.putExtra(
+                                    "receiver_name", createCallSocketDataClass.msg
+                                )
+                                startActivity(intent)
+                            }
                         }
 
                         if (SocketConstants.showIncomingCallTopBarUI) {
@@ -532,5 +542,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         } else {
             false
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isChatScreenOpened = false
     }
 }

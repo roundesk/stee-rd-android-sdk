@@ -21,6 +21,7 @@ import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
+import com.roundesk.sdk.util.URLConfigurationUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -52,10 +53,12 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
+    var isCallHistoryScreenOpened: Boolean? = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_call_history)
+        isCallHistoryScreenOpened = true
         initSocket()
         getIntentData()
         recyclerview = findViewById(R.id.recyclerview)
@@ -105,7 +108,10 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             "all"
         )
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ALL_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ALL_CALL}"
+        )
         LogUtil.e(
             TAG,
             "Request Parameters : ${
@@ -164,19 +170,24 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
                 runOnUiThread {
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-                        if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
-//                            if (isIncomingCall) {
-                            val intent =
-                                Intent(this@CallHistoryActivity, IncomingCallActivity::class.java)
-                            intent.putExtra("room_id", createCallSocketDataClass.room_id)
-                            intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
-                            intent.putExtra("audioStatus", audioStatus)
-                            intent.putExtra("videoStatus", videoStatus)
-                            intent.putExtra(
-                                "receiver_name",
-                                createCallSocketDataClass.msg
-                            )
-                            startActivity(intent)
+                        if (isCallHistoryScreenOpened == true) {
+                            if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
+                                val intent =
+                                    Intent(
+                                        this@CallHistoryActivity,
+                                        IncomingCallActivity::class.java
+                                    )
+                                intent.putExtra("room_id", createCallSocketDataClass.room_id)
+                                intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                                intent.putExtra("audioStatus", audioStatus)
+                                intent.putExtra("videoStatus", videoStatus)
+                                intent.putExtra("activity_name", "CallHistoryActivity")
+                                intent.putExtra(
+                                    "receiver_name",
+                                    createCallSocketDataClass.msg
+                                )
+                                startActivity(intent)
+                            }
                         }
 
                         if (showTopBarUI) {
@@ -237,7 +248,10 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -334,7 +348,10 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $declineCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -507,5 +524,10 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     private fun isExternalStorageReadable(): Boolean {
         val state = Environment.getExternalStorageState()
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isCallHistoryScreenOpened = false
     }
 }

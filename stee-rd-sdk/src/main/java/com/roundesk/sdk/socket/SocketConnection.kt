@@ -1,8 +1,7 @@
 package com.roundesk.sdk.socket
 
 
-import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.URLConfigurationUtil
 import io.socket.client.IO
 import io.socket.client.Socket
 import java.io.UnsupportedEncodingException
@@ -14,7 +13,7 @@ class SocketConnection {
 
     fun connectSocket() {
         try {
-            mSocket = IO.socket(Constants.SOCKET_URL)
+            mSocket = IO.socket(URLConfigurationUtil.getSocketURL())
             if (mSocket?.connected() == false) {
                 mSocket?.connect()
             }

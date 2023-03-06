@@ -24,6 +24,7 @@ import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
+import com.roundesk.sdk.util.URLConfigurationUtil
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -52,6 +53,7 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
     private var socketConnection: SocketConnection? = null
+    var isSettingsScreenOpened: Boolean? = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +62,7 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
             this@SettingsActivity,
             "STEE-SDK SOCKET Service is running..."
         )
+        isSettingsScreenOpened = true
         initSocket()
         txtStartWithChat = findViewById(R.id.txtStartWithChat)
         txtStartWithAudio = findViewById(R.id.txtStartWithAudio)
@@ -101,19 +104,24 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
 
                 runOnUiThread {
                     if (createCallSocketDataClass.type == SocketConstants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-//                        if (SocketConstants.showIncomingCallUI) {
-                        if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
-                            val intent =
-                                Intent(this@SettingsActivity, IncomingCallActivity::class.java)
-                            intent.putExtra("room_id", createCallSocketDataClass.room_id)
-                            intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
-                            intent.putExtra("audioStatus", SocketConstants.RECEIVER_AUDIO_STATUS)
-                            intent.putExtra("videoStatus", SocketConstants.RECEIVER_VIDEO_STATUS)
-                            intent.putExtra(
-                                "receiver_name",
-                                createCallSocketDataClass.msg
-                            )
-                            startActivity(intent)
+                        if (isSettingsScreenOpened == true) {
+                            if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
+                                val intent =
+                                    Intent(this@SettingsActivity, IncomingCallActivity::class.java)
+                                intent.putExtra("room_id", createCallSocketDataClass.room_id)
+                                intent.putExtra("meeting_id", createCallSocketDataClass.meetingId)
+                                intent.putExtra(
+                                    "audioStatus", SocketConstants.RECEIVER_AUDIO_STATUS
+                                )
+                                intent.putExtra(
+                                    "videoStatus", SocketConstants.RECEIVER_VIDEO_STATUS
+                                )
+                                intent.putExtra("activity_name", "SettingsActivity")
+                                intent.putExtra(
+                                    "receiver_name", createCallSocketDataClass.msg
+                                )
+                                startActivity(intent)
+                            }
                         }
 
                         if (SocketConstants.showIncomingCallTopBarUI) {
@@ -181,7 +189,10 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         Log.e(TAG, "-----------------------")
-        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        Log.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
+        )
         Log.e(TAG, "Request Body : $acceptCallJson")
         Log.e(TAG, "-----------------------")
 
@@ -278,7 +289,10 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         Log.e(TAG, "-----------------------")
-        Log.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        Log.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+        )
         Log.e(TAG, "Request Body : $declineCallJson")
         Log.e(TAG, "-----------------------")
 
@@ -350,5 +364,10 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
 
     override fun onRationaleDenied(requestCode: Int) {
         Log.d(TAG, "onRationaleDenied: $requestCode")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isSettingsScreenOpened = false
     }
 }

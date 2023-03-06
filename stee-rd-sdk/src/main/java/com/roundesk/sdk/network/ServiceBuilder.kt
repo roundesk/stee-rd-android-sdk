@@ -4,6 +4,7 @@ import android.os.Build
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.roundesk.sdk.util.Constants
+import com.roundesk.sdk.util.URLConfigurationUtil
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -34,7 +35,7 @@ object ServiceBuilder {
     }.build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl(Constants.BASE_URL)
+        .baseUrl(URLConfigurationUtil.getBaseURL())
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .client(client)
         .build()*/
@@ -55,7 +56,7 @@ object ServiceBuilder {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl(Constants.BASE_URL)
+            .baseUrl(URLConfigurationUtil.getBaseURL())
             .client(okHttpClient)
 //            .addConverterFactory(GsonConverterFactory.create(gson))
             .addConverterFactory(MoshiConverterFactory.create(moshi))

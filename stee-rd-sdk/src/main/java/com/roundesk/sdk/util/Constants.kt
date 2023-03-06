@@ -4,18 +4,21 @@ import com.roundesk.sdk.socket.SocketConnection
 
 object Constants {
 
-//    const val BASE_URL: String = "http://test.roundesk.io/stee-server/public/api/"
-//    const val SOCKET_URL: String = "http://socket.roundesk.io:3000"
+    const val UAT = "uat"
+    const val DEV = "dev"
 
-//    const val BASE_URL: String = "https://stee-rd-uat.roundesk.io/api/"
-//    const val SOCKET_URL: String = "https://stee-rd-uat.roundesk.io:3000"
+    // Change this BUILD_TYPE to UAT for generating UAT build
+    const val BUILD_TYPE = DEV
 
-    // Use this for UAT
-    const val BASE_URL: String = "https://stee-prod.roundesk.io/api/"
-    const val SOCKET_URL: String = "https://stee-prod.roundesk.io:3000"
+    const val BASE_URL_DEV: String = "https://stee-prod.roundesk.io/api/"
+    const val SOCKET_URL_DEV: String = "https://stee-prod.roundesk.io:3000"
+    private const val SERVER_ADDRESS_DEV: String = "stee-prod.roundesk.io:5443"
+    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/LiveApp/websocket"
 
-//    const val BASE_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
-//    const val SOCKET_URL: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
+    const val BASE_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
+    const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
+    private const val SERVER_ADDRESS_UAT: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
+    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/LiveApp/websocket"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 

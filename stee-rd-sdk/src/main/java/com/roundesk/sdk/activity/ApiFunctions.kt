@@ -9,10 +9,7 @@ import com.roundesk.sdk.dataclass.CreateCallRequest
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketConnection
-import com.roundesk.sdk.util.Constants
-import com.roundesk.sdk.util.LogUtil
-import com.roundesk.sdk.util.NetworkUtils
-import com.roundesk.sdk.util.ToastUtil
+import com.roundesk.sdk.util.*
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
@@ -66,7 +63,7 @@ class ApiFunctions(private var mContext: Activity?) {
         val call = request.getCreateCallSocketData(user)
 
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
+        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
         LogUtil.e(TAG, "Request Body : $json")
         LogUtil.e(TAG, "-----------------------")
 
@@ -135,7 +132,7 @@ class ApiFunctions(private var mContext: Activity?) {
          val call = request.sampleManualParsing(user)
 
          LogUtil.e(TAG, "-----------------------")
-         LogUtil.e(TAG, "API : ${Constants.BASE_URL + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
+         LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_CREATE_CALL}")
          LogUtil.e(TAG, "Request Body : $json")
          LogUtil.e(TAG, "-----------------------")
 
