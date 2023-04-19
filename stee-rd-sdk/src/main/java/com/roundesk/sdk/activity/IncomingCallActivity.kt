@@ -6,24 +6,24 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.roundesk.sdk.R
-import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.socket.SocketConnection
+import com.roundesk.sdk.socket.AppSocketManager
+import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
 import com.roundesk.sdk.util.URLConfigurationUtil
+import io.webrtc.webrtcandroidframework.ConferenceManager
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -92,13 +92,20 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         initSocket()
         initView()
         playSong()
+
+
     }
 
     private fun initSocket() {
-        SocketManager(
+        /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).createCallSocket()
+        ).createCallSocket()*/
+        AppSocketManager(
+            this, Constants.InitializeSocket.socketConnection,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).emitSocketEvents()
+
     }
 
     private fun initView() {

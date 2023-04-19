@@ -7,6 +7,7 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.media.MediaPlayer
 import android.nfc.Tag
 import android.os.*
@@ -32,6 +33,8 @@ import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.AppSocketManager
+import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.*
@@ -134,7 +137,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
 
-    private var isCallerSmall: Boolean = false
+    private var isCallerSmall: Boolean = true
     private var isPictureInPictureMode: Boolean = false
     private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
@@ -149,7 +152,6 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     var screenWidth = displayMetrics.widthPixels
     var screenHeight = displayMetrics.heightPixels
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     private var pictureInPictureParamsBuilder = PictureInPictureParams.Builder()
@@ -168,6 +170,8 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var tempUserStreamIDList: ArrayList<String> = arrayListOf()
     private var joinedUserStreamIds: ArrayList<String> = arrayListOf()
     private var allJoinedUserArray: ArrayList<String> = arrayListOf()
+    private var getRoomDetailsDataArrayList: ArrayList<RoomDetailDataClassResponse.Success> =
+        arrayListOf()
     private var tempValue: Int? = 0
     private var lastStreamSize: Int? = -1
     private var addedOrRemovedStreamId: String? = ""
@@ -176,6 +180,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     var strParticipant3Name: String? = ""
     var strParticipant4Name: String? = ""
     var strParticipant5Name: String? = ""
+    private var participant1Visible: Boolean = false
+    private var participant2Visible: Boolean = false
+    private var participant3Visible: Boolean = false
+    private var participant4Visible: Boolean = false
+    private var participant5Visible: Boolean = false
+
     private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> = arrayListOf()
 
     lateinit var mainHandler: Handler
@@ -203,200 +213,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun refreshRoomDetails() {
-        if (conferenceManager?.connectedStreamList?.size == 1) {
-            switchView?.isClickable = true
-            switchView?.isFocusable = true
-            lastStreamSize = 1
-            userStreamIDList.clear()
-            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
-            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
-
-            if (!initialView) {
-                imgBack?.isEnabled = true
-                switchLayout(isCallerSmall)
-                initialView = true
-            }
-
-            if (isMultipleUsersConnected) {
-                showTwoUsersUI()
-                isMultipleUsersConnected = false
-            }
-
-            if (tempUserStreamIDList.isEmpty()) {
-                tempUserStreamIDList.addAll(userStreamIDList)
-                joinedUserStreamIds.add(tempUserStreamIDList[0])
-                allJoinedUserArray.addAll(joinedUserStreamIds)
-
-                relLay2ParticipantsName?.visibility = View.VISIBLE
-                linLayMultipleParticipantsName?.visibility = View.GONE
-                txtInitialViewParticipant1?.text = mStreamId
-                txtParticipant1?.text = mStreamId
-                txtInitialViewParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
-                txtParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
-
-                strParticipant1Name = mStreamId
-                strParticipant2Name = getJoinedUserName(joinedUserStreamIds[0])
-            } else {
-                if (tempUserStreamIDList.size > userStreamIDList.size) {
-                    tempUserStreamIDList.removeAll(userStreamIDList)
-                    addedOrRemovedStreamId = tempUserStreamIDList[0]
-                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Index of Removed Participant : ${
-                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
-                        }"
-                    )
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Removed Participant Name : $addedOrRemovedStreamId"
-                    )
-                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
-                    relLay2ParticipantsName?.visibility = View.VISIBLE
-                    linLayMultipleParticipantsName?.visibility = View.GONE
-                    relLayNames34?.visibility = View.GONE
-                    txtParticipant3?.visibility = View.GONE
-                }
-                tempUserStreamIDList.clear()
-                tempUserStreamIDList.addAll(joinedUserStreamIds)
+        if (conferenceManager?.connectedStreamList?.size != null) {
+            if (conferenceManager?.connectedStreamList?.size!! > 0) {
+                getRoomInfoDetails()
             }
         }
 
-        if (conferenceManager!!.connectedStreamList != null) {
-            if (conferenceManager!!.connectedStreamList.isNotEmpty()) {
-                if (!startTimer) {
-                    startCallDurationTimer()
-                    linlayCallerDetails?.visibility = View.GONE
-                    startTimer = true
-                }
-            } else {
-                if (lastStreamSize != -1) {
-                    if (conferenceManager!!.connectedStreamList.isEmpty()) {
-                        finish()
-                    }
-                }
-            }
-        }
-
-        if (conferenceManager?.connectedStreamList?.size == 2) {
-            switchView?.isClickable = false
-            switchView?.isFocusable = false
-            imgBack?.isEnabled = true
-            lastStreamSize = 2
-            userStreamIDList.clear()
-            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
-            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
-
-            if (tempUserStreamIDList.isNotEmpty()) {
-                if (tempUserStreamIDList.size > userStreamIDList.size) {
-                    tempUserStreamIDList.removeAll(userStreamIDList)
-                    addedOrRemovedStreamId = tempUserStreamIDList[0]
-                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Index of Removed Participant : ${
-                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
-                        }"
-                    )
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Removed Participant Name : $addedOrRemovedStreamId"
-                    )
-                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
-                } else {
-                    userStreamIDList.removeAll(tempUserStreamIDList)
-                    joinedUserStreamIds.add(userStreamIDList[0])
-                    allJoinedUserArray.clear()
-                    allJoinedUserArray.addAll(joinedUserStreamIds)
-                    showThreeUsersUI()
-                    relLay2ParticipantsName?.visibility = View.GONE
-                    linLayMultipleParticipantsName?.visibility = View.VISIBLE
-                    relLayNames34?.visibility = View.VISIBLE
-                    txtParticipant3?.alightParentRightIs(true)
-                    dividerView1?.visibility = View.GONE
-                    txtParticipant3?.visibility = View.VISIBLE
-                    txtParticipant3?.text = getJoinedUserName(joinedUserStreamIds[1])
-                    strParticipant3Name = getJoinedUserName(joinedUserStreamIds[1])
-                }
-                tempUserStreamIDList.clear()
-                tempUserStreamIDList.addAll(joinedUserStreamIds)
-            }
-
-            isMultipleUsersConnected = true
-        }
-
-        if (conferenceManager?.connectedStreamList?.size == 3) {
-            switchView?.isClickable = false
-            switchView?.isFocusable = false
-            imgBack?.isEnabled = true
-            lastStreamSize = 3
-            userStreamIDList.clear()
-            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
-            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
-
-            isMultipleUsersConnected = true
-            if (tempUserStreamIDList.isNotEmpty()) {
-                if (tempUserStreamIDList.size > userStreamIDList.size) {
-                    tempUserStreamIDList.removeAll(userStreamIDList)
-                    addedOrRemovedStreamId = tempUserStreamIDList[0]
-                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Index of Removed Participant : ${
-                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
-                        }"
-                    )
-
-                    Log.e(
-                        "$TAG Connected Users",
-                        "Removed Participant Name : $addedOrRemovedStreamId"
-                    )
-                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
-                } else {
-                    userStreamIDList.removeAll(tempUserStreamIDList)
-                    joinedUserStreamIds.add(userStreamIDList[0])
-                    allJoinedUserArray.clear()
-                    allJoinedUserArray.addAll(joinedUserStreamIds)
-                    showFourUsersUI()
-                    txtParticipant3?.alightParentRightIs(false)
-                    dividerView1?.visibility = View.VISIBLE
-                    txtParticipant4?.visibility = View.VISIBLE
-                    txtParticipant4?.text = getJoinedUserName(joinedUserStreamIds[2])
-
-                    strParticipant4Name = getJoinedUserName(joinedUserStreamIds[2])
-                }
-
-                tempUserStreamIDList.clear()
-                tempUserStreamIDList.addAll(joinedUserStreamIds)
-            }
-        }
-
-        if (conferenceManager?.connectedStreamList?.size == 4) {
-            switchView?.isClickable = false
-            switchView?.isFocusable = false
-            imgBack?.isEnabled = true
-            lastStreamSize = 4
-            userStreamIDList.clear()
-            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
-            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
-
-            isMultipleUsersConnected = true
-            if (tempUserStreamIDList.isNotEmpty()) {
-                userStreamIDList.removeAll(tempUserStreamIDList)
-                joinedUserStreamIds.add(userStreamIDList[0])
-                allJoinedUserArray.clear()
-                allJoinedUserArray.addAll(joinedUserStreamIds)
-                tempUserStreamIDList.clear()
-                tempUserStreamIDList.addAll(joinedUserStreamIds)
-                showFiveUsersUI()
-                relLayNames5?.visibility = View.VISIBLE
-                txtParticipant5?.text = getJoinedUserName(joinedUserStreamIds[3])
-                strParticipant5Name = getJoinedUserName(joinedUserStreamIds[3])
-            }
-        }
-
-//        Log.e("$TAG Connected Users", "participantsList : " + Gson().toJson(participantsList))
-        Log.e("$TAG Connected Users", "joinedUserStreamIds : " + Gson().toJson(joinedUserStreamIds))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -448,10 +270,15 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun initSocket() {
-        SocketManager(
+        /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).createCallSocket()
+        ).createCallSocket()*/
+        AppSocketManager(
+            this, Constants.InitializeSocket.socketConnection,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).emitSocketEvents()
+
     }
 
     private fun initView() {
@@ -648,8 +475,12 @@ class VideoCallActivityNew : AppCompatActivity(),
 
             R.id.imgBack -> {
                 val aspectRatio = Rational(relLayoutMain!!.width, relLayoutMain!!.height)
+                val sourceRectHint = Rect()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
+                    pictureInPictureParamsBuilder
+                        .setAspectRatio(aspectRatio)
+                        .setSourceRectHint(sourceRectHint)
+                        .build()
                     enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
                 }
             }
@@ -773,7 +604,10 @@ class VideoCallActivityNew : AppCompatActivity(),
             val request = ServiceBuilder.buildService(ApiInterface::class.java)
             val endCall = request.endCall(endCallRequest)
             LogUtil.e(TAG, "-----------------------")
-            LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_END_CALL}")
+            LogUtil.e(
+                TAG,
+                "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_END_CALL}"
+            )
             LogUtil.e(TAG, "Request Body : $endCallJson")
             LogUtil.e(TAG, "-----------------------")
 
@@ -829,7 +663,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         imgBottomVideo?.isEnabled = true
         imgAudio?.isEnabled = true
 
-        getRoomInfoDetails()
+//        getRoomInfoDetails()
 
         if (audioStatus?.equals("off", ignoreCase = true) == true) {
             if (conferenceManager!!.isPublisherAudioOn) {
@@ -1047,6 +881,48 @@ class VideoCallActivityNew : AppCompatActivity(),
                 paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
                 publishViewRenderer?.layoutParams = paramsReceiver
             }
+
+            if (tempValue == 2) {
+                val paramsReceiver: RelativeLayout.LayoutParams =
+                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+                val paramsRemote: RelativeLayout.LayoutParams =
+                    play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+
+                paramsReceiver.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                paramsReceiver.width = displayMetrics.widthPixels / 2
+                paramsReceiver.marginEnd = 0
+                paramsReceiver.topMargin = 0
+                paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                publishViewRenderer?.layoutParams = paramsReceiver
+
+                paramsRemote.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                paramsRemote.width = displayMetrics.widthPixels / 2
+                paramsRemote.marginEnd = 0
+                paramsRemote.topMargin = 0
+                paramsRemote.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                play_view_renderer1?.layoutParams = paramsReceiver
+            }
+            if (strParticipant1Name?.isNotEmpty() == true) {
+                txtParticipant1?.text = strParticipant1Name?.take(2)?.uppercase()
+                txtInitialViewParticipant1?.text = strParticipant1Name?.take(2)?.uppercase()
+            }
+
+            if (strParticipant2Name?.isNotEmpty() == true) {
+                txtParticipant2?.text = strParticipant2Name?.take(2)?.uppercase()
+                txtInitialViewParticipant2?.text = strParticipant2Name?.take(2)?.uppercase()
+            }
+
+            if (strParticipant3Name?.isNotEmpty() == true) {
+                txtParticipant3?.text = strParticipant3Name?.take(2)?.uppercase()
+            }
+
+            if (strParticipant4Name?.isNotEmpty() == true) {
+                txtParticipant4?.text = strParticipant4Name?.take(2)?.uppercase()
+            }
+
+            if (strParticipant5Name?.isNotEmpty() == true) {
+                txtParticipant5?.text = strParticipant5Name?.take(2)?.uppercase()
+            }
         } else {
             layoutBottomSheet.visibility = View.VISIBLE
             relLayToolbar?.visibility = View.VISIBLE
@@ -1059,6 +935,27 @@ class VideoCallActivityNew : AppCompatActivity(),
                 paramsReceiver.topMargin = 48
                 paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
                 publishViewRenderer?.layoutParams = paramsReceiver
+            }
+            if (strParticipant1Name?.isNotEmpty() == true) {
+                txtParticipant1?.text = strParticipant1Name
+                txtInitialViewParticipant1?.text = strParticipant1Name
+            }
+
+            if (strParticipant2Name?.isNotEmpty() == true) {
+                txtParticipant2?.text = strParticipant2Name
+                txtInitialViewParticipant2?.text = strParticipant2Name
+            }
+
+            if (strParticipant3Name?.isNotEmpty() == true) {
+                txtParticipant3?.text = strParticipant3Name
+            }
+
+            if (strParticipant4Name?.isNotEmpty() == true) {
+                txtParticipant4?.text = strParticipant4Name
+            }
+
+            if (strParticipant5Name?.isNotEmpty() == true) {
+                txtParticipant5?.text = strParticipant5Name
             }
         }
     }
@@ -1111,8 +1008,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     override fun onBackPressed() {
         if (imgBack?.isEnabled == true) {
             val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+            val sourceRectHint = Rect()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                pictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build()
+                pictureInPictureParamsBuilder
+                    .setAspectRatio(aspectRatio)
+                    .setSourceRectHint(sourceRectHint)
+                    .build()
                 enterPictureInPictureMode(pictureInPictureParamsBuilder.build())
             }
         }
@@ -1232,7 +1133,10 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -1300,7 +1204,10 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+        )
         LogUtil.e(TAG, "Request Body : $declineCallJson")
         LogUtil.e(TAG, "-----------------------")
 
@@ -1350,6 +1257,11 @@ class VideoCallActivityNew : AppCompatActivity(),
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).offAllEvent()*/
+        participant1Visible = false
+        participant2Visible = false
+        participant3Visible = false
+        participant4Visible = false
+        participant5Visible = false
     }
 
     private fun showDefaultView() {
@@ -1608,10 +1520,12 @@ class VideoCallActivityNew : AppCompatActivity(),
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val getRoomInfoDetail = request.getRoomDetail(roomDetailRequest)
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ROOM_DETAIL}")
+        LogUtil.e(
+            TAG,
+            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ROOM_DETAIL}"
+        )
         LogUtil.e(TAG, "Request Body : $roomInfoJson")
         LogUtil.e(TAG, "-----------------------")
-
 
         getRoomInfoDetail.enqueue(object : Callback<RoomDetailDataClassResponse?> {
             override fun onResponse(
@@ -1626,7 +1540,9 @@ class VideoCallActivityNew : AppCompatActivity(),
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
                     LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
-                        recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
+                        // Below code is for to show the list of participants in the BottomSheet
+                        //-------------------------
+                        /*recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
                         bottomSheetAdapter =
                             response.body()
                                 ?.let {
@@ -1640,7 +1556,14 @@ class VideoCallActivityNew : AppCompatActivity(),
                         recyclerview?.adapter = bottomSheetAdapter
 
                         participantsList.clear()
-                        response.body()?.let { participantsList.addAll(it.success) }
+                        response.body()?.let { participantsList.addAll(it.success) }*/
+                        //-------------------------
+
+                        if (response.body()?.success?.size!! > 0) {
+                            response.body()?.success?.let { getRoomDetailsDataArrayList.addAll(it) }
+                        }
+
+                        manageUserViews()
                     }
                 }
             }
@@ -1654,6 +1577,238 @@ class VideoCallActivityNew : AppCompatActivity(),
                 LogUtil.e(TAG, "-----------------------")
             }
         })
+    }
+
+    private fun manageUserViews() {
+        if (conferenceManager?.connectedStreamList?.size == 1) {
+            switchView?.isClickable = true
+            switchView?.isFocusable = true
+            lastStreamSize = 1
+            userStreamIDList.clear()
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
+            if (!initialView) {
+                imgBack?.isEnabled = true
+                switchLayout(isCallerSmall)
+                initialView = true
+            }
+
+            if (isMultipleUsersConnected) {
+                showTwoUsersUI()
+                isMultipleUsersConnected = false
+            }
+
+            if (tempUserStreamIDList.isEmpty()) {
+                tempUserStreamIDList.addAll(userStreamIDList)
+                joinedUserStreamIds.add(tempUserStreamIDList[0])
+                allJoinedUserArray.addAll(joinedUserStreamIds)
+
+                relLay2ParticipantsName?.visibility = View.VISIBLE
+                linLayMultipleParticipantsName?.visibility = View.GONE
+                if (activityName == "Incoming") {
+                    txtInitialViewParticipant1?.text = receiverName
+                    txtParticipant1?.text = receiverName
+                    strParticipant1Name = receiverName
+                } else {
+                    txtInitialViewParticipant1?.text = callerName
+                    txtParticipant1?.text = callerName
+                    strParticipant1Name = callerName
+                }
+//                txtInitialViewParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
+//                txtParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
+                txtInitialViewParticipant2?.text = getConnectedUserName(joinedUserStreamIds[0])
+                txtParticipant2?.text = getConnectedUserName(joinedUserStreamIds[0])
+
+//                strParticipant2Name = getJoinedUserName(joinedUserStreamIds[0])
+                strParticipant2Name = getConnectedUserName(joinedUserStreamIds[0])
+            } else {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                    relLay2ParticipantsName?.visibility = View.VISIBLE
+                    linLayMultipleParticipantsName?.visibility = View.GONE
+                    relLayNames34?.visibility = View.GONE
+                    txtParticipant3?.visibility = View.GONE
+                }
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            }
+        }
+
+        if (conferenceManager!!.connectedStreamList != null) {
+            if (conferenceManager!!.connectedStreamList.isNotEmpty()) {
+                if (!startTimer) {
+                    startCallDurationTimer()
+                    linlayCallerDetails?.visibility = View.GONE
+                    startTimer = true
+                }
+            } else {
+                if (lastStreamSize != -1) {
+                    if (conferenceManager!!.connectedStreamList.isEmpty()) {
+                        finish()
+                    }
+                }
+            }
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 2) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
+            imgBack?.isEnabled = true
+            lastStreamSize = 2
+            userStreamIDList.clear()
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
+            if (tempUserStreamIDList.isNotEmpty()) {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                } else {
+                    userStreamIDList.removeAll(tempUserStreamIDList)
+                    joinedUserStreamIds.add(userStreamIDList[0])
+                    allJoinedUserArray.clear()
+                    allJoinedUserArray.addAll(joinedUserStreamIds)
+                    showThreeUsersUI()
+                    relLay2ParticipantsName?.visibility = View.GONE
+                    linLayMultipleParticipantsName?.visibility = View.VISIBLE
+                    relLayNames34?.visibility = View.VISIBLE
+                    txtParticipant3?.alightParentRightIs(true)
+                    dividerView1?.visibility = View.GONE
+                    txtParticipant3?.visibility = View.VISIBLE
+//                    txtParticipant3?.text = getJoinedUserName(joinedUserStreamIds[1])
+//                    strParticipant3Name = getJoinedUserName(joinedUserStreamIds[1])
+                    txtParticipant3?.text = getConnectedUserName(joinedUserStreamIds[1])
+                    strParticipant3Name = getConnectedUserName(joinedUserStreamIds[1])
+                }
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            } else {
+                showThreeUsersUI()
+                relLay2ParticipantsName?.visibility = View.GONE
+                linLayMultipleParticipantsName?.visibility = View.VISIBLE
+                relLayNames34?.visibility = View.VISIBLE
+                txtParticipant3?.alightParentRightIs(true)
+                dividerView1?.visibility = View.GONE
+                txtParticipant3?.visibility = View.VISIBLE
+                if (activityName == "Incoming") {
+                    txtInitialViewParticipant1?.text = receiverName
+                    txtParticipant1?.text = receiverName
+                    strParticipant1Name = receiverName
+                }
+                txtParticipant2?.text = getConnectedUserName(userStreamIDList[0])
+                strParticipant2Name = getConnectedUserName(userStreamIDList[0])
+                txtParticipant3?.text = getConnectedUserName(userStreamIDList[1])
+                strParticipant3Name = getConnectedUserName(userStreamIDList[1])
+                Log.e(
+                    "$TAG ---------->>>>>>>>>>",
+                    "userStreamIDList : " + Gson().toJson(userStreamIDList)
+                )
+            }
+
+            isMultipleUsersConnected = true
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 3) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
+            imgBack?.isEnabled = true
+            lastStreamSize = 3
+            userStreamIDList.clear()
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
+            isMultipleUsersConnected = true
+            if (tempUserStreamIDList.isNotEmpty()) {
+                if (tempUserStreamIDList.size > userStreamIDList.size) {
+                    tempUserStreamIDList.removeAll(userStreamIDList)
+                    addedOrRemovedStreamId = tempUserStreamIDList[0]
+                    manageParticipantsUIVisibility(allJoinedUserArray.indexOf(addedOrRemovedStreamId))
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Index of Removed Participant : ${
+                            allJoinedUserArray.indexOf(addedOrRemovedStreamId)
+                        }"
+                    )
+
+                    Log.e(
+                        "$TAG Connected Users",
+                        "Removed Participant Name : $addedOrRemovedStreamId"
+                    )
+                    joinedUserStreamIds.remove(joinedUserStreamIds.filter { it == addedOrRemovedStreamId }[0])
+                } else {
+                    userStreamIDList.removeAll(tempUserStreamIDList)
+                    joinedUserStreamIds.add(userStreamIDList[0])
+                    allJoinedUserArray.clear()
+                    allJoinedUserArray.addAll(joinedUserStreamIds)
+                    showFourUsersUI()
+                    txtParticipant3?.alightParentRightIs(false)
+                    dividerView1?.visibility = View.VISIBLE
+                    txtParticipant4?.visibility = View.VISIBLE
+//                    txtParticipant4?.text = getJoinedUserName(joinedUserStreamIds[2])
+//                    strParticipant4Name = getJoinedUserName(joinedUserStreamIds[2])
+                    txtParticipant4?.text = getConnectedUserName(joinedUserStreamIds[2])
+                    strParticipant4Name = getConnectedUserName(joinedUserStreamIds[2])
+                }
+
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+            }
+        }
+
+        if (conferenceManager?.connectedStreamList?.size == 4) {
+            switchView?.isClickable = false
+            switchView?.isFocusable = false
+            imgBack?.isEnabled = true
+            lastStreamSize = 4
+            userStreamIDList.clear()
+            userStreamIDList.addAll(conferenceManager?.connectedStreamList!!)
+            Log.e("$TAG Connected Users", "userStreamIDList : " + Gson().toJson(userStreamIDList))
+
+            isMultipleUsersConnected = true
+            if (tempUserStreamIDList.isNotEmpty()) {
+                userStreamIDList.removeAll(tempUserStreamIDList)
+                joinedUserStreamIds.add(userStreamIDList[0])
+                allJoinedUserArray.clear()
+                allJoinedUserArray.addAll(joinedUserStreamIds)
+                tempUserStreamIDList.clear()
+                tempUserStreamIDList.addAll(joinedUserStreamIds)
+                showFiveUsersUI()
+                relLayNames5?.visibility = View.VISIBLE
+//                txtParticipant5?.text = getJoinedUserName(joinedUserStreamIds[3])
+//                strParticipant5Name = getJoinedUserName(joinedUserStreamIds[3])
+                txtParticipant5?.text = getConnectedUserName(joinedUserStreamIds[3])
+                strParticipant5Name = getConnectedUserName(joinedUserStreamIds[3])
+            }
+        }
+
+//        Log.e("$TAG Connected Users", "participantsList : " + Gson().toJson(participantsList))
+        Log.e("$TAG Connected Users", "joinedUserStreamIds : " + Gson().toJson(joinedUserStreamIds))
     }
 
     private fun storeDataLogsFile() {
@@ -1720,8 +1875,30 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (aligned) {
             (this.layoutParams as? RelativeLayout.LayoutParams)?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
         } else {
-            (this.layoutParams as? RelativeLayout.LayoutParams)?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0)
+            (this.layoutParams as? RelativeLayout.LayoutParams)?.addRule(
+                RelativeLayout.ALIGN_PARENT_RIGHT,
+                0
+            )
         }
         this.layoutParams = layoutParams
+    }
+
+    private fun getConnectedUserName(participantStreamID: String): String {
+        var strParticipantName = ""
+        LogUtil.e(
+            "getConnectedUserName",
+            "getRoomDetailsDataArrayList: ${Gson().toJson(getRoomDetailsDataArrayList)}"
+        );
+        for (item in getRoomDetailsDataArrayList.indices) {
+            strParticipantName =
+                if (participantStreamID.lowercase()
+                        .contains(getRoomDetailsDataArrayList[item].name.toString().lowercase())
+                ) {
+                    return getRoomDetailsDataArrayList[item].name.toString()
+                } else {
+                    participantStreamID
+                }
+        }
+        return strParticipantName
     }
 }

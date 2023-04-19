@@ -16,6 +16,8 @@ import com.roundesk.sdk.adapter.CallHistoryAdapter
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
+import com.roundesk.sdk.socket.AppSocketManager
+import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
@@ -78,10 +80,14 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     }
 
     private fun initSocket() {
-        SocketManager(
+        /*SocketManager(
             this, Constants.InitializeSocket.socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).createCallSocket()
+        ).createCallSocket()*/
+        AppSocketManager(
+            this, Constants.InitializeSocket.socketConnection,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).emitSocketEvents()
     }
 
     private fun getIntentData() {

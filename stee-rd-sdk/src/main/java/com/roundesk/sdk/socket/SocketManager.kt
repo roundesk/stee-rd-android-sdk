@@ -1,7 +1,7 @@
 package com.roundesk.sdk.socket
 
 import com.roundesk.sdk.util.LogUtil
-import io.socket.emitter.Emitter
+//import io.socket.emitter.Emitter
 
 class SocketManager(
     private val socketListener: SocketListener<Any>,
@@ -9,6 +9,7 @@ class SocketManager(
     private val socketConnectId: String
 ) {
 
+/*
     fun createCallSocket() {
         LogUtil.e("SocketManager", "isSocketConnected : " + socketConnection.mSocket!!.connected())
 
@@ -39,13 +40,16 @@ class SocketManager(
         )
     }
 
-    /*fun leaveRoomSocket() {
+    */
+/*fun leaveRoomSocket() {
         socketConnection.mSocket!!.emit(Constant.SocketSuffix.SOCKET_CODE_ROOM_LEAVE)
-    }*/
+    }*//*
+
 
     fun offAllEvent() {
         socketConnection.mSocket!!.off(socketConnectId)
     }
+*/
 
 
 }

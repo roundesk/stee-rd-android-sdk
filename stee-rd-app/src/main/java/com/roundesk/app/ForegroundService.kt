@@ -12,11 +12,11 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.roundesk.sdk.activity.ApiFunctions
-import com.roundesk.sdk.socket.SocketConnection
+import com.github.nkzawa.socketio.client.Socket
 
 class ForegroundService : Service() {
     private val CHANNEL_ID = "STEE-SDK SOCKET Service"
-    var socketConnection: SocketConnection? = null
+    var socketConnection: Socket? = null
 
     companion object {
         fun startService(context: Context, message: String) {
@@ -72,13 +72,12 @@ class ForegroundService : Service() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         Log.e("ForegroundService", "ForegroundService Stopped")
-        socketConnection?.disConnectSocket()
+//        socketConnection?.disConnectSocket()
         stopSelf()
     }
 
     private fun initSocket() {
-        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+        socketConnection = SocketConfig.getInstance()?.getMSocket()
 //        ApiFunctions(this).getSocketInstance(socketConnection)
-
     }
 }

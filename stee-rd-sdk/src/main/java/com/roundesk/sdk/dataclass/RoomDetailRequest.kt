@@ -9,8 +9,6 @@ import com.squareup.moshi.JsonClass
 @Keep
 @JsonClass(generateAdapter = true)
 data class RoomDetailRequest(
-    @field:Json(name = "roomId")
-    var roomId: String,
-    @field:Json(name = "apiToken")
-    var apiToken: String
+    @field:Json(name = "roomId") var roomId: String,
+    @field:Json(name = "apiToken") var apiToken: String
 )

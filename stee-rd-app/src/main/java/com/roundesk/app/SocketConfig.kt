@@ -1,19 +1,21 @@
 package com.roundesk.app
 
-import android.app.Activity
+//import com.roundesk.sdk.socket.SocketConnection
 import android.app.Application
 import android.content.Context
-import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import com.roundesk.sdk.socket.SocketConnection
+import com.github.nkzawa.socketio.client.IO
+import com.github.nkzawa.socketio.client.Socket
+import com.roundesk.sdk.util.URLConfigurationUtil
 import java.io.File
 import java.io.IOException
+import java.net.URISyntaxException
 
 
-class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
+class SocketConfig : Application() {
 
-    private var socketConnection: SocketConnection? = null
+    private var mSocket: Socket? = null
 
     companion object {
         private var mInstance: SocketConfig? = null
@@ -33,9 +35,18 @@ class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
         super.onCreate()
         mInstance = this
         mContext = applicationContext;
-        registerActivityLifecycleCallbacks(this)
+        storeDataLogsFile()
+        try {
+            //creating socket instance
+            mSocket = IO.socket(URLConfigurationUtil.getSocketURL())
+        } catch (e: URISyntaxException) {
+            throw RuntimeException(e)
+        }
+    }
 
-       storeDataLogsFile();
+    //return socket instance
+    fun getMSocket(): Socket? {
+        return mSocket
     }
 
     private fun storeDataLogsFile() {
@@ -84,11 +95,7 @@ class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
     }
 
-    fun getSocketInstance(): SocketConnection? {
-        return socketConnection
-    }
-
-    override fun onActivityCreated(activity: Activity, p1: Bundle?) {
+    /*override fun onActivityCreated(activity: Activity, p1: Bundle?) {
 //        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
         socketConnection = SocketConnection()
         socketConnection!!.connectSocket()
@@ -116,5 +123,5 @@ class SocketConfig : Application(), Application.ActivityLifecycleCallbacks {
 
     override fun onActivityDestroyed(activity: Activity) {
 //        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
-    }
+    }*/
 }

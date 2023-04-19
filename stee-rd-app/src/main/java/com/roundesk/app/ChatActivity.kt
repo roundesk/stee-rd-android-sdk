@@ -23,7 +23,6 @@ import com.roundesk.sdk.activity.VideoCallActivityNew
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.*
@@ -35,8 +34,11 @@ import retrofit2.Response
 import java.io.File
 import java.io.IOException
 import java.util.*
+import com.github.nkzawa.socketio.client.IO
+import com.github.nkzawa.socketio.client.Socket
+import com.roundesk.sdk.socket.AppSocketManager
 
-class ChatActivity : AppCompatActivity(), View.OnClickListener,
+class ChatActivity : SocketController(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
@@ -47,6 +49,7 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     private var relLayTopNotification: RelativeLayout? = null
     private var btnAccept: Button? = null
     private var btnDecline: Button? = null
+    private var txtUserName: TextView? = null
     var arraylistReceiverId: ArrayList<String> = arrayListOf()
     var newRoomId: Int? = null
     var newMeetingId: Int? = null
@@ -57,12 +60,11 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     var isChatScreenOpened: Boolean? = false
 
     //    private var isIncomingCall: Boolean = false
-    private var socketConnection: SocketConnection? = null
+//    private var socketConnection: SocketConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
-        isChatScreenOpened = true
         initSocket()
         initView()
 
@@ -71,19 +73,27 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun initSocket() {
-        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+//        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+//        ApiFunctions(this).getSocketInstance(socketConnection)
 
-        ApiFunctions(this).getSocketInstance(socketConnection)
+        ApiFunctions(this).getSocketInstance(mSocket)
 
         Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
 
         Constants.CALLER_SOCKET_ID = SocketConstants.CALLER_SOCKET_ID
 
+/*
         SocketManager(
             this, socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         ).createCallSocket()
+*/
+
+        AppSocketManager(
+            this, mSocket,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).emitSocketEvents()
     }
 
     private fun initView() {
@@ -92,7 +102,9 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         txtCallerName = findViewById(R.id.txtCallerName)
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
+        txtUserName = findViewById(R.id.txtUserName)
 
+        txtUserName?.text = SocketConstants.CALLER_SOCKET_ID
         imgVideo?.setOnClickListener(this)
         btnAccept?.setOnClickListener(this)
         btnDecline?.setOnClickListener(this)
@@ -102,14 +114,17 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
                 arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
-//                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
 
-                if (SocketConstants.CALLER_SOCKET_ID == SocketConstants.UUIDs.USER_HIMANSHU)
+                arraylistReceiverId.remove(SocketConstants.CALLER_SOCKET_ID)
+
+                Log.e("Chat Activity", "arraylistReceiverId: " + Gson().toJson(arraylistReceiverId))
+                /*if (SocketConstants.CALLER_SOCKET_ID == SocketConstants.UUIDs.USER_HIMANSHU)
                     arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
                 else
-                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
+                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)*/
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -547,5 +562,10 @@ class ChatActivity : AppCompatActivity(), View.OnClickListener,
     override fun onDestroy() {
         super.onDestroy()
         isChatScreenOpened = false
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isChatScreenOpened = true
     }
 }

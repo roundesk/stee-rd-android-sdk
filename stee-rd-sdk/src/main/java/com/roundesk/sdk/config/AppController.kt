@@ -3,13 +3,10 @@ package com.roundesk.sdk.config
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.LogUtil
-
 
 class AppController : Application(), Application.ActivityLifecycleCallbacks {
 
-    private var socketConnection: SocketConnection? = null
     private var activityReferences = 0
     private var isActivityChangingConfigurations = false
 
@@ -29,14 +26,10 @@ class AppController : Application(), Application.ActivityLifecycleCallbacks {
         registerActivityLifecycleCallbacks(this)
     }
 
-    fun getSocketInstance(): SocketConnection? {
-        return socketConnection
-    }
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
 //        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
-        socketConnection = SocketConnection()
-        socketConnection!!.connectSocket()
+
     }
 
     override fun onActivityStarted(activity: Activity) {

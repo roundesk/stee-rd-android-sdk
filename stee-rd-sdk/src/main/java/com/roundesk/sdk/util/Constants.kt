@@ -1,6 +1,7 @@
 package com.roundesk.sdk.util
 
-import com.roundesk.sdk.socket.SocketConnection
+//import com.roundesk.sdk.socket.SocketConnection
+import com.github.nkzawa.socketio.client.Socket
 
 object Constants {
 
@@ -39,7 +40,7 @@ object Constants {
     }
 
     object InitializeSocket {
-        var socketConnection: SocketConnection? = null
+        var socketConnection: Socket? = null
     }
 
     var CALLER_SOCKET_ID: String = ""

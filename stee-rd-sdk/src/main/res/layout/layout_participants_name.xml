@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:visibility="visible">
 
     <RelativeLayout
         android:id="@+id/relLay2ParticipantsName"
@@ -26,9 +27,8 @@
             android:layout_height="@dimen/dimen_170dp"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="@dimen/dimen_16dp"
-            android:layout_marginTop="@dimen/dimen_16dp"
-            >
+            android:layout_marginEnd="@dimen/dimen_20dp"
+            android:layout_marginTop="@dimen/dimen_20dp">
 
             <TextView
                 android:id="@+id/txtInitialViewParticipant2"
@@ -37,6 +37,8 @@
                 android:layout_alignParentStart="true"
                 android:background="@color/black"
                 android:padding="@dimen/dimen_10dp"
+                android:layout_marginTop="@dimen/dimen_10dp"
+                android:layout_marginStart="@dimen/dimen_8dp"
                 android:text="Initial Participant 2"
                 android:textColor="@color/white"
                 android:textSize="@dimen/dimen_14sp"

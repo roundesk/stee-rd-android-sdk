@@ -1,10 +1,8 @@
 package com.roundesk.app
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -15,13 +13,13 @@ import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
 import com.roundesk.sdk.activity.VideoCallActivityNew
-import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.socket.SocketConnection
+import com.roundesk.sdk.socket.AppSocketManager
+//import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.SocketManager
+//import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.URLConfigurationUtil
@@ -33,7 +31,7 @@ import retrofit2.Response
 import java.util.*
 
 
-class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickListener,
+class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks {
 
@@ -52,7 +50,8 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
-    private var socketConnection: SocketConnection? = null
+
+    //    private var socketConnection: SocketConnection? = null
     var isSettingsScreenOpened: Boolean? = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,18 +78,32 @@ class SettingsActivity : AppCompatActivity(), SocketListener<Any>, View.OnClickL
     }
 
     private fun initSocket() {
-        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
-        ApiFunctions(this).getSocketInstance(socketConnection)
+        AppSocketManager(
+            this, mSocket,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        ).emitSocketEvents()
+
+//        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
+//        ApiFunctions(this).getSocketInstance(socketConnection)
+        LogUtil.e(TAG, "Socket status : " + mSocket?.connected())
+        if (mSocket?.connected() == true) {
+            LogUtil.e(TAG, "Socket is connected : " + mSocket?.connected())
+        } else {
+            LogUtil.e(TAG, "Socket is not connected : " + mSocket?.connected())
+        }
+        ApiFunctions(this).getSocketInstance(mSocket)
 
         Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
 
         Constants.CALLER_SOCKET_ID = SocketConstants.CALLER_SOCKET_ID
 
-        SocketManager(
+        /*SocketManager(
             this, socketConnection!!,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).createCallSocket()
+        ).createCallSocket()*/
+
+
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {

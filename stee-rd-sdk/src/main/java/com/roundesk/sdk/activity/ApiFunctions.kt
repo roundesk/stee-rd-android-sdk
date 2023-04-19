@@ -8,13 +8,14 @@ import com.roundesk.sdk.dataclass.CreateCallDataClassResponse
 import com.roundesk.sdk.dataclass.CreateCallRequest
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
-import com.roundesk.sdk.socket.SocketConnection
+//import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.util.*
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
+import com.github.nkzawa.socketio.client.Socket
 
 
 class ApiFunctions(private var mContext: Activity?) {
@@ -181,7 +182,7 @@ class ApiFunctions(private var mContext: Activity?) {
         mContext?.startActivity(intent)
     }
 
-    fun getSocketInstance(socketInstance: SocketConnection?) {
+    fun getSocketInstance(socketInstance: Socket?) {
         Constants.InitializeSocket.socketConnection = socketInstance
     }
 }

@@ -9,15 +9,15 @@ object SocketConstants {
     const val RECEIVER_VIDEO_STATUS: String = "on"
 
     object UUIDs {
-        const val USER_DEEPAK: String = "deepak@evvoiot.com"
         const val USER_HIMANSHU: String = "himanshu@evvoiot.com"
+        const val USER_DEEPAK: String = "deepak@evvoiot.com"
         const val USER_PRIYANKA: String = "priyanka@evvoiot.com"
     }
 
     const val showIncomingCallUI: Boolean = false
     const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"
-    const val CALLER_SOCKET_ID: String = UUIDs.USER_HIMANSHU
+    const val CALLER_SOCKET_ID: String = UUIDs.USER_DEEPAK
 
     object SocketSuffix {
         const val SOCKET_CONNECT_SEND_CALL_TO_CLIENT: String =

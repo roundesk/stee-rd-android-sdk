@@ -1,15 +1,15 @@
 package com.roundesk.sdk.socket
 
 
-import com.roundesk.sdk.util.URLConfigurationUtil
-import io.socket.client.IO
-import io.socket.client.Socket
-import java.io.UnsupportedEncodingException
-import java.net.URISyntaxException
+//import com.roundesk.sdk.util.URLConfigurationUtil
+//import io.socket.client.IO
+//import io.socket.client.Socket
+//import java.io.UnsupportedEncodingException
+//import java.net.URISyntaxException
 
 class SocketConnection {
 
-    var mSocket: Socket? = null
+    /*var mSocket: Socket? = null
 
     fun connectSocket() {
         try {
@@ -34,5 +34,5 @@ class SocketConnection {
         } catch (e: UnsupportedEncodingException) {
             e.printStackTrace()
         }
-    }
+    }*/
 }
