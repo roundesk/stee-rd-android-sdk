@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.media.MediaPlayer
-import android.nfc.Tag
 import android.os.*
 import android.util.DisplayMetrics
 import android.util.Log
@@ -23,20 +22,16 @@ import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
-import com.roundesk.sdk.base.AppBaseActivity
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
-import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.*
@@ -48,12 +43,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.IOException
-import java.lang.Character.toString
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.Arrays.toString
 import java.util.concurrent.TimeUnit
-import kotlin.Unit.toString
 
 
 class VideoCallActivityNew : AppCompatActivity(),
@@ -216,6 +208,12 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (conferenceManager?.connectedStreamList?.size != null) {
             if (conferenceManager?.connectedStreamList?.size!! > 0) {
                 getRoomInfoDetails()
+            } else {
+                if (initialView) {
+                    conferenceManager?.leaveFromConference()
+                    stopCallDurationTimer()
+                    endCall(true)
+                }
             }
         }
 
@@ -791,8 +789,8 @@ class VideoCallActivityNew : AppCompatActivity(),
 
             paramsRelLayLocal.height = 510
             paramsRelLayLocal.width = 432
-            paramsRelLayLocal.marginEnd = 48
-            paramsRelLayLocal.topMargin = 48
+            paramsRelLayLocal.marginEnd = 40
+            paramsRelLayLocal.topMargin = 40
             paramsRelLayLocal.gravity = Gravity.END
 
             paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
@@ -803,8 +801,17 @@ class VideoCallActivityNew : AppCompatActivity(),
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
             relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
 
-            txtInitialViewParticipant2?.text = strParticipant1Name
-            txtInitialViewParticipant1?.text = strParticipant2Name
+//            if (activityName == "Incoming") {
+//                txtInitialViewParticipant1?.text = strParticipant1Name
+//                txtInitialViewParticipant2?.text = strParticipant2Name
+//                txtParticipant1?.text = strParticipant1Name
+//                txtParticipant2?.text = strParticipant2Name
+//            } else {
+            txtInitialViewParticipant1?.text = strParticipant1Name
+            txtInitialViewParticipant2?.text = strParticipant2Name
+            txtParticipant1?.text = strParticipant1Name
+            txtParticipant2?.text = strParticipant2Name
+//            }
         } else {
             setSmallLocalVideoView(false, paramsLocalVideo)
             setSmallRemoteVideoView(true, paramsRemoteVideo)
@@ -816,16 +823,24 @@ class VideoCallActivityNew : AppCompatActivity(),
 
             paramsRelLayRemote.height = 510
             paramsRelLayRemote.width = 432
-            paramsRelLayRemote.marginEnd = 48
-            paramsRelLayRemote.topMargin = 48
+            paramsRelLayRemote.marginEnd = 40
+            paramsRelLayRemote.topMargin = 40
             paramsRelLayRemote.gravity = Gravity.END
 
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
             relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
 
-            txtInitialViewParticipant1?.text = strParticipant1Name
-            txtInitialViewParticipant2?.text = strParticipant2Name
-
+//            if (activityName == "Incoming") {
+//                txtInitialViewParticipant1?.text = strParticipant1Name
+//                txtInitialViewParticipant2?.text = strParticipant2Name
+//                txtParticipant1?.text = strParticipant1Name
+//                txtParticipant2?.text = strParticipant2Name
+//            } else {
+            txtInitialViewParticipant1?.text = strParticipant2Name
+            txtInitialViewParticipant2?.text = strParticipant1Name
+            txtParticipant1?.text = strParticipant2Name
+            txtParticipant2?.text = strParticipant1Name
+//            }
         }
 
         publishViewRenderer.visibility = View.VISIBLE
@@ -872,19 +887,30 @@ class VideoCallActivityNew : AppCompatActivity(),
             layoutBottomSheet.visibility = View.GONE
             relLayToolbar?.visibility = View.GONE
             if (tempValue == 1) {
-                val paramsReceiver: RelativeLayout.LayoutParams =
-                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-                paramsReceiver.height = 210
-                paramsReceiver.width = 165
-                paramsReceiver.marginEnd = 10
-                paramsReceiver.topMargin = 10
-                paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                publishViewRenderer?.layoutParams = paramsReceiver
+                if (isCallerSmall) {
+                    val paramsReceiver: RelativeLayout.LayoutParams =
+                        publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+                    paramsReceiver.height = 210
+                    paramsReceiver.width = 165
+                    paramsReceiver.marginEnd = 10
+                    paramsReceiver.topMargin = 10
+                    paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                    publishViewRenderer.layoutParams = paramsReceiver
+                } else {
+                    val paramsReceiver: RelativeLayout.LayoutParams =
+                        play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+                    paramsReceiver.height = 210
+                    paramsReceiver.width = 165
+                    paramsReceiver.marginEnd = 10
+                    paramsReceiver.topMargin = 10
+                    paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                    play_view_renderer1?.layoutParams = paramsReceiver
+                }
             }
 
             if (tempValue == 2) {
                 val paramsReceiver: RelativeLayout.LayoutParams =
-                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
+                    publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
                 val paramsRemote: RelativeLayout.LayoutParams =
                     play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
 
@@ -903,47 +929,68 @@ class VideoCallActivityNew : AppCompatActivity(),
                 play_view_renderer1?.layoutParams = paramsReceiver
             }
             if (strParticipant1Name?.isNotEmpty() == true) {
-                txtParticipant1?.text = strParticipant1Name?.take(2)?.uppercase()
-                txtInitialViewParticipant1?.text = strParticipant1Name?.take(2)?.uppercase()
+                txtParticipant1?.text = getInitials(strParticipant1Name)
+                txtInitialViewParticipant1?.text = getInitials(strParticipant1Name)
             }
 
             if (strParticipant2Name?.isNotEmpty() == true) {
-                txtParticipant2?.text = strParticipant2Name?.take(2)?.uppercase()
-                txtInitialViewParticipant2?.text = strParticipant2Name?.take(2)?.uppercase()
+                txtParticipant2?.text = getInitials(strParticipant2Name)
+                txtInitialViewParticipant2?.text = getInitials(strParticipant2Name)
             }
 
             if (strParticipant3Name?.isNotEmpty() == true) {
-                txtParticipant3?.text = strParticipant3Name?.take(2)?.uppercase()
+                txtParticipant3?.text = getInitials(strParticipant3Name)
             }
 
             if (strParticipant4Name?.isNotEmpty() == true) {
-                txtParticipant4?.text = strParticipant4Name?.take(2)?.uppercase()
+                txtParticipant4?.text = getInitials(strParticipant4Name)
             }
 
             if (strParticipant5Name?.isNotEmpty() == true) {
-                txtParticipant5?.text = strParticipant5Name?.take(2)?.uppercase()
+                txtParticipant5?.text = getInitials(strParticipant5Name)
             }
         } else {
             layoutBottomSheet.visibility = View.VISIBLE
             relLayToolbar?.visibility = View.VISIBLE
             if (tempValue == 1) {
-                val paramsReceiver: RelativeLayout.LayoutParams =
-                    publishViewRenderer?.getLayoutParams() as RelativeLayout.LayoutParams
-                paramsReceiver.height = 510
-                paramsReceiver.width = 432
-                paramsReceiver.marginEnd = 48
-                paramsReceiver.topMargin = 48
-                paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                publishViewRenderer?.layoutParams = paramsReceiver
+                if (isCallerSmall) {
+                    val paramsReceiver: RelativeLayout.LayoutParams =
+                        publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+                    paramsReceiver.height = 510
+                    paramsReceiver.width = 432
+                    paramsReceiver.marginEnd = 48
+                    paramsReceiver.topMargin = 48
+                    paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                    publishViewRenderer.layoutParams = paramsReceiver
+                }else{
+                    val paramsReceiver: RelativeLayout.LayoutParams =
+                        play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+                    paramsReceiver.height = 510
+                    paramsReceiver.width = 432
+                    paramsReceiver.marginEnd = 48
+                    paramsReceiver.topMargin = 48
+                    paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                    play_view_renderer1?.layoutParams = paramsReceiver
+                }
             }
             if (strParticipant1Name?.isNotEmpty() == true) {
-                txtParticipant1?.text = strParticipant1Name
-                txtInitialViewParticipant1?.text = strParticipant1Name
+                if(isCallerSmall){
+                    txtParticipant1?.text = strParticipant1Name
+                    txtInitialViewParticipant1?.text = strParticipant1Name
+                }else{
+                    txtParticipant1?.text = strParticipant2Name
+                    txtInitialViewParticipant1?.text = strParticipant2Name
+                }
             }
 
             if (strParticipant2Name?.isNotEmpty() == true) {
-                txtParticipant2?.text = strParticipant2Name
-                txtInitialViewParticipant2?.text = strParticipant2Name
+                if(isCallerSmall){
+                    txtInitialViewParticipant2?.text = strParticipant2Name
+                    txtParticipant2?.text = strParticipant2Name
+                }else{
+                    txtInitialViewParticipant2?.text = strParticipant1Name
+                    txtParticipant2?.text = strParticipant1Name
+                }
             }
 
             if (strParticipant3Name?.isNotEmpty() == true) {
@@ -1061,11 +1108,10 @@ class VideoCallActivityNew : AppCompatActivity(),
                         receiverName = createCallSocketDataClass.receiver_name
 //                        txtBottomReceiverName?.text = receiverName
                         linlayCallerDetails?.visibility = View.GONE
-                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_DEEPAK) {
+                        if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_2) {
                             txtRinging2?.visibility = View.GONE
                             progressBar2?.visibility = View.GONE
                         }
-
                     }
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
@@ -1282,8 +1328,8 @@ class VideoCallActivityNew : AppCompatActivity(),
             play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
         paramsReceiver.height = 510
         paramsReceiver.width = 432
-        paramsReceiver.marginEnd = 48
-        paramsReceiver.topMargin = 48
+        paramsReceiver.marginEnd = 40
+        paramsReceiver.topMargin = 40
         paramsReceiver.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         play_view_renderer1?.layoutParams = paramsReceiver
         play_view_renderer1?.elevation = 2F
@@ -1600,28 +1646,29 @@ class VideoCallActivityNew : AppCompatActivity(),
             }
 
             if (tempUserStreamIDList.isEmpty()) {
-                tempUserStreamIDList.addAll(userStreamIDList)
+                tempUserStreamIDList.add(userStreamIDList[0])
                 joinedUserStreamIds.add(tempUserStreamIDList[0])
                 allJoinedUserArray.addAll(joinedUserStreamIds)
 
                 relLay2ParticipantsName?.visibility = View.VISIBLE
                 linLayMultipleParticipantsName?.visibility = View.GONE
                 if (activityName == "Incoming") {
-                    txtInitialViewParticipant1?.text = receiverName
-                    txtParticipant1?.text = receiverName
-                    strParticipant1Name = receiverName
-                } else {
-                    txtInitialViewParticipant1?.text = callerName
-                    txtParticipant1?.text = callerName
-                    strParticipant1Name = callerName
-                }
-//                txtInitialViewParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
-//                txtParticipant2?.text = getJoinedUserName(joinedUserStreamIds[0])
-                txtInitialViewParticipant2?.text = getConnectedUserName(joinedUserStreamIds[0])
-                txtParticipant2?.text = getConnectedUserName(joinedUserStreamIds[0])
+                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+                    strParticipant1Name = getConnectedUserName(joinedUserStreamIds[0])
 
-//                strParticipant2Name = getJoinedUserName(joinedUserStreamIds[0])
-                strParticipant2Name = getConnectedUserName(joinedUserStreamIds[0])
+                    txtInitialViewParticipant2?.text = receiverName
+                    txtParticipant2?.text = receiverName
+                    strParticipant2Name = receiverName
+                } else {
+                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+                    strParticipant1Name = getConnectedUserName(joinedUserStreamIds[0])
+
+                    txtInitialViewParticipant2?.text = callerName
+                    txtParticipant2?.text = callerName
+                    strParticipant2Name = callerName
+                }
             } else {
                 if (tempUserStreamIDList.size > userStreamIDList.size) {
                     tempUserStreamIDList.removeAll(userStreamIDList)
@@ -1892,7 +1939,9 @@ class VideoCallActivityNew : AppCompatActivity(),
         for (item in getRoomDetailsDataArrayList.indices) {
             strParticipantName =
                 if (participantStreamID.lowercase()
-                        .contains(getRoomDetailsDataArrayList[item].name.toString().lowercase())
+                        .contains(
+                            getRoomDetailsDataArrayList[item].stream_id.toString().lowercase()
+                        )
                 ) {
                     return getRoomDetailsDataArrayList[item].name.toString()
                 } else {
@@ -1900,5 +1949,27 @@ class VideoCallActivityNew : AppCompatActivity(),
                 }
         }
         return strParticipantName
+    }
+
+    private fun getInitials(strName: String?): String {
+        var initials = ""
+        if (strName?.contains(" ") == true) {
+            val strFullName = strName.split(" ")
+            val strFirstName = strFullName[0]
+            val strLastName = strFullName[1]
+
+            if (strFirstName.isNotEmpty()) {
+                initials += strFirstName.take(1)
+            }
+            if (strLastName.isNotEmpty()) {
+                initials += strLastName.take(1)
+            }
+        } else {
+            if (strName?.isNotEmpty() == true) {
+                initials = strName.toString().take(2)
+            }
+        }
+
+        return initials.uppercase()
     }
 }

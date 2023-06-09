@@ -104,7 +104,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
         btnDecline = findViewById(R.id.btnDecline)
         txtUserName = findViewById(R.id.txtUserName)
 
-        txtUserName?.text = SocketConstants.CALLER_SOCKET_ID
+//        txtUserName?.text = SocketConstants.CALLER_SOCKET_ID
         imgVideo?.setOnClickListener(this)
         btnAccept?.setOnClickListener(this)
         btnDecline?.setOnClickListener(this)
@@ -114,17 +114,19 @@ class ChatActivity : SocketController(), View.OnClickListener,
         when (view?.id) {
             R.id.imgVideo -> {
                 arraylistReceiverId.clear()
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
-                arraylistReceiverId.add(SocketConstants.UUIDs.USER_PRIYANKA)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_1)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_2)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_3)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_4)
+                arraylistReceiverId.add(SocketConstants.UUIDs.USER_5)
 
                 arraylistReceiverId.remove(SocketConstants.CALLER_SOCKET_ID)
 
                 Log.e("Chat Activity", "arraylistReceiverId: " + Gson().toJson(arraylistReceiverId))
-                /*if (SocketConstants.CALLER_SOCKET_ID == SocketConstants.UUIDs.USER_HIMANSHU)
-                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_DEEPAK)
+                /*if (SocketConstants.CALLER_SOCKET_ID == SocketConstants.UUIDs.USER_1)
+                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_2)
                 else
-                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_HIMANSHU)*/
+                    arraylistReceiverId.add(SocketConstants.UUIDs.USER_1)*/
 
                 if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
