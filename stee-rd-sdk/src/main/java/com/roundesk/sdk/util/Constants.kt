@@ -24,7 +24,7 @@ object Constants {
     const val BASE_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
     const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
     private const val SERVER_ADDRESS_UAT: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
-    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/LiveApp/websocket"
+    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/testing/websocket"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 
@@ -39,15 +39,11 @@ object Constants {
     }
 
     object UUIDs {
-//        const val USER_HIMANSHU: String = "himanshu@evvoiot.com"
-//        const val USER_DEEPAK: String = "deepak@evvoiot.com"
-//        const val USER_PRIYANKA: String = "priyanka@evvoiot.com"
-
-        const val USER_1: String = "rfhuzkfvodpajiletqss" // Roundesk Admin
-        const val USER_2: String = "crhuzkfvodpajiletqgb" // deepak yahoo
-        const val USER_3: String = "agjqticlbhvredpouzkf" // deepak outlook
-        const val USER_4: String = "wqhuzkfvodpajiletqst" // himanshu
-        const val USER_5: String = "gihuzkfvodpajiletlmn" // Priyanka
+        const val USER_1: String = "rfhuzkfvodpajiletqss" // Name : Roundesk Admin
+        const val USER_2: String = "crhuzkfvodpajiletqgb" // Name : deepak yahoo
+        const val USER_3: String = "agjqticlbhvredpouzkf" // Name : deepak outlook
+        const val USER_4: String = "wqhuzkfvodpajiletqst" // Name : himanshu
+        const val USER_5: String = "gihuzkfvodpajiletlmn" // Name : Priyanka
     }
 
     object InitializeSocket {

@@ -1,6 +1,5 @@
 package com.roundesk.app
 
-//import com.roundesk.sdk.socket.SocketConnection
 import android.app.Application
 import android.content.Context
 import android.os.Environment
@@ -94,34 +93,4 @@ class SocketConfig : Application() {
         val state = Environment.getExternalStorageState()
         return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
     }
-
-    /*override fun onActivityCreated(activity: Activity, p1: Bundle?) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityCreated")
-        socketConnection = SocketConnection()
-        socketConnection!!.connectSocket()
-    }
-
-    override fun onActivityStarted(activity: Activity) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityStarted")
-    }
-
-    override fun onActivityResumed(activity: Activity) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityResumed")
-    }
-
-    override fun onActivityPaused(activity: Activity) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityPaused")
-    }
-
-    override fun onActivityStopped(activity: Activity) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityStopped")
-    }
-
-    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivitySaveInstanceState")
-    }
-
-    override fun onActivityDestroyed(activity: Activity) {
-//        LogUtil.e("isActivityChangingConfigurations", "onActivityDestroyed")
-    }*/
 }

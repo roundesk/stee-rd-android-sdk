@@ -73,22 +73,12 @@ class ChatActivity : SocketController(), View.OnClickListener,
     }
 
     private fun initSocket() {
-//        socketConnection = SocketConfig.getInstance()?.getSocketInstance()
-//        ApiFunctions(this).getSocketInstance(socketConnection)
-
         ApiFunctions(this).getSocketInstance(mSocket)
 
         Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT =
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
 
         Constants.CALLER_SOCKET_ID = SocketConstants.CALLER_SOCKET_ID
-
-/*
-        SocketManager(
-            this, socketConnection!!,
-            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).createCallSocket()
-*/
 
         AppSocketManager(
             this, mSocket,
@@ -423,6 +413,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
                                     "receiver_name", createCallSocketDataClass.msg
                                 )
                                 startActivity(intent)
+                                isChatScreenOpened = false
                             }
                         }
 
