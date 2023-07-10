@@ -34,7 +34,8 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     private final String roomName;
     private String streamId;
     private HashMap<String, WebRTCClient> peers = new HashMap<>();
-    private LinkedHashMap<SurfaceViewRenderer, WebRTCClient> playRendererAllocationMap = new LinkedHashMap<>();
+     private LinkedHashMap<SurfaceViewRenderer, WebRTCClient> playRendererAllocationMap = new LinkedHashMap<>();
+     private LinkedHashMap<SurfaceViewRenderer, String> playRendererMap = new LinkedHashMap<>();
     private SurfaceViewRenderer publishViewRenderer;
     private final IWebRTCListener webRTCListener;
     private final IDataChannelObserver dataChannelObserver;
@@ -455,6 +456,16 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         }
     }
 
+    public boolean isremoteVideoOn(String streamid){
+        WebRTCClient playStream = peers.get(streamid);
+        if (playStream != null) {
+            return playStream.isVideoOn();
+        } else {
+            Log.w("ConferenceManager", "It did not joined to the conference room yet ");
+            return false;
+        }
+    }
+
     private void scheduleGetRoomInfo() {
         handler.postDelayed(getRoomInfoRunnable, ROOM_INFO_POLLING_MILLIS);
     }
@@ -496,6 +507,10 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     public String[] getConnectedStreamList() {
         return connectedStreamList;
+    }
+
+    public LinkedHashMap<SurfaceViewRenderer, WebRTCClient> getPlayRendererAllocationMap(){
+        return playRendererAllocationMap;
     }
 
 

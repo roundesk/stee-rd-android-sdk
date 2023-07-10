@@ -6,10 +6,12 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.dataclass.*
@@ -24,6 +26,8 @@ import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
 import com.roundesk.sdk.util.URLConfigurationUtil
 import io.webrtc.webrtcandroidframework.ConferenceManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -36,7 +40,6 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
     private val TAG = IncomingCallActivity::class.java.simpleName
-
     //    private var mSocket: Socket? = null
     private var imgCallEnd: ImageView? = null
     private var imgCallAccept: ImageView? = null
@@ -194,6 +197,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                                 intent.putExtra("audioStatus", audioStatus)
                                 intent.putExtra("videoStatus", videoStatus)
                                 startActivity(intent)
+                                finishAndRemoveTask()
 //                            }, 3000)
                             }
                         }
@@ -209,7 +213,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     LogUtil.e(TAG, "-----------------------")
                 }
             })
-            finish()
+//            finish()
         } else {
             if (!hasCameraPermission()) {
                 EasyPermissions.requestPermissions(
@@ -273,7 +277,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
                     LogUtil.e(TAG, "-----------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
                     LogUtil.e(TAG, "-----------------------")
-                    finish()
+                    finishAndRemoveTask()
                 }
             }
 
@@ -311,7 +315,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-        LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
+            LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
@@ -348,7 +352,6 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
 //                        playSong()
                         finish()
                     }
-
                 }
             }
         }

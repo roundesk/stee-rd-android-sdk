@@ -13,15 +13,14 @@ import android.os.*
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
-import android.view.Gravity
-import android.view.View
-import android.view.Window
-import android.view.WindowManager
+import android.view.*
 import android.widget.*
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
@@ -36,6 +35,9 @@ import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.*
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.webrtc.*
 import retrofit2.Call
@@ -46,6 +48,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.ArrayList
 
 
 class VideoCallActivityNew : AppCompatActivity(),
@@ -65,14 +68,16 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var activityName: String? = null
     private var audioStatus: String? = null
     private var videoStatus: String? = null
+    private var numberOfReceiver: Int = 0
+    private var numberOfReceiverRejects: Int = 0
 
     private var conferenceManager: ConferenceManager? = null
 
     private lateinit var publishViewRenderer: SurfaceViewRenderer
-    private var play_view_renderer1: SurfaceViewRenderer? = null
-    private var play_view_renderer2: SurfaceViewRenderer? = null
-    private var play_view_renderer3: SurfaceViewRenderer? = null
-    private var play_view_renderer4: SurfaceViewRenderer? = null
+    private lateinit var play_view_renderer1: SurfaceViewRenderer
+    private lateinit var play_view_renderer2: SurfaceViewRenderer
+    private lateinit var play_view_renderer3: SurfaceViewRenderer
+    private lateinit var play_view_renderer4: SurfaceViewRenderer
     private var imgCallEnd: ImageView? = null
     private var imgBottomCamera: ImageView? = null
     private var imgBottomVideo: ImageView? = null
@@ -106,11 +111,11 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var btnDecline: Button? = null
     private var recyclerview: RecyclerView? = null
 
-    private var relLayParticipant1: RelativeLayout? = null
-    private var relLayParticipant2: RelativeLayout? = null
-    private var relLayParticipant3: RelativeLayout? = null
-    private var relLayParticipant4: RelativeLayout? = null
-    private var relLayParticipant5: RelativeLayout? = null
+    private lateinit var relLayParticipant1: RelativeLayout
+    private lateinit var relLayParticipant2: RelativeLayout
+    private lateinit var relLayParticipant3: RelativeLayout
+    private lateinit var relLayParticipant4: RelativeLayout
+    private lateinit var relLayParticipant5: RelativeLayout
     private var txtInitialViewParticipant1: TextView? = null
     private var txtInitialViewParticipant2: TextView? = null
     private var txtParticipant1: TextView? = null
@@ -125,9 +130,11 @@ class VideoCallActivityNew : AppCompatActivity(),
     private var relLayNames5: RelativeLayout? = null
     private var relLay2ParticipantsName: RelativeLayout? = null
     private var linLayMultipleParticipantsName: LinearLayout? = null
+    private lateinit var namesLayoutParent: RelativeLayout
 
     private lateinit var layoutBottomSheet: RelativeLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
+
 
     private var isCallerSmall: Boolean = true
     private var isPictureInPictureMode: Boolean = false
@@ -187,29 +194,77 @@ class VideoCallActivityNew : AppCompatActivity(),
 
     private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> = arrayListOf()
 
-    lateinit var mainHandler: Handler
-    private val updateTextTask = object : Runnable {
-        override fun run() {
-            LogUtil.e(
-                TAG, "connectedStreamList Size : " + conferenceManager?.connectedStreamList?.size
-            )
-            runOnUiThread {
-                if (NetworkUtils.isConnectedFast(this@VideoCallActivityNew)) {
-                    if (tempValue != conferenceManager?.connectedStreamList?.size) {
-                        tempValue = conferenceManager?.connectedStreamList?.size
-                        refreshRoomDetails()
-                    }
-                } else {
-                    ToastUtil.displayLongDurationToast(
-                        this@VideoCallActivityNew,
-                        "Your Connection is not Stable. For video calling your connection should be stable"
-                    )
-                    finish()
-                }
-            }
-            mainHandler.postDelayed(this, 1500)
-        }
+    val userIdAndposition = ArrayList<String>()
+    val surfaceViewList = ArrayList<Int>()
+    var surfaceViewIdList = ArrayList<SurfaceViewRenderer>()
+    val relaytiveLayoutList = ArrayList<RelativeLayout>()
+    val textViewList = ArrayList<TextView>()
+    var playViewRenderIndex: Int = 0
+    var oldUserEntersCount: Int? = 0
+    val isNewUserEnter: MutableLiveData<Int> by lazy {
+        MutableLiveData<Int>()
     }
+    val totalRemoteUsers = ArrayList<String>()
+    private val remoteUsersSet = LinkedHashSet<String>()
+    private var iscallEnded = false
+    private var isCallStarted = false
+    private var forTimer = true
+    var h = 0
+    var m = 0
+    var s = 0
+    var ss = ""
+    var mm = ""
+    var hh = ""
+    var booleanWhenUserEntersOrExit = false
+
+
+    private suspend fun runLoop() {
+        while (true) {
+            delay(500)
+            if (NetworkUtils.isConnectedFast(this@VideoCallActivityNew)) {
+                conferenceManager?.connectedStreamList?.let {
+                    if (isCallStarted && conferenceManager?.connectedStreamList?.size == 0) {
+                        endCall(true)
+                        finish()
+                    }
+
+                    if (tempValue!! < it.size) {
+                        tempValue = it.size
+                        isCallStarted = true
+                        runOnUiThread {
+                            manageUserViews()
+                            if (forTimer) {
+                                forTimer = false
+                                lifecycleScope.launch {
+                                    timer()
+                                }
+                            }
+                        }
+
+                    } else if (tempValue!! > it.size) {
+                        tempValue = it.size
+                        runOnUiThread {
+                            if (tempValue != 0) {
+                                getDisconnectedView()
+                            }
+
+                        }
+                    }
+
+
+                }
+
+            } else {
+                ToastUtil.displayLongDurationToast(
+                    this@VideoCallActivityNew,
+                    "Your Connection is not Stable. For video calling your connection should be stable"
+                )
+                finish()
+            }
+        }
+
+    }
+
 
     private fun refreshRoomDetails() {
         if (conferenceManager?.connectedStreamList?.size != null) {
@@ -223,6 +278,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                 }
             }
         }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -238,10 +294,18 @@ class VideoCallActivityNew : AppCompatActivity(),
         )
         setContentView(R.layout.activity_video_call_new)
         storeDataLogsFile()
-        mainHandler = Handler(Looper.getMainLooper())
-        initSocket()
         getIntentData()
+        initSocket()
         initView()
+
+        lifecycleScope.launch {
+            runLoop()
+        }
+
+    }
+
+    private fun getRemoteViewList(): Int? {
+        return conferenceManager?.connectedStreamList?.size ?: 0
     }
 
     private fun getIntentData() {
@@ -256,7 +320,9 @@ class VideoCallActivityNew : AppCompatActivity(),
             receiverName = extras.getString("receiver_name")
             audioStatus = extras.getString("audioStatus")
             videoStatus = extras.getString("videoStatus")
-//            isReceiverID = extras.getBoolean("isIncomingCall")
+            isReceiverID = extras.getBoolean("isIncomingCall")
+//            numberOfReceiver = extras.getString("numberOfReceiver")!!.toInt()
+
         }
 
         LogUtil.e(
@@ -272,6 +338,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     + " CALLER_SOCKET_ID : ${Constants.CALLER_SOCKET_ID}"
                     + " audioStatus : $audioStatus"
                     + " videoStatus : $videoStatus"
+                    + " numberOfReceiver : $numberOfReceiver"
         )
     }
 
@@ -332,6 +399,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         relLayParticipant4 = findViewById(R.id.relLayParticipant4)
         relLayParticipant5 = findViewById(R.id.relLayParticipant5)
 
+        namesLayoutParent = findViewById(R.id.name_layout_parent)
         txtInitialViewParticipant1 = findViewById(R.id.txtInitialViewParticipant1)
         txtInitialViewParticipant2 = findViewById(R.id.txtInitialViewParticipant2)
         txtParticipant1 = findViewById(R.id.txtParticipant1)
@@ -359,6 +427,26 @@ class VideoCallActivityNew : AppCompatActivity(),
         displayParticipant5View(false)
         sheetBehavior.isHideable = false
 
+
+
+        surfaceViewList.add(R.id.play_view_renderer1)
+        surfaceViewList.add(R.id.play_view_renderer2)
+        surfaceViewList.add(R.id.play_view_renderer3)
+        surfaceViewList.add(R.id.play_view_renderer4)
+
+        surfaceViewIdList.add(play_view_renderer1)
+        surfaceViewIdList.add(play_view_renderer2)
+        surfaceViewIdList.add(play_view_renderer3)
+        surfaceViewIdList.add(play_view_renderer4)
+
+
+//        relaytiveLayoutList.add(relLayParticipant1)
+        relaytiveLayoutList.add(relLayParticipant2)
+        relaytiveLayoutList.add(relLayParticipant3)
+        relaytiveLayoutList.add(relLayParticipant4)
+        relaytiveLayoutList.add(relLayParticipant5)
+
+
         playViewRenderers.add(findViewById(R.id.play_view_renderer1))
         playViewRenderers.add(findViewById(R.id.play_view_renderer2))
         playViewRenderers.add(findViewById(R.id.play_view_renderer3))
@@ -373,6 +461,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         sheetBehaviour()
         checkPermissions()
 
+
         // this.getIntent().putExtra(CallActivity.EXTRA_VIDEO_FPS, 24);
 //         this.getIntent().putExtra(CallActivity.EXTRA_DATA_CHANNEL_ENABLED, true);
 
@@ -381,6 +470,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             joinConference()
         }
     }
+
 
     private fun conferenceDetails(
         publishViewRenderer: SurfaceViewRenderer,
@@ -414,6 +504,8 @@ class VideoCallActivityNew : AppCompatActivity(),
             null
         )
 
+
+
         conferenceManager?.setPlayOnlyMode(false)
         conferenceManager?.setOpenFrontCamera(true)
     }
@@ -429,6 +521,8 @@ class VideoCallActivityNew : AppCompatActivity(),
         btnAccept?.setOnClickListener(this)
         btnDecline?.setOnClickListener(this)
         viewHideShowBottomSheet?.setOnClickListener(this)
+        relLayParticipant2.setOnClickListener(this)
+        relLayParticipant1.setOnClickListener(this)
     }
 
     private fun checkPermissions() {
@@ -446,8 +540,12 @@ class VideoCallActivityNew : AppCompatActivity(),
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.imgCallEnd -> {
+                if (conferenceManager?.connectedStreamList == null || conferenceManager?.connectedStreamList?.size == 0) {
+                    declineCall(true)
+                }
                 conferenceManager?.leaveFromConference()
                 stopCallDurationTimer()
+                iscallEnded = true
                 if (conferenceManager?.connectedStreamList?.size == 1) {
                     endCall(true)
                 } else {
@@ -510,6 +608,45 @@ class VideoCallActivityNew : AppCompatActivity(),
                 if (sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
                     sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN)
                 }*/
+            }
+
+
+        }
+    }
+
+    private suspend fun timer() {
+        while (true) {
+            delay(1000)
+            s++
+            if (s > 59) {
+                s = 0
+                m++
+                if (m > 59) {
+                    m = 0
+                    h++
+                }
+            }
+
+            ss = if (s.toString().length == 1) {
+                "0$s"
+            } else {
+                "$s"
+            }
+
+            mm = if (m.toString().length == 1) {
+                "0$m"
+            } else {
+                "$m"
+            }
+
+            hh = if (h.toString().length == 1) {
+                "0$h"
+            } else {
+                "$h"
+            }
+            val timer = "$hh:$mm:$ss"
+            if (!iscallEnded) {
+                txtTimer!!.text = timer
             }
         }
     }
@@ -584,6 +721,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             imgArrowUp?.rotation = 0F
         }
     }
+
 
     private fun endCall(endCallForAllUsers: Boolean) {
         var callTime: String = ""
@@ -686,6 +824,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun onPlayStarted(streamId: String?) {
+
         LogUtil.e(TAG, "onPlayStarted streamId: $streamId")
     }
 
@@ -709,11 +848,26 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun onIceConnected(streamId: String?) {
-        LogUtil.e(TAG, "onIceConnected streamId: $streamId")
+
+        booleanWhenUserEntersOrExit = true
+        if (!conferenceManager!!.connectedStreamList.isNullOrEmpty()) {
+            oldUserEntersCount = conferenceManager!!.connectedStreamList.size
+        }
+        userIdAndposition.add(streamId!!)
+        LogUtil.e(TAG, "streamIdInUse streamId1:  $isReceiverID")
+        LogUtil.e(TAG, "streamIdInUse streamId1:  $mStreamId")
+
     }
 
     override fun onIceDisconnected(streamId: String?) {
-        LogUtil.e(TAG, "onIceDisconnected streamId: $streamId")
+        Log.d("getuserIdAndposition", "onIceDisconnected")
+        Log.d("switchLayout", "getuserIdAndposition = $streamId")
+        var boolean = true
+        userIdAndposition.remove(streamId)
+        booleanWhenUserEntersOrExit = false
+        if (userIdAndposition.size == 1) {
+            finish()
+        }
     }
 
     override fun onTrackList(tracks: Array<out String>?) {
@@ -745,6 +899,7 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     override fun onStateChange(state: DataChannel.State?, dataChannelLabel: String?) {
+
     }
 
     override fun onMessage(buffer: DataChannel.Buffer?, dataChannelLabel: String?) {
@@ -768,9 +923,174 @@ class VideoCallActivityNew : AppCompatActivity(),
         LogUtil.e(TAG, "SentEvent: $strDataJson")
     }
 
+    private fun getDisconnectedView() {
+        var boolean = true
+        lifecycleScope.launch {
+//            while(true){
+//                delay(1500)
+            if (conferenceManager!!.playRendererAllocationMap != null) {
+                var p = 0
+                conferenceManager!!.playRendererAllocationMap.forEach { (key, value) ->
+                    if (value == null) {
+
+                        val s = conferenceManager!!.playRendererAllocationMap[key]
+                        if (boolean) {
+                            p = surfaceViewList.indexOf(key.id)
+                            Log.d("switchLayout", "values = $p")
+                            manageViewsIfAnyUserLeave(p)
+                            boolean = false
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    private fun manageViewsIfAnyUserLeave(position: Int) {
+        Log.d("switchLayout", "values = $position")
+//      runOnUiThread {
+        if (position == 0) {
+            Log.d("manageViewsIfAnyUser", "1")
+            relLayParticipant3.removeView(play_view_renderer2)
+            relLayParticipant2.removeView(play_view_renderer1)
+            relLayParticipant2.addView(play_view_renderer2)
+            relLayParticipant3.visibility = View.GONE
+            txtParticipant2!!.text = txtParticipant3!!.text
+            txtParticipant3!!.visibility = View.GONE
+            linLayUser34!!.visibility = View.GONE
+            switchView!!.visibility = View.VISIBLE
+            playViewRenderIndex = surfaceViewIdList.indexOf(play_view_renderer2)
+//              switchLayout(isCallerSmall)
+            switchLayout(isCallerSmall)
+        }
+        if (position == 1) {
+            Log.d("manageViewsIfAnyUser", "2")
+            relLayParticipant3.visibility = View.GONE
+            txtParticipant2!!.text = txtParticipant3!!.text
+            txtParticipant3!!.visibility = View.GONE
+            linLayUser34!!.visibility = View.GONE
+            switchView!!.visibility = View.VISIBLE
+            playViewRenderIndex = surfaceViewIdList.indexOf(play_view_renderer1)
+            switchLayout(isCallerSmall)
+        }
+
+
+        namesLayoutParent.visibility = View.GONE
+
+
+//        if(position < oldUserEntersCount!!-1) {
+//            Log.d("getuserIdAndposition45", "1")
+//            for (i in position until oldUserEntersCount!!-1) {
+//                val j = i+1
+//                Log.d("getuserIdAndposition45", "forloop $i")
+//                relaytiveLayoutList[j + 1].removeView(surfaceViewIdList[i + 1])
+//                relaytiveLayoutList[j+1].visibility = View.GONE
+//                relaytiveLayoutList[j].removeView(surfaceViewIdList[i])
+//                relaytiveLayoutList[j].addView(surfaceViewIdList[i + 1])
+//            }
+//
+//        }
+//        else{
+//            Log.d("getuserIdAndposition45", "else")
+//                relaytiveLayoutList[position+1].visibility =View.GONE
+//        }
+//
+//        if(oldUserEntersCount== 2  && (position == 0 || position== 1) )  {
+//            Log.d("getuserIdAndposition45", "if2")
+//            linLayUser34!!.visibility = View.GONE
+//            switchView!!.visibility = View.VISIBLE
+//            switchLayout(true)
+//        }
+//        else if(position== oldUserEntersCount!!-1){
+//            Log.d("ifelsePosition", "3")
+//            relaytiveLayoutList[position].visibility =View.GONE
+//            if(oldUserEntersCount== 2  && (position == 0 || position== 1) )  {
+//                linLayUser34!!.visibility = View.GONE
+//                switchView!!.visibility = View.VISIBLE
+//                switchLayout(true)
+//            }
+//        }
+//        remoteUsersSet.remove(streamId)
+
+//                    relaytiveLayoutList[k].visibility= View.GONE
+//                    userIdAndposition.removeAt(position)
+//                   relaytiveLayoutList.removeAt(k)
+//            if(relaytiveLayoutList.size<2){
+//                LogUtil.e(TAG, "R.id.relLayParticipant1 ->{
+//
+//            } 3")
+//                linLayUser34!!.visibility= View.GONE
+//                switchView!!.visibility = View.VISIBLE
+//                switchLayout(isCallerSmall)
+//            }
+//                }
+////            }
+//            else{
+//            LogUtil.e(TAG, "manageUserViews $2")
+//                    if(position == 2){
+//                        relaytiveLayoutList[position].visibility= View.GONE
+//                        relaytiveLayoutList.removeAt(position)
+//                        userIdAndposition.removeAt(position)
+//                        if(relaytiveLayoutList.size<2){
+//                            LogUtil.e(TAG, "manageUserViews 3")
+//                            linLayUser34!!.visibility= View.GONE
+//                            switchView!!.visibility = View.VISIBLE
+//                            switchLayout(isCallerSmall)
+//                        }
+//                    }else{
+//                        for(i in position until relaytiveLayoutList.size -1){
+//                            LogUtil.e(TAG, "manageUserViews $i")
+//                            relaytiveLayoutList[i+1].removeView(surfaceViewListForManagingViews[i+1])
+//                            relaytiveLayoutList[i+1].visibility = View.GONE
+//                            relaytiveLayoutList[i].removeView(surfaceViewListForManagingViews[i])
+//                            relaytiveLayoutList[i].addView(surfaceViewListForManagingViews[i+1])
+//                            surfaceViewListForManagingViews.removeAt(i)
+//                        }
+//                        userIdAndposition.removeAt(position)
+//                    }
+//                }
+//
+
+
+//        if(userIdAndposition.size>=3){
+//            if(position < userIdAndposition.size ){
+//                for(i in position until userIdAndposition.size-1){
+//                    val j = i+1
+//                    if(j < relaytiveLayoutList.size){
+//                        relaytiveLayoutList[i+1].removeView(surfaceViewListForManagingViews[i+1])
+//                        relaytiveLayoutList[i].removeView(surfaceViewListForManagingViews[i])
+//                        relaytiveLayoutList[i].addView(surfaceViewListForManagingViews[i+1])
+//                        surfaceViewListForManagingViews.removeAt(i)
+//                        relaytiveLayoutList.removeAt(relaytiveLayoutList.size-1)
+//
+//                        relaytiveLayoutList[relaytiveLayoutList.size-1].visibility = View.GONE
+//                    }
+//
+////                    surfaceViewListForManagingViews.add(i,surfaceViewListForManagingViews[i+1])
+//                    if(userIdAndposition.size==2){
+//                        linLayUser34!!.visibility= View.GONE
+//                        switchView!!.visibility = View.VISIBLE
+//                        switchLayout(isCallerSmall)
+////           manageUserViews()
+//                    }
+//                }
+//            }
+//            else{
+//                relaytiveLayoutList[position].visibility = View.GONE
+//            }
+//        }
+
+
+    }
+
+
     private fun switchLayout(isCallerSmall: Boolean) {
+        relLayoutMain!!.removeView(switchView)
+        Log.d("switchLayout", "switchLayout2")
+        Log.d("switchLayout", "$playViewRenderIndex")
         val paramsRemoteVideo: RelativeLayout.LayoutParams =
-            play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+            surfaceViewIdList[playViewRenderIndex!!].layoutParams as RelativeLayout.LayoutParams
         val paramsLocalVideo: RelativeLayout.LayoutParams =
             publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
 
@@ -780,11 +1100,11 @@ class VideoCallActivityNew : AppCompatActivity(),
             relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
 
         publishViewRenderer.visibility = View.GONE
-        play_view_renderer1?.visibility = View.GONE
+        surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
         relLayParticipant1?.removeView(publishViewRenderer)
-        relLayParticipant2?.removeView(play_view_renderer1)
+        relLayParticipant2?.removeView(surfaceViewIdList[playViewRenderIndex])
         publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
-        play_view_renderer1?.setZOrderMediaOverlay(!isCallerSmall)
+        surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
 
         if (isCallerSmall) {
             setSmallLocalVideoView(true, paramsLocalVideo)
@@ -802,7 +1122,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             paramsRelLayRemote.topMargin = 0
 
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+            relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
 
 //            if (activityName == "Incoming") {
 //                txtInitialViewParticipant1?.text = strParticipant1Name
@@ -831,7 +1151,7 @@ class VideoCallActivityNew : AppCompatActivity(),
             paramsRelLayRemote.gravity = Gravity.END
 
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+            relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
 
 //            if (activityName == "Incoming") {
 //                txtInitialViewParticipant1?.text = strParticipant1Name
@@ -847,8 +1167,101 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
 
         publishViewRenderer.visibility = View.VISIBLE
-        play_view_renderer1?.visibility = View.VISIBLE
+        surfaceViewIdList[playViewRenderIndex]?.visibility = View.VISIBLE
+        relLayoutMain!!.addView(switchView)
+        switchView?.isClickable = true
+        switchView?.isFocusable = true
     }
+
+
+    private fun switchLayout(isCallerSmall: Boolean, playRenderIndex: Int) {
+        relLayoutMain!!.removeView(switchView)
+        Log.d("switchLayout", "switchLayout2")
+        Log.d("switchLayout", "$playRenderIndex")
+        val paramsRemoteVideo: RelativeLayout.LayoutParams =
+            surfaceViewIdList[playRenderIndex].layoutParams as RelativeLayout.LayoutParams
+        val paramsLocalVideo: RelativeLayout.LayoutParams =
+            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+
+        val paramsRelLayLocal: FrameLayout.LayoutParams =
+            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
+        val paramsRelLayRemote: FrameLayout.LayoutParams =
+            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+
+        publishViewRenderer.visibility = View.GONE
+        surfaceViewIdList[playRenderIndex].visibility = View.GONE
+        relLayParticipant1?.removeView(publishViewRenderer)
+        relLayParticipant2?.removeView(surfaceViewIdList[playRenderIndex])
+        publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
+        surfaceViewIdList[playRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
+
+        if (isCallerSmall) {
+            setSmallLocalVideoView(true, paramsLocalVideo)
+            setSmallRemoteVideoView(false, paramsRemoteVideo)
+
+            paramsRelLayLocal.height = 510
+            paramsRelLayLocal.width = 432
+            paramsRelLayLocal.marginEnd = 40
+            paramsRelLayLocal.topMargin = 40
+            paramsRelLayLocal.gravity = Gravity.END
+
+            paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayRemote.marginEnd = 0
+            paramsRelLayRemote.topMargin = 0
+
+            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            relLayParticipant2?.addView(surfaceViewIdList[playRenderIndex], paramsRelLayRemote)
+
+//            if (activityName == "Incoming") {
+//                txtInitialViewParticipant1?.text = strParticipant1Name
+//                txtInitialViewParticipant2?.text = strParticipant2Name
+//                txtParticipant1?.text = strParticipant1Name
+//                txtParticipant2?.text = strParticipant2Name
+//            } else {
+            txtInitialViewParticipant1?.text = strParticipant1Name
+            txtInitialViewParticipant2?.text = strParticipant2Name
+            txtParticipant1?.text = strParticipant1Name
+            txtParticipant2?.text = strParticipant2Name
+//            }
+        } else {
+            setSmallLocalVideoView(false, paramsLocalVideo)
+            setSmallRemoteVideoView(true, paramsRemoteVideo)
+
+            paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayLocal.width = FrameLayout.LayoutParams.MATCH_PARENT
+            paramsRelLayLocal.marginEnd = 0
+            paramsRelLayLocal.topMargin = 0
+
+            paramsRelLayRemote.height = 510
+            paramsRelLayRemote.width = 432
+            paramsRelLayRemote.marginEnd = 40
+            paramsRelLayRemote.topMargin = 40
+            paramsRelLayRemote.gravity = Gravity.END
+
+            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            relLayParticipant2?.addView(surfaceViewIdList[playRenderIndex], paramsRelLayRemote)
+
+//            if (activityName == "Incoming") {
+//                txtInitialViewParticipant1?.text = strParticipant1Name
+//                txtInitialViewParticipant2?.text = strParticipant2Name
+//                txtParticipant1?.text = strParticipant1Name
+//                txtParticipant2?.text = strParticipant2Name
+//            } else {
+            txtInitialViewParticipant1?.text = strParticipant2Name
+            txtInitialViewParticipant2?.text = strParticipant1Name
+            txtParticipant1?.text = strParticipant2Name
+            txtParticipant2?.text = strParticipant1Name
+//            }
+        }
+
+        publishViewRenderer.visibility = View.VISIBLE
+        surfaceViewIdList[playRenderIndex]?.visibility = View.VISIBLE
+        relLayoutMain!!.addView(switchView)
+        switchView?.isClickable = true
+        switchView?.isFocusable = true
+    }
+
 
     private fun manage2and3UserView(boolean: Boolean) {
         if (boolean) {
@@ -1121,49 +1534,49 @@ class VideoCallActivityNew : AppCompatActivity(),
         }
     }
 
-    private val mHandler: Handler = object : Handler(Looper.getMainLooper()) {
-        override fun handleMessage(msg: Message) {
-            super.handleMessage(msg)
-            when (msg.what) {
-                MSG_START_TIMER -> {
-                    timer.start()
-                    sendEmptyMessage(MSG_UPDATE_TIMER)
-                }
-                MSG_UPDATE_TIMER -> {
-                    val millis = timer.getElapsedTime()
-                    val hh = TimeUnit.MILLISECONDS.toHours(millis)
-                    val mm = (TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(
-                        TimeUnit.MILLISECONDS.toHours(millis)
-                    ))
-                    val ss = (TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(
-                        TimeUnit.MILLISECONDS.toMinutes(millis)
-                    ))
-                    stoppedTimeDuration = String.format("%02d:%02d:%02d", hh, mm, ss)
-                    txtTimer?.text = stoppedTimeDuration
-
-                    sendEmptyMessageDelayed(
-                        MSG_UPDATE_TIMER,
-                        REFRESH_RATE.toLong()
-                    )
-                }
-                MSG_STOP_TIMER -> {
-                    this.removeMessages(MSG_UPDATE_TIMER)
-                    timer.stop()
-//                    txtTimer?.setText("" + timer.getElapsedTime())
-                    txtTimer?.text = stoppedTimeDuration
-                }
-                else -> {
-                }
-            }
-        }
-    }
+//    private val mHandler: Handler = object : Handler(Looper.getMainLooper()) {
+//        override fun handleMessage(msg: Message) {
+//            super.handleMessage(msg)
+//            when (msg.what) {
+//                MSG_START_TIMER -> {
+//                    timer.start()
+//                    sendEmptyMessage(MSG_UPDATE_TIMER)
+//                }
+//                MSG_UPDATE_TIMER -> {
+//                    val millis = timer.getElapsedTime()
+//                    val hh = TimeUnit.MILLISECONDS.toHours(millis)
+//                    val mm = (TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(
+//                        TimeUnit.MILLISECONDS.toHours(millis)
+//                    ))
+//                    val ss = (TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(
+//                        TimeUnit.MILLISECONDS.toMinutes(millis)
+//                    ))
+//                    stoppedTimeDuration = String.format("%02d:%02d:%02d", hh, mm, ss)
+//                    txtTimer?.text = stoppedTimeDuration
+//
+//                    sendEmptyMessageDelayed(
+//                        MSG_UPDATE_TIMER,
+//                        REFRESH_RATE.toLong()
+//                    )
+//                }
+//                MSG_STOP_TIMER -> {
+//                    this.removeMessages(MSG_UPDATE_TIMER)
+//                    timer.stop()
+////                    txtTimer?.setText("" + timer.getElapsedTime())
+//                    txtTimer?.text = stoppedTimeDuration
+//                }
+//                else -> {
+//                }
+//            }
+//        }
+//    }
 
     private fun startCallDurationTimer() {
-        mHandler.sendEmptyMessage(MSG_START_TIMER);
+//        mHandler.sendEmptyMessage(MSG_START_TIMER);
     }
 
     private fun stopCallDurationTimer() {
-        mHandler.sendEmptyMessage(MSG_STOP_TIMER);
+//        mHandler.sendEmptyMessage(MSG_STOP_TIMER);
     }
 
     override fun onBackPressed() {
@@ -1199,17 +1612,18 @@ class VideoCallActivityNew : AppCompatActivity(),
         if (isPictureInPictureMode)
             navToLauncherTask(this)
 
-        mainHandler.removeCallbacks(updateTextTask)
+//        mainHandler.removeCallbacks(updateTextTask)
     }
 
     override fun onResume() {
         super.onResume()
-        mainHandler.post(updateTextTask)
+//        mainHandler.post(updateTextTask)
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
         LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
+        LogUtil.e(TAG, "handleSocketSuccessResponse: $type")
         LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
@@ -1217,7 +1631,6 @@ class VideoCallActivityNew : AppCompatActivity(),
                     Gson().fromJson(response, CreateCallSocketDataClass::class.java)
                 runOnUiThread {
                     bottomSheetAdapter?.manageUIVisibility(createCallSocketDataClass)
-
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
                         receiverName = createCallSocketDataClass.receiver_name
 //                        txtBottomReceiverName?.text = receiverName
@@ -1240,11 +1653,17 @@ class VideoCallActivityNew : AppCompatActivity(),
 
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_REJECT_CALL) {
                         playSong()
-                        imgCallEnd?.performClick()
-                        txtRinging2?.text = "Rejected"
-                        progressBar2?.visibility = View.GONE
-                        imgCallRejected?.visibility = View.VISIBLE
-                        linlayCallerDetails?.visibility = View.GONE
+                        ++numberOfReceiverRejects
+                        LogUtil.e(TAG, "handleSocketSuccessResponse: $numberOfReceiver")
+                        if (numberOfReceiverRejects == 2) {
+                            LogUtil.e(TAG, "handleSocketSuccessResponsem: $numberOfReceiver")
+                            imgCallEnd?.performClick()
+                            txtRinging2?.text = "Rejected"
+                            progressBar2?.visibility = View.GONE
+                            imgCallRejected?.visibility = View.VISIBLE
+                            linlayCallerDetails?.visibility = View.GONE
+                        }
+
                     }
                 }
             }
@@ -1493,6 +1912,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                 manage2and3UserView(true)
             }
         }
+
 
     }
 
@@ -1758,8 +2178,10 @@ class VideoCallActivityNew : AppCompatActivity(),
                         if (response.body()?.success?.size!! > 0) {
                             response.body()?.success?.let { getRoomDetailsDataArrayList.addAll(it) }
                         }
+                        if (booleanWhenUserEntersOrExit) {
+                            manageUserViews()
+                        }
 
-                        manageUserViews()
                     }
                 }
             }
@@ -1836,20 +2258,20 @@ class VideoCallActivityNew : AppCompatActivity(),
                     )
                 }
                 if (activityName == "Incoming") {
-                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
-                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+//                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+//                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
                     strParticipant1Name = getConnectedUserName(joinedUserStreamIds[0])
 
-                    txtInitialViewParticipant2?.text = receiverName
-                    txtParticipant2?.text = receiverName
+//                    txtInitialViewParticipant2?.text = receiverName
+//                    txtParticipant2?.text = receiverName
                     strParticipant2Name = receiverName
                 } else {
-                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
-                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+//                    txtInitialViewParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
+//                    txtParticipant1?.text = getConnectedUserName(joinedUserStreamIds[0])
                     strParticipant1Name = getConnectedUserName(joinedUserStreamIds[0])
 
-                    txtInitialViewParticipant2?.text = callerName
-                    txtParticipant2?.text = callerName
+//                    txtInitialViewParticipant2?.text = callerName
+//                    txtParticipant2?.text = callerName
                     strParticipant2Name = callerName
                 }
             } else {
@@ -1945,7 +2367,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     txtParticipant3?.alightParentRightIs(true)
                     dividerView1?.visibility = View.GONE
                     txtParticipant3?.visibility = View.VISIBLE
-                    txtParticipant3?.text = getConnectedUserName(joinedUserStreamIds[1])
+//                    txtParticipant3?.text = getConnectedUserName(joinedUserStreamIds[1])
                     strParticipant3Name = getConnectedUserName(joinedUserStreamIds[1])
                     if (Constants.CALLER_SOCKET_ID == Constants.UUIDs.USER_2) {
                         manageIfUserIsInTheRoom(
@@ -2003,13 +2425,13 @@ class VideoCallActivityNew : AppCompatActivity(),
                 dividerView1?.visibility = View.GONE
                 txtParticipant3?.visibility = View.VISIBLE
                 if (activityName == "Incoming") {
-                    txtInitialViewParticipant1?.text = receiverName
-                    txtParticipant1?.text = receiverName
+//                    txtInitialViewParticipant1?.text = receiverName
+//                    txtParticipant1?.text = receiverName
                     strParticipant1Name = receiverName
                 }
-                txtParticipant2?.text = getConnectedUserName(userStreamIDList[0])
+//                txtParticipant2?.text = getConnectedUserName(userStreamIDList[0])
                 strParticipant2Name = getConnectedUserName(userStreamIDList[0])
-                txtParticipant3?.text = getConnectedUserName(userStreamIDList[1])
+//                txtParticipant3?.text = getConnectedUserName(userStreamIDList[1])
                 strParticipant3Name = getConnectedUserName(userStreamIDList[1])
                 Log.e(
                     "$TAG ---------->>>>>>>>>>",
@@ -2056,7 +2478,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     txtParticipant3?.alightParentRightIs(false)
                     dividerView1?.visibility = View.VISIBLE
                     txtParticipant4?.visibility = View.VISIBLE
-                    txtParticipant4?.text = getConnectedUserName(joinedUserStreamIds[2])
+//                    txtParticipant4?.text = getConnectedUserName(joinedUserStreamIds[2])
                     strParticipant4Name = getConnectedUserName(joinedUserStreamIds[2])
                 }
 
@@ -2086,16 +2508,40 @@ class VideoCallActivityNew : AppCompatActivity(),
                 relLayNames5?.visibility = View.VISIBLE
 //                txtParticipant5?.text = getJoinedUserName(joinedUserStreamIds[3])
 //                strParticipant5Name = getJoinedUserName(joinedUserStreamIds[3])
-                txtParticipant5?.text = getConnectedUserName(joinedUserStreamIds[3])
+//                txtParticipant5?.text = getConnectedUserName(joinedUserStreamIds[3])
                 strParticipant5Name = getConnectedUserName(joinedUserStreamIds[3])
             }
         }
 
+        namesLayoutParent.visibility = View.GONE
         Log.e("$TAG Connected Users", "joinedUserStreamIds : " + Gson().toJson(joinedUserStreamIds))
         Log.e(
             "$TAG Users StreamIDs",
             "--> isUser1InTheRoom : ($user1StreamId) --> isUser2InTheRoom : ($user2StreamId) --> isUser3InTheRoom : ($user3StreamId) --> isUser4InTheRoom : ($user4StreamId)  --> isUser5InTheRoom : ($user5StreamId)"
         )
+
+//        setNamesToTextView()
+
+    }
+
+    private fun setNamesToTextView() {
+        if (isReceiverID) {
+            txtParticipant1!!.text = receiverName
+            txtInitialViewParticipant1!!.text = receiverName
+        } else {
+            txtParticipant1!!.text = callerName
+            txtInitialViewParticipant1!!.text = callerName
+        }
+        if (!remoteUsersSet.isNullOrEmpty()) {
+            txtInitialViewParticipant2!!.text = getConnectedUserName(remoteUsersSet.elementAt(0))
+            when (remoteUsersSet.size) {
+                1 -> txtParticipant2!!.text = getConnectedUserName(remoteUsersSet.elementAt(0))
+                2 -> txtParticipant3!!.text = getConnectedUserName(remoteUsersSet.elementAt(1))
+
+            }
+
+
+        }
     }
 
     private fun storeDataLogsFile() {
@@ -2208,5 +2654,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         user3StreamId = user3ID
         user4StreamId = user4ID
         user5StreamId = user5ID
+
+        play_view_renderer1.display.displayId
     }
 }
