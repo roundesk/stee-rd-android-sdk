@@ -24,7 +24,7 @@ object Constants {
     const val BASE_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
     const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
     private const val SERVER_ADDRESS_UAT: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
-    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/testing/websocket"
+    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/WebRTCAppEE/websocket"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 
