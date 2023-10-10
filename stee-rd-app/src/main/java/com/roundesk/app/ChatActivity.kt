@@ -15,7 +15,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
@@ -37,13 +39,16 @@ import java.util.*
 import com.github.nkzawa.socketio.client.IO
 import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.socket.AppSocketManager
+import kotlinx.coroutines.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class ChatActivity : SocketController(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
     EasyPermissions.RationaleCallbacks, SocketListener<Any> {
 
     private val TAG = ChatActivity::class.java.simpleName
-
+    private var pid = 0
     private var imgVideo: ImageView? = null
     private var txtCallerName: TextView? = null
     private var relLayTopNotification: RelativeLayout? = null
@@ -58,19 +63,22 @@ class ChatActivity : SocketController(), View.OnClickListener,
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
     var isChatScreenOpened: Boolean? = false
-
+    private val logJob = CoroutineScope(Dispatchers.IO)
     //    private var isIncomingCall: Boolean = false
 //    private var socketConnection: SocketConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
+        pid= android.os.Process.myPid()
         initSocket()
         initView()
 
         ApiFunctions(this).getCallerRole(SocketConstants.showIncomingCallUI)
         storeDataLogsFile()
     }
+
+
 
     private fun initSocket() {
         ApiFunctions(this).getSocketInstance(mSocket)
@@ -93,6 +101,14 @@ class ChatActivity : SocketController(), View.OnClickListener,
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
         txtUserName = findViewById(R.id.txtUserName)
+       val pid = android.os.Process.myPid()
+        val c :Int= VideoCallActivityNew.hashCode()
+
+            Log.d("getPiD", pid.toString())
+
+//        if(pid.equals(VideoCallActivityNew::class.java.hashCode())){
+//            Log.d("getPiD", "yes")
+//        }
 
 //        txtUserName?.text = SocketConstants.CALLER_SOCKET_ID
         imgVideo?.setOnClickListener(this)
@@ -439,36 +455,66 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
 
     private fun storeDataLogsFile() {
+//        Log.e("SocketConfig", "File Path $pid");
         if (isExternalStorageWritable()) {
 //            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
-            val cDir: File? = applicationContext?.getExternalFilesDir(null);
-            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
-            val logDirectory = File("$appDirectory/logs")
-            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
-            // create app folder
-            if (!appDirectory.exists()) {
-                appDirectory.mkdir()
-            }
-
-            // create log folder
-            if (!logDirectory.exists()) {
-                logDirectory.mkdir()
-            }
+//            val cDir: File? = applicationContext?.getExternalFilesDir(null);
+//            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
+//            val logDirectory = File("$appDirectory/logs")
+//            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
+//            // create app folder
+//            if (!appDirectory.exists()) {
+//                appDirectory.mkdir()
+//            }
+//
+//            // create log folder
+//            if (!logDirectory.exists()) {
+//                logDirectory.mkdir()
+//            }
 
             // clear the previous logcat and then write the new one to the file
-            try {
+//            try {
 //                Process process = Runtime.getRuntime().exec("logcat -c");
-                val process = Runtime.getRuntime().exec("logcat -f $logFile")
 
-                Log.e("SocketConfig", "File Path $process");
+//                val process = Runtime.getRuntime().exec("logcat -f $logFile")
+//                lifecycleScope.launch(Dispatchers.IO){
+//
+//                    while(process.isAlive){
+//                        Log.d("isProcessAlive", "yes")
+//                        delay(2000)
+//                    }
+//                }
 
-            } catch (e: IOException) {
-                e.printStackTrace()
+
+//               lifecycleScope.launchWhenResumed {
+                logJob.launch {
+                    SaveLogsToFile(applicationContext).startLog("cht")
+                }
+//
+//               }
+
+
+
+
+//                Log.e("SocketConfig", "File Path $process");
+
+//            } catch (e: IOException) {
+//                e.printStackTrace()
             }
-        } else if (isExternalStorageReadable()) {
-            // only readable
-        } else {
-            // not accessible
+//        } else if (isExternalStorageReadable()) {
+//            // only readable
+//        } else {
+//            // not accessible
+//        }
+    }
+
+
+
+    private fun deleteFirstFileFromLogDir(file: File){
+        val fileList = file.listFiles()!!.asList().sortedBy { it.lastModified() }
+        if(fileList.size > 10){
+            fileList[0].delete()
+            deleteFirstFileFromLogDir(file)
         }
     }
 
@@ -555,6 +601,18 @@ class ChatActivity : SocketController(), View.OnClickListener,
     override fun onDestroy() {
         super.onDestroy()
         isChatScreenOpened = false
+
+//        lifecycleScope.launch(Dispatchers.IO){
+//            SaveLogsToFile(applicationContext).stopLog()
+//        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        logJob.cancel()
+//        lifecycleScope.launch(Dispatchers.IO){
+//            SaveLogsToFile(applicationContext).stopLog()
+//        }
     }
 
     override fun onResume() {

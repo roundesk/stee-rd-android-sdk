@@ -35,6 +35,7 @@ import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.*
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,6 +60,7 @@ class VideoCallActivityNew : AppCompatActivity(),
         val TAG: String = VideoCallActivityNew::class.java.simpleName
     }
 
+    private var pid = 0
     private var mRoomId: Int = 0
     private var mMeetingId: Int = 0
     private var mStreamId: String? = null
@@ -293,6 +295,7 @@ class VideoCallActivityNew : AppCompatActivity(),
                     or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
         setContentView(R.layout.activity_video_call_new)
+        pid = android.os.Process.myPid()
         storeDataLogsFile()
         getIntentData()
         initSocket()
@@ -2545,37 +2548,42 @@ class VideoCallActivityNew : AppCompatActivity(),
     }
 
     private fun storeDataLogsFile() {
-        if (isExternalStorageWritable()) {
+//        LogUtil.e("SocketConfig", "File Pathvc $pid")
+//        if (isExternalStorageWritable()) {
 //            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
-            val cDir: File? = applicationContext?.getExternalFilesDir(null);
-            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
-            val logDirectory = File("$appDirectory/logs")
-            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
-            // create app folder
-            if (!appDirectory.exists()) {
-                appDirectory.mkdir()
-            }
+//            val cDir: File? = applicationContext?.getExternalFilesDir(null);
+//            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
+//            val logDirectory = File("$appDirectory/logs")
+//            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
+//            // create app folder
+//            if (!appDirectory.exists()) {
+//                appDirectory.mkdir()
+//            }
+//
+//            // create log folder
+//            if (!logDirectory.exists()) {
+//                logDirectory.mkdir()
+//            }
 
-            // create log folder
-            if (!logDirectory.exists()) {
-                logDirectory.mkdir()
+            lifecycleScope.launch(Dispatchers.IO){
+                SaveLogsToFile(applicationContext).startLog("VcActivity")
             }
-
             // clear the previous logcat and then write the new one to the file
-            try {
-//                Process process = Runtime.getRuntime().exec("logcat -c");
-                val process = Runtime.getRuntime().exec("logcat -f $logFile")
+//            try {
+////                Process process = Runtime.getRuntime().exec("logcat -c");
+////                val process = Runtime.getRuntime().exec("logcat | grep $pid > ${logFile.absolutePath}")
+//
+////                LogUtil.e("SocketConfig", "File Path $process");
 
-                LogUtil.e("SocketConfig", "File Path $process");
-
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        } else if (isExternalStorageReadable()) {
-            // only readable
-        } else {
-            // not accessible
-        }
+//
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//            }
+//        } else if (isExternalStorageReadable()) {
+//            // only readable
+//        } else {
+//            // not accessible
+//        }
     }
 
     /* Checks if external storage is available for read and write */
