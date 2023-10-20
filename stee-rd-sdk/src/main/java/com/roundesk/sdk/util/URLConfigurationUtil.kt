@@ -12,6 +12,9 @@ open class URLConfigurationUtil {
                 Constants.UAT -> {
                     baseurl = Constants.BASE_URL_UAT
                 }
+                Constants.PRODUCTION -> {
+                    baseurl = Constants.BASE_URL_PRODUCTION
+                }
             }
             return baseurl
         }
@@ -25,6 +28,9 @@ open class URLConfigurationUtil {
                 Constants.UAT -> {
                     socketurl = Constants.SOCKET_URL_UAT
                 }
+                Constants.PRODUCTION -> {
+                    socketurl = Constants.SOCKET_URL_PRODUCTION
+                }
             }
             return socketurl
         }
@@ -37,6 +43,9 @@ open class URLConfigurationUtil {
                 }
                 Constants.UAT -> {
                     serverurl = Constants.SERVER_URL_UAT
+                }
+                Constants.PRODUCTION -> {
+                    serverurl = Constants.SERVER_URL_PRODUCTION
                 }
             }
             return serverurl

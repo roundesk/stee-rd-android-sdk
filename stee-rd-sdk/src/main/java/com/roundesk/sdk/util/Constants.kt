@@ -7,6 +7,7 @@ object Constants {
 
     const val UAT = "uat"
     const val DEV = "dev"
+    const val PRODUCTION = "production"
 
     // Change this BUILD_TYPE to UAT for generating UAT build
     const val BUILD_TYPE = DEV
@@ -25,6 +26,12 @@ object Constants {
     const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
     private const val SERVER_ADDRESS_UAT: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
     const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/WebRTCAppEE/websocket"
+
+
+    const val BASE_URL_PRODUCTION: String = "https://tele-omnii-lb.intranet.spfone.gov.sg/api/"
+    const val SOCKET_URL_PRODUCTION: String = "https://tele-omnii-lb.intranet.spfone.gov.sg:3000"
+    private const val SERVER_ADDRESS_PRODUCTION: String = "tele-omnii-lb.intranet.spfone.gov.sg:5443"
+    const val SERVER_URL_PRODUCTION = "wss://$SERVER_ADDRESS_PRODUCTION/LiveApp/websocket"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 

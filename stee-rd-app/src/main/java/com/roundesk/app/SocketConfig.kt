@@ -8,6 +8,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.github.nkzawa.socketio.client.IO
 import com.github.nkzawa.socketio.client.Socket
+import com.roundesk.sdk.util.SaveLogsToFile
 import com.roundesk.sdk.util.URLConfigurationUtil
 import kotlinx.coroutines.*
 import java.net.URISyntaxException
@@ -17,7 +18,7 @@ class SocketConfig : Application() {
 
     private var mSocket: Socket? = null
     private var pid = 0
-
+    private var job = MainScope()
 
     companion object {
         private var mInstance: SocketConfig? = null
@@ -77,13 +78,13 @@ private fun storeDataLogsFile() {
 ////                Process process = Runtime.getRuntime().exec("logcat -c");
 //            val process = Runtime.getRuntime().exec("logcat -f $logFile")
 //            Log.e("SocketConfig", "File Path $process");
-            with(ProcessLifecycleOwner.get()) {
-                lifecycleScope.launch {
-                    if (this@with.lifecycle.currentState != Lifecycle.State.RESUMED) {
+//            with(ProcessLifecycleOwner.get()) {
+                job.launch {
+//                    if (this@with.lifecycle.currentState != Lifecycle.State.RESUMED) {
                         SaveLogsToFile(applicationContext).startLog("socconfig")
-                    }
+//                    }
                 }
-            }
+//            }
 //        } catch (e: IOException) {
 //            e.printStackTrace()
 //        }

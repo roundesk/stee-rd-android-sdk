@@ -76,7 +76,9 @@ class SaveLogsToFile(
 
                         }
                         }
-                    } catch (e: IOException) {
+                    } catch (_: IOException,) {
+
+                    }catch (_: java.lang.NullPointerException){
 
                     }
 
