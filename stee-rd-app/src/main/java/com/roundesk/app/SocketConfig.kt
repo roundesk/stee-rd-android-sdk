@@ -3,9 +3,6 @@ package com.roundesk.app
 import android.app.Application
 import android.content.Context
 import android.os.Environment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import com.github.nkzawa.socketio.client.IO
 import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.util.SaveLogsToFile
