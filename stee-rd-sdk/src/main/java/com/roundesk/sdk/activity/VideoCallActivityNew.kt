@@ -54,7 +54,8 @@ import kotlin.collections.ArrayList
 
 class VideoCallActivityNew : AppCompatActivity(),
     View.OnClickListener, IWebRTCListener,
-    IDataChannelObserver, SocketListener<Any> {
+    IDataChannelObserver, SocketListener<Any>,
+EglRendererInterface{
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
@@ -2664,5 +2665,11 @@ class VideoCallActivityNew : AppCompatActivity(),
         user5StreamId = user5ID
 
         play_view_renderer1.display.displayId
+    }
+
+    override fun publishVideoinitializedTwice() {
+        Toast.makeText(this,"Network issue or Server Issue", Toast.LENGTH_LONG).show()
+        conferenceManager?.leaveFromConference()
+        finish()
     }
 }
