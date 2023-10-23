@@ -505,7 +505,8 @@ EglRendererInterface{
             publishViewRenderer,
             playViewRenderers,
             strStreamID,
-            null
+            null,
+            this
         )
 
 

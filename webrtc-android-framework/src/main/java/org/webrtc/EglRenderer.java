@@ -206,10 +206,14 @@ public class EglRenderer implements VideoSink {
    * for e.g. syncing audio and video.
    */
   public void init(@Nullable final EglBase.Context sharedContext, final int[] configAttributes,
-      RendererCommon.GlDrawer drawer, boolean usePresentationTimeStamp) {
+      RendererCommon.GlDrawer drawer, boolean usePresentationTimeStamp, EglRendererInterface eglRendererInterface) {
     synchronized (handlerLock) {
       if (renderThreadHandler != null) {
-        throw new IllegalStateException(name + "Already initialized");
+//          throw new IllegalStateException(name + "Already initialized");
+        if(eglRendererInterface != null){
+          eglRendererInterface.publishVideoinitializedTwice();
+        }
+        return;
       }
       logD("Initializing EglRenderer");
       this.drawer = drawer;
@@ -252,11 +256,11 @@ public class EglRenderer implements VideoSink {
   /**
    * Same as above with usePresentationTimeStamp set to false.
    *
-   * @see #init(EglBase.Context, int[], RendererCommon.GlDrawer, boolean)
+   * @see #init(EglBase.Context, int[], RendererCommon.GlDrawer, boolean, EglRendererInterface)
    */
   public void init(@Nullable final EglBase.Context sharedContext, final int[] configAttributes,
-      RendererCommon.GlDrawer drawer) {
-    init(sharedContext, configAttributes, drawer, /* usePresentationTimeStamp= */ false);
+      RendererCommon.GlDrawer drawer, EglRendererInterface eglRendererInterface) {
+    init(sharedContext, configAttributes, drawer, /* usePresentationTimeStamp= */ false, eglRendererInterface);
   }
 
   public void createEglSurface(Surface surface) {

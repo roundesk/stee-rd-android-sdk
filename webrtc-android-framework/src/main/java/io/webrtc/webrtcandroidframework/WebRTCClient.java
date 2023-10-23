@@ -31,6 +31,7 @@ import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.EglBase;
+import org.webrtc.EglRendererInterface;
 import org.webrtc.FileVideoCapturer;
 import org.webrtc.IceCandidate;
 import org.webrtc.Logging;
@@ -125,6 +126,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     private VideoTrack localVideoTrack;
     private Intent intent = new Intent();
+    private EglRendererInterface eglRendererInterface;
     private Handler handler = new Handler();
     private WebSocketHandler wsHandler;
 //    private String googleStunServerUri = "stun:stun.l.google.com:19302";
@@ -167,9 +169,10 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     private static Map<Long, Long> captureTimeMsMap = new ConcurrentHashMap<>();
 
-    public WebRTCClient(IWebRTCListener webRTCListener, Context context) {
+    public WebRTCClient(IWebRTCListener webRTCListener, Context context, EglRendererInterface eglRendererInterface) {
         this.webRTCListener = webRTCListener;
         this.context = context;
+        this.eglRendererInterface = eglRendererInterface;
     }
 
     @Nullable
@@ -273,7 +276,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
         // Create video renderers.
         if (pipRenderer != null) {
-            pipRenderer.init(eglBase.getEglBaseContext(), null);
+            pipRenderer.init(eglBase.getEglBaseContext(), null, eglRendererInterface);
             pipRenderer.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
         }
@@ -290,7 +293,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             }
         }
         if (fullscreenRenderer != null) {
-            fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
+            fullscreenRenderer.init(eglBase.getEglBaseContext(), null, eglRendererInterface);
             fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
             fullscreenRenderer.setEnableHardwareScaler(false /* enabled */);
             Log.i("WebRTCClient", "Initializing the full screen renderer");
@@ -304,7 +307,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
         if (remoteRendererList != null) {
             for (SurfaceViewRenderer renderer : remoteRendererList) {
-                renderer.init(eglBase.getEglBaseContext(), null);
+                renderer.init(eglBase.getEglBaseContext(), null, eglRendererInterface);
                 renderer.setScalingType(ScalingType.SCALE_ASPECT_FIT);
                 renderer.setEnableHardwareScaler(true);
             }
@@ -461,7 +464,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     public void startStream() {
-        init(this.url, this.streamId, this.streamMode, this.token, this.intent);
+        init(this.url, this.streamId, this.streamMode, this.token, this.intent );
         if (wsHandler == null) {
             wsHandler = new WebSocketHandler(this, handler);
             wsHandler.connect(roomConnectionParameters.roomUrl);

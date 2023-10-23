@@ -9,6 +9,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.DataChannel;
+import org.webrtc.EglRendererInterface;
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceViewRenderer;
@@ -45,7 +46,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     private boolean openFrontCamera = true;
     private String[] connectedStreamList;
-
+   private  EglRendererInterface eglRendererInterface;
     private int ROOM_INFO_POLLING_MILLIS = 5000;
     private Runnable getRoomInfoRunnable = new Runnable() {
         @Override
@@ -58,9 +59,10 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     private WebRTCClient webRTCClient;
 
 
-    public ConferenceManager(Context context, IWebRTCListener webRTCListener, Intent intent, String serverUrl, String roomName, SurfaceViewRenderer publishViewRenderer, ArrayList<SurfaceViewRenderer> playViewRenderers, String streamId, IDataChannelObserver dataChannelObserver) {
+    public ConferenceManager(Context context, IWebRTCListener webRTCListener, Intent intent, String serverUrl, String roomName, SurfaceViewRenderer publishViewRenderer, ArrayList<SurfaceViewRenderer> playViewRenderers, String streamId, IDataChannelObserver dataChannelObserver, EglRendererInterface eglRendererInterface) {
         this.context = context;
         this.intent = intent;
+        this.eglRendererInterface = eglRendererInterface;
         this.publishViewRenderer = publishViewRenderer;
         if (playViewRenderers != null) {
             for (SurfaceViewRenderer svr : playViewRenderers) {
@@ -115,7 +117,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     }
 
     private WebRTCClient createPeer(String streamId, String mode) {
-        webRTCClient = new WebRTCClient(webRTCListener, context);
+        webRTCClient = new WebRTCClient(webRTCListener, context, eglRendererInterface);
 
         webRTCClient.setWsHandler(wsHandler);
 

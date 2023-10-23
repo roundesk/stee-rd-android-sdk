@@ -233,7 +233,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     final EglBase eglBase = EglBase.create();
 
     // Create video renderers.
-    pipRenderer.init(eglBase.getEglBaseContext(), null);
+    pipRenderer.init(eglBase.getEglBaseContext(), null, null);
     pipRenderer.setScalingType(ScalingType.SCALE_ASPECT_FIT);
     String saveRemoteVideoToFile = intent.getStringExtra(EXTRA_SAVE_REMOTE_VIDEO_TO_FILE);
 
@@ -250,7 +250,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             "Failed to open video file for output: " + saveRemoteVideoToFile, e);
       }
     }
-    fullscreenRenderer.init(eglBase.getEglBaseContext(), null);
+    fullscreenRenderer.init(eglBase.getEglBaseContext(), null, null);
     fullscreenRenderer.setScalingType(ScalingType.SCALE_ASPECT_FILL);
 
     pipRenderer.setZOrderMediaOverlay(true);

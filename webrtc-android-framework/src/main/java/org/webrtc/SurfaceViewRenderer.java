@@ -67,8 +67,8 @@ public class SurfaceViewRenderer extends SurfaceView
    * Initialize this class, sharing resources with |sharedContext|. It is allowed to call init() to
    * reinitialize the renderer after a previous init()/release() cycle.
    */
-  public void init(EglBase.Context sharedContext, RendererCommon.RendererEvents rendererEvents) {
-    init(sharedContext, rendererEvents, EglBase.CONFIG_PLAIN, new GlRectDrawer());
+  public void init(EglBase.Context sharedContext, RendererCommon.RendererEvents rendererEvents, EglRendererInterface eglRendererInterface) {
+    init(sharedContext, rendererEvents, EglBase.CONFIG_PLAIN, new GlRectDrawer(), eglRendererInterface);
   }
 
   /**
@@ -79,12 +79,12 @@ public class SurfaceViewRenderer extends SurfaceView
    */
   public void init(final EglBase.Context sharedContext,
       RendererCommon.RendererEvents rendererEvents, final int[] configAttributes,
-      RendererCommon.GlDrawer drawer) {
+      RendererCommon.GlDrawer drawer, EglRendererInterface eglRendererInterface) {
     ThreadUtils.checkIsOnMainThread();
     this.rendererEvents = rendererEvents;
     rotatedFrameWidth = 0;
     rotatedFrameHeight = 0;
-    eglRenderer.init(sharedContext, this /* rendererEvents */, configAttributes, drawer);
+    eglRenderer.init(sharedContext, this /* rendererEvents */, configAttributes, drawer, eglRendererInterface);
   }
 
   /**

@@ -49,7 +49,7 @@ public class SurfaceEglRenderer extends EglRenderer implements SurfaceHolder.Cal
    */
   public void init(final EglBase.Context sharedContext,
       RendererCommon.RendererEvents rendererEvents, final int[] configAttributes,
-      RendererCommon.GlDrawer drawer) {
+      RendererCommon.GlDrawer drawer, EglRendererInterface eglRendererInterface) {
     ThreadUtils.checkIsOnMainThread();
     this.rendererEvents = rendererEvents;
     synchronized (layoutLock) {
@@ -58,13 +58,13 @@ public class SurfaceEglRenderer extends EglRenderer implements SurfaceHolder.Cal
       rotatedFrameHeight = 0;
       frameRotation = 0;
     }
-    super.init(sharedContext, configAttributes, drawer);
+    super.init(sharedContext, configAttributes, drawer, eglRendererInterface );
   }
 
   @Override
   public void init(final EglBase.Context sharedContext, final int[] configAttributes,
-      RendererCommon.GlDrawer drawer) {
-    init(sharedContext, null /* rendererEvents */, configAttributes, drawer);
+      RendererCommon.GlDrawer drawer, EglRendererInterface eglRendererInterface) {
+    init(sharedContext, null /* rendererEvents */, configAttributes, drawer, eglRendererInterface );
   }
 
   /**
