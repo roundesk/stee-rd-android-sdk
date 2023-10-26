@@ -139,6 +139,9 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     // Turn Server URL for UAT
     private String spfoneUATStunServerUri_without_TCP_5080 = "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5080";
 
+    // Turn Server URL for Prod
+    private String spfoneStunServerUri_without_TCP_3478 = "turn:tele-omnii-lb.intranet.spfone.gov.sg:3478";
+
     // Turn Server URL for Dev
 //    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:3478";
     private String turnServerURI = "turn:stee-prod.roundesk.io:3478";
@@ -234,7 +237,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 //        iceServers.add(new PeerConnection.IceServer(stunServerUri3478));
 //        iceServers.add(new PeerConnection.IceServer(stunServerUri5443));
 //        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_with_TCP, "username", "password"));
-//        iceServers.add(new PeerConnection.IceServer(spfoneUATStunServerUri_without_TCP, "username", "password"));
+//        iceServers.add(new PeerConnect ion.IceServer(spfoneUATStunServerUri_without_TCP, "username", "password"));
 
 //        iceServers.add(PeerConnection.IceServer.builder(googleStunServerUri).createIceServer());
         iceServers.add(PeerConnection.IceServer.builder(turnServerURI)
@@ -243,6 +246,11 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                 .createIceServer());
 
         iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP_5080)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+
+        iceServers.add(PeerConnection.IceServer.builder(spfoneStunServerUri_without_TCP_3478)
                 .setUsername("username")
                 .setPassword("password")
                 .createIceServer());
