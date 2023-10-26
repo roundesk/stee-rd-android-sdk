@@ -107,9 +107,9 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketSuccessResponse: $response")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -152,9 +152,9 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
     }
 
     override fun onClick(view: View?) {
@@ -201,13 +201,13 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
         )
-        Log.e(TAG, "Request Body : $acceptCallJson")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "Request Body : $acceptCallJson")
+//        Log.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -216,8 +216,8 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
                     call: Call<AcceptCallDataClassResponse?>,
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
-                    LogUtil.e(TAG, "Server Header Details : $response")
-                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                    LogUtil.e(TAG, "Server Header Details : $response")
+//                    LogUtil.e(TAG, "Server Response : ${response.body()}")
                     LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
                         Log.e(TAG, "-----------------------")
@@ -252,9 +252,9 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                     Log.e(TAG, "Failure Response : ${t.message}")
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -301,21 +301,21 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
         )
-        Log.e(TAG, "Request Body : $declineCallJson")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "Request Body : $declineCallJson")
+//        Log.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Header Details : $response")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     Log.e(TAG, "-----------------------")
@@ -330,9 +330,9 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                Log.e(TAG, "-----------------------")
+//                Log.e(TAG, "-----------------------")
                 Log.e(TAG, "Failure Response : ${t.message}")
-                Log.e(TAG, "-----------------------")
+//                Log.e(TAG, "-----------------------")
             }
         })
     }

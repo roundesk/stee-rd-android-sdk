@@ -113,7 +113,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             Constants.CALLER_SOCKET_ID,
             "all"
         )
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ALL_CALL}"
@@ -126,7 +126,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                         + " type : all"
             }"
         )
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
 
         call.enqueue(object : Callback<List<CallHistoryResponseDataClass?>> {
             override fun onResponse(
@@ -167,9 +167,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -211,9 +211,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         ToastUtil.displayShortDurationToast(
             this,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
@@ -259,7 +259,7 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
         )
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
-        LogUtil.e(TAG, "-----------------------")
+//        LogUtil.e(TAG, "--------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -269,13 +269,13 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     response: Response<AcceptCallDataClassResponse?>
                 ) {
                     LogUtil.e(TAG, "Server Header Details : $response")
-                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                    LogUtil.e(TAG, "Server Response : ${response.body()}")
                     LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
                         if (response.body() != null) {
                             LogUtil.e(TAG, "-----------------------")
                             LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                            LogUtil.e(TAG, "-----------------------")
+//                            LogUtil.e(TAG, "-----------------------")
 
                             relLayTopNotification?.visibility = View.GONE
                             if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
@@ -304,9 +304,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     LogUtil.e(TAG, "Failure Response : ${t.message}")
-                    LogUtil.e(TAG, "-----------------------")
+//                    LogUtil.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -353,13 +353,13 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
         )
         LogUtil.e(TAG, "Request Body : $declineCallJson")
-        LogUtil.e(TAG, "-----------------------")
+//        LogUtil.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
@@ -367,12 +367,12 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 response: Response<BaseDataClassResponse?>
             ) {
                 LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    LogUtil.e(TAG, "-----------------------")
+//                    LogUtil.e(TAG, "-----------------------")
                     if (response.body() != null) {
                         relLayTopNotification?.visibility = View.GONE
                     }
@@ -383,9 +383,9 @@ class CallHistoryActivity : AppCompatActivity(), SocketListener<Any>, View.OnCli
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
                 LogUtil.e(TAG, "Failure Response : ${t.message}")
-                LogUtil.e(TAG, "-----------------------")
+//                LogUtil.e(TAG, "-----------------------")
             }
         })
     }

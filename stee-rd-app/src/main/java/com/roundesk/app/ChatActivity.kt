@@ -15,8 +15,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
@@ -26,7 +24,6 @@ import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.*
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
@@ -34,14 +31,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
-import java.io.IOException
 import java.util.*
-import com.github.nkzawa.socketio.client.IO
-import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.socket.AppSocketManager
 import kotlinx.coroutines.*
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 class ChatActivity : SocketController(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks,
@@ -62,7 +54,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
     private val RC_CAMERA_PERM = 123
     private val RC_MICROPHONE_PERM = 124
     private val RC_STORAGE_PERM = 125
-    var isChatScreenOpened: Boolean? = false
+    var isChatscreenOpened: Boolean? = false
     private val logJob = CoroutineScope(Dispatchers.IO)
     //    private var isIncomingCall: Boolean = false
 //    private var socketConnection: SocketConnection? = null
@@ -70,7 +62,6 @@ class ChatActivity : SocketController(), View.OnClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
-        pid= android.os.Process.myPid()
         initSocket()
         initView()
 
@@ -101,14 +92,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
         btnAccept = findViewById(R.id.btnAccept)
         btnDecline = findViewById(R.id.btnDecline)
         txtUserName = findViewById(R.id.txtUserName)
-       val pid = android.os.Process.myPid()
-        val c :Int= VideoCallActivityNew.hashCode()
 
-            Log.d("getPiD", pid.toString())
-
-//        if(pid.equals(VideoCallActivityNew::class.java.hashCode())){
-//            Log.d("getPiD", "yes")
-//        }
 
 //        txtUserName?.text = SocketConstants.CALLER_SOCKET_ID
         imgVideo?.setOnClickListener(this)
@@ -216,13 +200,13 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
         )
         Log.e(TAG, "Request Body : $acceptCallJson")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
 
         if (hasCameraPermission() && hasMicrophonePermission() && hasStoragePermission()) {
 
@@ -233,11 +217,11 @@ class ChatActivity : SocketController(), View.OnClickListener,
                 ) {
                     LogUtil.e(TAG, "Server Header Details : $response")
                     LogUtil.e(TAG, "Server Response : ${response.body()}")
-                    LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
+//                    LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
-                        Log.e(TAG, "-----------------------")
+//                        Log.e(TAG, "-----------------------")
                         Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                        Log.e(TAG, "-----------------------")
+//                        Log.e(TAG, "-----------------------")
                         if (response.body() != null) {
                             relLayTopNotification?.visibility = View.GONE
                             if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
@@ -267,9 +251,9 @@ class ChatActivity : SocketController(), View.OnClickListener,
                     call: Call<AcceptCallDataClassResponse?>,
                     t: Throwable
                 ) {
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                     Log.e(TAG, "Failure Response : ${t.message}")
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                 }
             })
             finish()
@@ -316,26 +300,26 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
-        Log.e(TAG, "-----------------------")
-        Log.e(
-            TAG,
-            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
-        )
+//        Log.e(TAG, "-----------------------")
+//        Log.e(
+//            TAG,
+//            "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
+//        )
         Log.e(TAG, "Request Body : $declineCallJson")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
                 call: Call<BaseDataClassResponse?>,
                 response: Response<BaseDataClassResponse?>
             ) {
-                LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Header Details : $response")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                     Log.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    Log.e(TAG, "-----------------------")
+//                    Log.e(TAG, "-----------------------")
                     if (response.body() != null)
                         relLayTopNotification?.visibility = View.GONE
                 }
@@ -345,9 +329,9 @@ class ChatActivity : SocketController(), View.OnClickListener,
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                Log.e(TAG, "-----------------------")
+//                Log.e(TAG, "-----------------------")
                 Log.e(TAG, "Failure Response : ${t.message}")
-                Log.e(TAG, "-----------------------")
+//                Log.e(TAG, "-----------------------")
             }
         })
     }
@@ -402,9 +386,9 @@ class ChatActivity : SocketController(), View.OnClickListener,
     }
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketSuccessResponse: $response")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -412,7 +396,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
                 runOnUiThread {
                     if (createCallSocketDataClass.type == SocketConstants.SocketSuffix.SOCKET_TYPE_NEW_CALL) {
-                        if (isChatScreenOpened == true) {
+                        if (isChatscreenOpened == true) {
                             if (createCallSocketDataClass.receiverId != createCallSocketDataClass.callerId) {
                                 val intent =
                                     Intent(this@ChatActivity, IncomingCallActivity::class.java)
@@ -429,7 +413,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
                                     "receiver_name", createCallSocketDataClass.msg
                                 )
                                 startActivity(intent)
-                                isChatScreenOpened = false
+                                isChatscreenOpened = false
                             }
                         }
 
@@ -448,9 +432,9 @@ class ChatActivity : SocketController(), View.OnClickListener,
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
-        Log.e(TAG, "-----------------------")
+//        Log.e(TAG, "-----------------------")
     }
 
 
@@ -486,8 +470,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
 //                }
 
 
-//               lifecycleScope.launchWhenResumed {
-                logJob.launch {
+               lifecycleScope.launchWhenResumed {
                     SaveLogsToFile(applicationContext).startLog("cht")
                 }
 //
@@ -600,7 +583,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
     override fun onDestroy() {
         super.onDestroy()
-        isChatScreenOpened = false
+        isChatscreenOpened = false
 
 //        lifecycleScope.launch(Dispatchers.IO){
 //            SaveLogsToFile(applicationContext).stopLog()
@@ -617,6 +600,6 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
     override fun onResume() {
         super.onResume()
-        isChatScreenOpened = true
+        isChatscreenOpened = true
     }
 }

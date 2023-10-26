@@ -221,7 +221,7 @@ EglRendererInterface{
     var booleanWhenUserEntersOrExit = false
 
 
-    private suspend fun runLoop() {
+    private suspend fun runMainLoop() {
         while (true) {
             delay(500)
             if (NetworkUtils.isConnectedFast(this@VideoCallActivityNew)) {
@@ -303,7 +303,7 @@ EglRendererInterface{
         initView()
 
         lifecycleScope.launch {
-            runLoop()
+            runMainLoop()
         }
 
     }
@@ -747,13 +747,13 @@ EglRendererInterface{
             val endCallJson = Gson().toJson(endCallRequest)
             val request = ServiceBuilder.buildService(ApiInterface::class.java)
             val endCall = request.endCall(endCallRequest)
-            LogUtil.e(TAG, "-----------------------")
+//            LogUtil.e(TAG, "-----------------------")
             LogUtil.e(
                 TAG,
                 "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_END_CALL}"
             )
             LogUtil.e(TAG, "Request Body : $endCallJson")
-            LogUtil.e(TAG, "-----------------------")
+//            LogUtil.e(TAG, "-----------------------")
 
             endCall.enqueue(object : Callback<BaseDataClassResponse?> {
                 override fun onResponse(
@@ -761,12 +761,12 @@ EglRendererInterface{
                     response: Response<BaseDataClassResponse?>
                 ) {
                     LogUtil.e(TAG, "Server Header Details : $response")
-                    LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                    LogUtil.e(TAG, "Server Response : ${response.body()}")
                     LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                     if (response.isSuccessful) {
-                        LogUtil.e(TAG, "-----------------------")
+//                        LogUtil.e(TAG, "-----------------------")
                         LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                        LogUtil.e(TAG, "-----------------------")
+//                        LogUtil.e(TAG, "-----------------------")
                         if (response.body() != null) {
                             finish()
 //                        declineCall(true)
@@ -778,9 +778,9 @@ EglRendererInterface{
                     call: Call<BaseDataClassResponse?>,
                     t: Throwable
                 ) {
-                    LogUtil.e(TAG, "-----------------------")
+//                    LogUtil.e(TAG, "-----------------------")
                     LogUtil.e(TAG, "Failure Response : ${t.message}")
-                    LogUtil.e(TAG, "-----------------------")
+//                    LogUtil.e(TAG, "-----------------------")
                 }
             })
         } else {
@@ -953,10 +953,10 @@ EglRendererInterface{
     }
 
     private fun manageViewsIfAnyUserLeave(position: Int) {
-        Log.d("switchLayout", "values = $position")
+//        Log.d("switchLayout", "values = $position")
 //      runOnUiThread {
         if (position == 0) {
-            Log.d("manageViewsIfAnyUser", "1")
+//            Log.d("manageViewsIfAnyUser", "1")
             relLayParticipant3.removeView(play_view_renderer2)
             relLayParticipant2.removeView(play_view_renderer1)
             relLayParticipant2.addView(play_view_renderer2)
@@ -1181,8 +1181,8 @@ EglRendererInterface{
 
     private fun switchLayout(isCallerSmall: Boolean, playRenderIndex: Int) {
         relLayoutMain!!.removeView(switchView)
-        Log.d("switchLayout", "switchLayout2")
-        Log.d("switchLayout", "$playRenderIndex")
+//        Log.d("switchLayout", "switchLayout2")
+//        Log.d("switchLayout", "$playRenderIndex")
         val paramsRemoteVideo: RelativeLayout.LayoutParams =
             surfaceViewIdList[playRenderIndex].layoutParams as RelativeLayout.LayoutParams
         val paramsLocalVideo: RelativeLayout.LayoutParams =
@@ -1629,7 +1629,7 @@ EglRendererInterface{
         LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $type")
-        LogUtil.e(TAG, "-----------------------")
+//        LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -1676,9 +1676,9 @@ EglRendererInterface{
     }
 
     override fun handleSocketErrorResponse(error: Any) {
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(TAG, "handleSocketErrorResponse: ${Gson().toJson(error)}")
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         ToastUtil.displayShortDurationToast(
             this,
             "" + error.toString() + "\n" + resources.getString(R.string.toast_err_in_response) + " " +
@@ -1716,13 +1716,13 @@ EglRendererInterface{
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val acceptCall = request.getAcceptCallSocketData(acceptCallRequest)
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_ACCEPT_CALL}"
         )
         LogUtil.e(TAG, "Request Body : $acceptCallJson")
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
 
         acceptCall.enqueue(object : Callback<AcceptCallDataClassResponse?> {
             override fun onResponse(
@@ -1730,12 +1730,12 @@ EglRendererInterface{
                 response: Response<AcceptCallDataClassResponse?>
             ) {
                 LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     if (response.body() != null) {
                         if (response.body()?.roomId != 0 && response.body()?.meetingId != 0) {
                             imgCallEnd?.performClick()
@@ -1760,9 +1760,9 @@ EglRendererInterface{
                 call: Call<AcceptCallDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
                 LogUtil.e(TAG, "Failure Response : ${t.message}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
             }
         })
     }
@@ -1787,13 +1787,13 @@ EglRendererInterface{
 
         val request = ServiceBuilder.buildService(ApiInterface::class.java)
         val declineCall = request.declineCall(declineCallRequest)
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
         LogUtil.e(
             TAG,
             "API : ${URLConfigurationUtil.getBaseURL() + Constants.ApiSuffix.API_KEY_DECLINE_CALL}"
         )
         LogUtil.e(TAG, "Request Body : $declineCallJson")
-        LogUtil.e(TAG, "-----------------------")
+        LogUtil.e(TAG, "--------------------")
 
         declineCall.enqueue(object : Callback<BaseDataClassResponse?> {
             override fun onResponse(
@@ -1802,7 +1802,7 @@ EglRendererInterface{
             ) {
                 isOtherCallAccepted = false
                 LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     LogUtil.e(TAG, "-----------------------")
@@ -1821,9 +1821,9 @@ EglRendererInterface{
                 call: Call<BaseDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
                 LogUtil.e(TAG, "Failure Response : ${t.message}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
             }
         })
     }
@@ -2154,12 +2154,12 @@ EglRendererInterface{
                 response: Response<RoomDetailDataClassResponse?>
             ) {
                 LogUtil.e(TAG, "Server Header Details : $response")
-                LogUtil.e(TAG, "Server Response : ${response.body()}")
+//                LogUtil.e(TAG, "Server Response : ${response.body()}")
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
-                    LogUtil.e(TAG, "-----------------------")
+                    LogUtil.e(TAG, "--------------------")
                     if (response.body() != null) {
                         // Below code is for to show the list of participants in the BottomSheet
                         //-------------------------
@@ -2195,9 +2195,9 @@ EglRendererInterface{
                 call: Call<RoomDetailDataClassResponse?>,
                 t: Throwable
             ) {
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
                 LogUtil.e(TAG, "Failure Response : ${t.message}")
-                LogUtil.e(TAG, "-----------------------")
+                LogUtil.e(TAG, "--------------------")
             }
         })
     }
@@ -2529,7 +2529,7 @@ EglRendererInterface{
 
     }
 
-    private fun setNamesToTextView() {
+    private fun setNamesToTextview() {
         if (isReceiverID) {
             txtParticipant1!!.text = receiverName
             txtInitialViewParticipant1!!.text = receiverName
@@ -2668,7 +2668,7 @@ EglRendererInterface{
         play_view_renderer1.display.displayId
     }
 
-    override fun publishVideoinitializedTwice() {
+    override fun publishVideoInitializedTwice() {
         Toast.makeText(this,"Network issue or Server Issue", Toast.LENGTH_LONG).show()
         conferenceManager?.leaveFromConference()
         finish()

@@ -211,7 +211,7 @@ public class EglRenderer implements VideoSink {
       if (renderThreadHandler != null) {
 //          throw new IllegalStateException(name + "Already initialized");
         if(eglRendererInterface != null){
-          eglRendererInterface.publishVideoinitializedTwice();
+          eglRendererInterface.publishVideoInitializedTwice();
         }
         return;
       }

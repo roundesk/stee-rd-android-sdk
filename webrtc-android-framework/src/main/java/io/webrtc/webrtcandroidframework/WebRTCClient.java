@@ -245,15 +245,17 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
                 .setPassword("password")
                 .createIceServer());
 
+        iceServers.add(PeerConnection.IceServer.builder(spfoneStunServerUri_without_TCP_3478)
+                .setUsername("username")
+                .setPassword("password")
+                .createIceServer());
+
         iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_without_TCP_5080)
                 .setUsername("username")
                 .setPassword("password")
                 .createIceServer());
 
-        iceServers.add(PeerConnection.IceServer.builder(spfoneStunServerUri_without_TCP_3478)
-                .setUsername("username")
-                .setPassword("password")
-                .createIceServer());
+
 
 /*
         iceServers.add(PeerConnection.IceServer.builder(spfoneUATStunServerUri_with_TCP)

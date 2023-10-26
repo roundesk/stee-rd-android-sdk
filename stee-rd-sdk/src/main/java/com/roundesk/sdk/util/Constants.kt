@@ -49,8 +49,8 @@ object Constants {
         const val USER_1: String = "rfhuzkfvodpajiletqss" // Name : Roundesk Admin
         const val USER_2: String = "crhuzkfvodpajiletqgb" // Name : deepak yahoo
         const val USER_3: String = "agjqticlbhvredpouzkf" // Name : deepak outlook
-        const val USER_4: String = "wqhuzkfvodpajiletqst" // Name : himanshu
-        const val USER_5: String = "gihuzkfvodpajiletlmn" // Name : Priyanka
+        const val USER_4: String = "gihuzkfvodpajiletlmn" // Name : Priyanka
+        const val USER_5: String =  "wqhuzkfvodpajiletqst" // Name : himanshu
     }
 
     object InitializeSocket {
