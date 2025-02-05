@@ -1,5 +1,6 @@
 package com.roundesk.sdk.activity
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -9,23 +10,33 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.media.MediaPlayer
+import android.media.projection.MediaProjectionManager
 import android.os.*
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Rational
 import android.view.*
 import android.widget.*
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
+import com.roundesk.sdk.base.ScreenshotService
+import com.roundesk.sdk.databinding.ActivityVideoCallNewBinding
+import com.roundesk.sdk.databinding.ContentMainMultipleUserConferenceBinding
+import com.roundesk.sdk.databinding.ContentMainNewBinding
+import com.roundesk.sdk.databinding.MuteViewBinding
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
@@ -36,31 +47,30 @@ import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.*
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.webrtc.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.File
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
 
 
-class VideoCallActivityNew : AppCompatActivity(),
+class VideoCallActivityNew : ComponentActivity(),
     View.OnClickListener, IWebRTCListener,
     IDataChannelObserver, SocketListener<Any>,
-EglRendererInterface{
+    EglRendererInterface {
 
     companion object {
         val TAG: String = VideoCallActivityNew::class.java.simpleName
     }
 
+    private lateinit var binding: ContentMainMultipleUserConferenceBinding
+    private lateinit var appSocketManager: AppSocketManager
     private var pid = 0
     private var mRoomId: Int = 0
     private var mMeetingId: Int = 0
@@ -84,14 +94,17 @@ EglRendererInterface{
     private var imgCallEnd: ImageView? = null
     private var imgBottomCamera: ImageView? = null
     private var imgBottomVideo: ImageView? = null
+    private lateinit var muteVideoProgressBar: ProgressBar
+    private lateinit var muteAudioProgressBar: ProgressBar
     private var imgAudio: ImageView? = null
+    private lateinit var imgScreenshot: ImageView
     private var imgArrowUp: ImageView? = null
     private var imgBack: ImageView? = null
     private var switchView: View? = null
     private var dividerView: View? = null
     private var viewHideShowBottomSheet: View? = null
 
-    private var frameLaySurfaceViews: FrameLayout? = null
+    private lateinit var frameLaySurfaceViews: FrameLayout
     private var linLayUser34: LinearLayout? = null
     private var relLayToolbar: RelativeLayout? = null
     private var relLayoutMain: RelativeLayout? = null
@@ -135,11 +148,17 @@ EglRendererInterface{
     private var linLayMultipleParticipantsName: LinearLayout? = null
     private lateinit var namesLayoutParent: RelativeLayout
 
+//    private lateinit var publishViewNameParent : LinearLayout
+//    private lateinit var publishViewName : TextView
+
     private lateinit var layoutBottomSheet: RelativeLayout
+    private lateinit var bottomSheetIconsParentLayout: LinearLayout
     lateinit var sheetBehavior: BottomSheetBehavior<View>
 
 
     private var isCallerSmall: Boolean = true
+    private var fistTimeTwoUsers: Int = 0
+    private var twoUsersLayoutType: Boolean = false
     private var isPictureInPictureMode: Boolean = false
     private var isReceiverID: Boolean = false
     private var isOtherCallAccepted: Boolean = false
@@ -219,8 +238,15 @@ EglRendererInterface{
     var mm = ""
     var hh = ""
     var booleanWhenUserEntersOrExit = false
+    private var thisDevicePersonName = ""
+    private var connectedStreamIDCount = 0
+    private lateinit var mediaCaptureLauncher: ActivityResultLauncher<Intent>
+    private lateinit var mediaProjectionManager: MediaProjectionManager
+    private lateinit var captureIntent: Intent
+    private var initializeOnce = 0
+    private val parallelVideoItemWidth = MutableStateFlow<Int>(0)
 
-
+    private lateinit var viewModel: VideoCallViewModel
     private suspend fun runMainLoop() {
         while (true) {
             delay(500)
@@ -230,19 +256,18 @@ EglRendererInterface{
                         endCall(true)
                         finish()
                     }
-
                     if (tempValue!! < it.size) {
                         tempValue = it.size
                         isCallStarted = true
-                        runOnUiThread {
-                            manageUserViews()
-                            if (forTimer) {
-                                forTimer = false
-                                lifecycleScope.launch {
-                                    timer()
-                                }
+//                        runOnUiThread {
+                        manageUserViews()
+                        if (forTimer) {
+                            forTimer = false
+                            lifecycleScope.launch {
+                                timer()
                             }
                         }
+//                        }
 
                     } else if (tempValue!! > it.size) {
                         tempValue = it.size
@@ -253,8 +278,6 @@ EglRendererInterface{
 
                         }
                     }
-
-
                 }
 
             } else {
@@ -266,28 +289,41 @@ EglRendererInterface{
             }
         }
 
+//        while (true) {
+//            delay(500)
+//
+//        }
+
     }
 
 
     private fun refreshRoomDetails() {
-        if (conferenceManager?.connectedStreamList?.size != null) {
-            if (conferenceManager?.connectedStreamList?.size!! > 0) {
-                getRoomInfoDetails()
-            } else {
-                if (initialView) {
-                    conferenceManager?.leaveFromConference()
-                    stopCallDurationTimer()
-                    endCall(true)
-                }
+//        if (conferenceManager?.connectedStreamList?.size != null) {
+        if (userIdAndposition.size > 0) {
+            getRoomInfoDetails()
+        } else {
+            if (initialView) {
+                conferenceManager?.leaveFromConference()
+                stopCallDurationTimer()
+                endCall(true)
             }
         }
+//        }
 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        setContentView(R.layout.activity_video_call_new)
+        binding = ContentMainMultipleUserConferenceBinding.inflate(layoutInflater)
+        appSocketManager = AppSocketManager(this, Constants.InitializeSocket.socketConnection,
+            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
+        )
+        viewModel = ViewModelProvider(this).get(VideoCallViewModel::class.java)
+        windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        captureIntent = mediaProjectionManager.createScreenCaptureIntent()
         window.addFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN
                     or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
@@ -295,7 +331,6 @@ EglRendererInterface{
                     or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                     or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
-        setContentView(R.layout.activity_video_call_new)
         pid = android.os.Process.myPid()
         storeDataLogsFile()
         getIntentData()
@@ -303,14 +338,58 @@ EglRendererInterface{
         initView()
 
         lifecycleScope.launch {
+            ScreenshotService.screenshotResultMessage.collect {
+                if (it.isNotEmpty()) {
+                    Toast.makeText(this@VideoCallActivityNew, it, Toast.LENGTH_SHORT).show()
+                    ScreenshotService.setInitialValueOfScreenshotResult()
+                }
+            }
+        }
+        mediaCaptureLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val intent =
+                        Intent(this@VideoCallActivityNew, ScreenshotService::class.java).apply {
+                            putExtra("result_code", result.resultCode)
+                            putExtra("result_data", result.data)
+                        }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent)
+                    } else {
+                        ContextCompat.startForegroundService(this, intent)
+                    }
+                }
+            }
+        lifecycleScope.launch {
             runMainLoop()
         }
+//        }
+
 
     }
 
     private fun getRemoteViewList(): Int? {
         return conferenceManager?.connectedStreamList?.size ?: 0
     }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Log.d("getWidth la", "onConfigurationChanged")
+//        adjustLayout()
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            bottomSheetIconsParentLayout.setPadding(20,10,20,10)
+        }else{
+            bottomSheetIconsParentLayout.setPadding(20,20,20,20)
+        }
+        if (conferenceManager?.connectedStreamList.isNullOrEmpty()) return
+        if (::frameLaySurfaceViews.isInitialized && conferenceManager?.connectedStreamList?.size!! >= 2) {
+            relLayoutMain?.post {
+               manageTopTwoUsersView(relLayoutMain?.height ?: 0 )
+            }
+        }
+
+    }
+
 
     private fun getIntentData() {
         val extras = intent.extras
@@ -326,12 +405,12 @@ EglRendererInterface{
             videoStatus = extras.getString("videoStatus")
             isReceiverID = extras.getBoolean("isIncomingCall")
 //            numberOfReceiver = extras.getString("numberOfReceiver")!!.toInt()
-
         }
+        thisDevicePersonName = if (isReceiverID) receiverName ?: "" else callerName ?: ""
 
         LogUtil.e(
             TAG,
-            "activity : $activityName"
+            "GetIntent : $activityName"
                     + " room_id : $mRoomId"
                     + " meeting_id : $mMeetingId "
                     + " stream_id : $mStreamId "
@@ -347,10 +426,8 @@ EglRendererInterface{
     }
 
     private fun initSocket() {
-        AppSocketManager(
-            this, Constants.InitializeSocket.socketConnection,
-            Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
-        ).emitSocketEvents()
+//        appSocketManager.disconnectSocket()
+        appSocketManager.emitSocketEvents()
     }
 
     private fun initView() {
@@ -361,12 +438,16 @@ EglRendererInterface{
         play_view_renderer4 = findViewById(R.id.play_view_renderer4)
         val playViewRenderers = ArrayList<SurfaceViewRenderer>()
 
+        bottomSheetIconsParentLayout = findViewById(R.id.bottom_sheet_icons_parent)
         layoutBottomSheet = findViewById(R.id.bottomSheet)
         sheetBehavior = BottomSheetBehavior.from(layoutBottomSheet)
         imgCallEnd = findViewById(R.id.imgCallEnd)
         imgBottomCamera = findViewById(R.id.imgBottomCamera)
         imgBottomVideo = findViewById(R.id.imgBottomVideo)
+        muteVideoProgressBar = findViewById(R.id.muteVideoProgressBar)
+        muteAudioProgressBar = findViewById(R.id.muteAudioProgressBar)
         imgAudio = findViewById(R.id.imgAudio)
+        imgScreenshot = findViewById(R.id.screenshot_btn)
         imgArrowUp = findViewById(R.id.imgArrowUp)
         imgBack = findViewById(R.id.imgBack)
         switchView = findViewById(R.id.switchView)
@@ -411,6 +492,9 @@ EglRendererInterface{
         txtParticipant3 = findViewById(R.id.txtParticipant3)
         txtParticipant4 = findViewById(R.id.txtParticipant4)
         txtParticipant5 = findViewById(R.id.txtParticipant5)
+
+//        publishViewName = relLayParticipant1.findViewById(R.id.mute_view_txt)
+//        publishViewNameParent = relLayParticipant1.findViewById(R.id.mute_parent_view)
 
         dividerView1 = findViewById(R.id.dividerView1)
         dividerView2 = findViewById(R.id.dividerView2)
@@ -459,6 +543,10 @@ EglRendererInterface{
         mpCallReject = MediaPlayer.create(this, R.raw.call_reject_tone);
 
         bottomSheetAdapter = BottomSheetUserListAdapter(this, listOf())
+        binding.publishMuteView.muteViewTxt.background = getRandomColor(this@VideoCallActivityNew)
+        binding.playViewRenderer1MuteView.muteViewTxt.background = getRandomColor(this@VideoCallActivityNew)
+        binding.playViewRenderer2MuteView.muteViewTxt.background = getRandomColor(this@VideoCallActivityNew)
+
 
         showDefaultView()
         setListeners()
@@ -473,6 +561,7 @@ EglRendererInterface{
             conferenceDetails(publishViewRenderer, playViewRenderers)
             joinConference()
         }
+        collectAudioAndVideoApiState()
     }
 
 
@@ -510,7 +599,6 @@ EglRendererInterface{
         )
 
 
-
         conferenceManager?.setPlayOnlyMode(false)
         conferenceManager?.setOpenFrontCamera(true)
     }
@@ -520,6 +608,7 @@ EglRendererInterface{
         imgBottomCamera?.setOnClickListener(this)
         imgBottomVideo?.setOnClickListener(this)
         imgAudio?.setOnClickListener(this)
+        imgScreenshot.setOnClickListener(this)
         imgArrowUp?.setOnClickListener(this)
         imgBack?.setOnClickListener(this)
         switchView?.setOnClickListener(this)
@@ -569,6 +658,11 @@ EglRendererInterface{
                 controlAudio()
             }
 
+            R.id.screenshot_btn -> {
+                mediaCaptureLauncher.launch(captureIntent)
+//                startActivityForResult(captureIntent, Activity.RESULT_OK)
+            }
+
             R.id.imgBottomVideo -> {
                 controlVideo()
             }
@@ -591,6 +685,7 @@ EglRendererInterface{
 
             R.id.switchView -> {
                 isCallerSmall = !isCallerSmall
+                twoUsersLayoutType = !twoUsersLayoutType
                 switchLayout(isCallerSmall)
             }
 
@@ -603,16 +698,16 @@ EglRendererInterface{
             }
 
             R.id.viewHideShowBottomSheet -> {
-/*                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED
-                    || sheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN
-                ) {
-                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
-                    imgArrowUp?.rotation = 0F
-                }
+                /*                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED
+                                    || sheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN
+                                ) {
+                                    sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED)
+                                    imgArrowUp?.rotation = 0F
+                                }
 
-                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN)
-                }*/
+                                if (sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN)
+                                }*/
             }
 
 
@@ -665,6 +760,34 @@ EglRendererInterface{
         }
     }
 
+    private fun collectAudioAndVideoApiState() {
+        lifecycleScope.launch {
+            launch {
+                viewModel.muteVideoState.collect {
+                    if (it is MuteVideoViewState.Loading) {
+                        imgBottomVideo?.visibility = View.GONE
+                        muteVideoProgressBar.visibility = View.VISIBLE
+                    } else {
+                        muteVideoProgressBar.visibility = View.GONE
+                        imgBottomVideo?.visibility = View.VISIBLE
+
+                    }
+                }
+            }
+            launch {
+                viewModel.muteAudioState.collect {
+                    if (it is MuteAudioViewState.Loading) {
+                        imgAudio?.visibility = View.GONE
+                        muteAudioProgressBar.visibility = View.VISIBLE
+                    } else {
+                        imgAudio?.visibility = View.VISIBLE
+                        muteAudioProgressBar.visibility = View.GONE
+                    }
+                }
+            }
+        }
+    }
+
     private fun controlAudio() {
         if (conferenceManager!!.isPublisherAudioOn) {
             if (conferenceManager != null) {
@@ -685,11 +808,30 @@ EglRendererInterface{
                 conferenceManager!!.disableVideo()
             }
             imgBottomVideo?.setImageResource(R.drawable.ic_video_mute)
+            viewModel.muteVideo(
+                MuteVideoRequestData(
+                    caller_id = Constants.CALLER_SOCKET_ID,
+                    camera = "off",
+                    roomId = mRoomId
+                )
+            )
+            binding.publishMuteView.muteParentView.visibility = View.VISIBLE
+            publishViewRenderer.visibility = View.GONE
         } else {
             if (conferenceManager != null) {
                 conferenceManager!!.enableVideo()
             }
             imgBottomVideo?.setImageResource(R.drawable.ic_video)
+            viewModel.muteVideo(
+                MuteVideoRequestData(
+                    caller_id = Constants.CALLER_SOCKET_ID,
+                    camera = "on",
+                    roomId = mRoomId
+                )
+            )
+//            binding.muteParentView.visibility = View.GONE
+            binding.publishMuteView.muteParentView.visibility = View.GONE
+            publishViewRenderer.visibility = View.VISIBLE
         }
     }
 
@@ -699,14 +841,18 @@ EglRendererInterface{
                 when (newState) {
                     BottomSheetBehavior.STATE_HIDDEN -> {
                     }
+
                     BottomSheetBehavior.STATE_EXPANDED -> {
                         imgArrowUp?.rotation = 180F
                     }
+
                     BottomSheetBehavior.STATE_COLLAPSED -> {
                         imgArrowUp?.rotation = 0F
                     }
+
                     BottomSheetBehavior.STATE_DRAGGING -> {
                     }
+
                     BottomSheetBehavior.STATE_SETTLING -> {
                     }
                 }
@@ -853,24 +999,23 @@ EglRendererInterface{
     }
 
     override fun onIceConnected(streamId: String?) {
-
         booleanWhenUserEntersOrExit = true
         if (!conferenceManager!!.connectedStreamList.isNullOrEmpty()) {
             oldUserEntersCount = conferenceManager!!.connectedStreamList.size
         }
         userIdAndposition.add(streamId!!)
-        LogUtil.e(TAG, "streamIdInUse streamId1:  $isReceiverID")
-        LogUtil.e(TAG, "streamIdInUse streamId1:  $mStreamId")
-
+        lifecycleScope.launch {
+            refreshRoomDetails()
+        }
+        Log.d("setNamesToTextview ic", userIdAndposition.toString())
     }
 
     override fun onIceDisconnected(streamId: String?) {
-        Log.d("getuserIdAndposition", "onIceDisconnected")
-        Log.d("switchLayout", "getuserIdAndposition = $streamId")
         var boolean = true
         userIdAndposition.remove(streamId)
+        setNamesToTextview()
         booleanWhenUserEntersOrExit = false
-        if (userIdAndposition.size == 1) {
+        if (userIdAndposition.size == 0) {
             finish()
         }
     }
@@ -931,13 +1076,10 @@ EglRendererInterface{
     private fun getDisconnectedView() {
         var boolean = true
         lifecycleScope.launch {
-//            while(true){
-//                delay(1500)
             if (conferenceManager!!.playRendererAllocationMap != null) {
                 var p = 0
                 conferenceManager!!.playRendererAllocationMap.forEach { (key, value) ->
                     if (value == null) {
-
                         val s = conferenceManager!!.playRendererAllocationMap[key]
                         if (boolean) {
                             p = surfaceViewList.indexOf(key.id)
@@ -961,18 +1103,17 @@ EglRendererInterface{
             relLayParticipant2.removeView(play_view_renderer1)
             relLayParticipant2.addView(play_view_renderer2)
             relLayParticipant3.visibility = View.GONE
-            txtParticipant2!!.text = txtParticipant3!!.text
+//            txtParticipant2!!.text = txtParticipant3!!.text
             txtParticipant3!!.visibility = View.GONE
             linLayUser34!!.visibility = View.GONE
             switchView!!.visibility = View.VISIBLE
             playViewRenderIndex = surfaceViewIdList.indexOf(play_view_renderer2)
-//              switchLayout(isCallerSmall)
             switchLayout(isCallerSmall)
         }
         if (position == 1) {
             Log.d("manageViewsIfAnyUser", "2")
             relLayParticipant3.visibility = View.GONE
-            txtParticipant2!!.text = txtParticipant3!!.text
+//            txtParticipant2!!.text = txtParticipant3!!.text
             txtParticipant3!!.visibility = View.GONE
             linLayUser34!!.visibility = View.GONE
             switchView!!.visibility = View.VISIBLE
@@ -981,9 +1122,8 @@ EglRendererInterface{
         }
 
 
-        namesLayoutParent.visibility = View.GONE
-
-
+        namesLayoutParent.visibility = View.VISIBLE
+//        setNamesToTextview()
 //        if(position < oldUserEntersCount!!-1) {
 //            Log.d("getuserIdAndposition45", "1")
 //            for (i in position until oldUserEntersCount!!-1) {
@@ -1104,9 +1244,12 @@ EglRendererInterface{
         val paramsRelLayRemote: FrameLayout.LayoutParams =
             relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
 
+
         publishViewRenderer.visibility = View.GONE
         surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
-        relLayParticipant1?.removeView(publishViewRenderer)
+
+        publishViewRenderer.parent?.let { (it as ViewGroup).removeView(publishViewRenderer) }
+        binding.publishMuteView.muteParentView.parent?.let { (it as ViewGroup).removeView(binding.publishMuteView.muteParentView) }
         relLayParticipant2?.removeView(surfaceViewIdList[playViewRenderIndex])
         publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
         surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
@@ -1114,6 +1257,14 @@ EglRendererInterface{
         if (isCallerSmall) {
             setSmallLocalVideoView(true, paramsLocalVideo)
             setSmallRemoteVideoView(false, paramsRemoteVideo)
+            val paramsMuteView = FrameLayout.LayoutParams(
+                432,510
+            ).apply {
+                marginEnd = 40
+                topMargin = 40
+                gravity = Gravity.END
+            }
+
 
             paramsRelLayLocal.height = 510
             paramsRelLayLocal.width = 432
@@ -1121,25 +1272,17 @@ EglRendererInterface{
             paramsRelLayLocal.topMargin = 40
             paramsRelLayLocal.gravity = Gravity.END
 
+
+
             paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
             paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
             paramsRelLayRemote.marginEnd = 0
             paramsRelLayRemote.topMargin = 0
 
-            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
             relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
+            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            frameLaySurfaceViews.addView(binding.publishMuteView.muteParentView, paramsMuteView)
 
-//            if (activityName == "Incoming") {
-//                txtInitialViewParticipant1?.text = strParticipant1Name
-//                txtInitialViewParticipant2?.text = strParticipant2Name
-//                txtParticipant1?.text = strParticipant1Name
-//                txtParticipant2?.text = strParticipant2Name
-//            } else {
-            txtInitialViewParticipant1?.text = strParticipant1Name
-            txtInitialViewParticipant2?.text = strParticipant2Name
-            txtParticipant1?.text = strParticipant1Name
-            txtParticipant2?.text = strParticipant2Name
-//            }
         } else {
             setSmallLocalVideoView(false, paramsLocalVideo)
             setSmallRemoteVideoView(true, paramsRemoteVideo)
@@ -1156,115 +1299,27 @@ EglRendererInterface{
             paramsRelLayRemote.gravity = Gravity.END
 
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+            relLayParticipant1.addView(binding.publishMuteView.muteParentView, paramsRelLayLocal)
             relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
 
-//            if (activityName == "Incoming") {
-//                txtInitialViewParticipant1?.text = strParticipant1Name
-//                txtInitialViewParticipant2?.text = strParticipant2Name
-//                txtParticipant1?.text = strParticipant1Name
-//                txtParticipant2?.text = strParticipant2Name
-//            } else {
-            txtInitialViewParticipant1?.text = strParticipant2Name
-            txtInitialViewParticipant2?.text = strParticipant1Name
-            txtParticipant1?.text = strParticipant2Name
-            txtParticipant2?.text = strParticipant1Name
-//            }
         }
+
 
         publishViewRenderer.visibility = View.VISIBLE
         surfaceViewIdList[playViewRenderIndex]?.visibility = View.VISIBLE
-        relLayoutMain!!.addView(switchView)
-        switchView?.isClickable = true
-        switchView?.isFocusable = true
-    }
-
-
-    private fun switchLayout(isCallerSmall: Boolean, playRenderIndex: Int) {
-        relLayoutMain!!.removeView(switchView)
-//        Log.d("switchLayout", "switchLayout2")
-//        Log.d("switchLayout", "$playRenderIndex")
-        val paramsRemoteVideo: RelativeLayout.LayoutParams =
-            surfaceViewIdList[playRenderIndex].layoutParams as RelativeLayout.LayoutParams
-        val paramsLocalVideo: RelativeLayout.LayoutParams =
-            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
-
-        val paramsRelLayLocal: FrameLayout.LayoutParams =
-            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
-        val paramsRelLayRemote: FrameLayout.LayoutParams =
-            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
-
-        publishViewRenderer.visibility = View.GONE
-        surfaceViewIdList[playRenderIndex].visibility = View.GONE
-        relLayParticipant1?.removeView(publishViewRenderer)
-        relLayParticipant2?.removeView(surfaceViewIdList[playRenderIndex])
-        publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
-        surfaceViewIdList[playRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
-
-        if (isCallerSmall) {
-            setSmallLocalVideoView(true, paramsLocalVideo)
-            setSmallRemoteVideoView(false, paramsRemoteVideo)
-
-            paramsRelLayLocal.height = 510
-            paramsRelLayLocal.width = 432
-            paramsRelLayLocal.marginEnd = 40
-            paramsRelLayLocal.topMargin = 40
-            paramsRelLayLocal.gravity = Gravity.END
-
-            paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayRemote.marginEnd = 0
-            paramsRelLayRemote.topMargin = 0
-
-            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            relLayParticipant2?.addView(surfaceViewIdList[playRenderIndex], paramsRelLayRemote)
-
-//            if (activityName == "Incoming") {
-//                txtInitialViewParticipant1?.text = strParticipant1Name
-//                txtInitialViewParticipant2?.text = strParticipant2Name
-//                txtParticipant1?.text = strParticipant1Name
-//                txtParticipant2?.text = strParticipant2Name
-//            } else {
-            txtInitialViewParticipant1?.text = strParticipant1Name
-            txtInitialViewParticipant2?.text = strParticipant2Name
-            txtParticipant1?.text = strParticipant1Name
-            txtParticipant2?.text = strParticipant2Name
-//            }
-        } else {
-            setSmallLocalVideoView(false, paramsLocalVideo)
-            setSmallRemoteVideoView(true, paramsRemoteVideo)
-
-            paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayLocal.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayLocal.marginEnd = 0
-            paramsRelLayLocal.topMargin = 0
-
-            paramsRelLayRemote.height = 510
-            paramsRelLayRemote.width = 432
-            paramsRelLayRemote.marginEnd = 40
-            paramsRelLayRemote.topMargin = 40
-            paramsRelLayRemote.gravity = Gravity.END
-
-            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            relLayParticipant2?.addView(surfaceViewIdList[playRenderIndex], paramsRelLayRemote)
-
-//            if (activityName == "Incoming") {
-//                txtInitialViewParticipant1?.text = strParticipant1Name
-//                txtInitialViewParticipant2?.text = strParticipant2Name
-//                txtParticipant1?.text = strParticipant1Name
-//                txtParticipant2?.text = strParticipant2Name
-//            } else {
-            txtInitialViewParticipant1?.text = strParticipant2Name
-            txtInitialViewParticipant2?.text = strParticipant1Name
-            txtParticipant1?.text = strParticipant2Name
-            txtParticipant2?.text = strParticipant1Name
-//            }
+        binding.publishMuteView.muteParentView.apply {
+            bringToFront()
+            requestLayout()
         }
 
-        publishViewRenderer.visibility = View.VISIBLE
-        surfaceViewIdList[playRenderIndex]?.visibility = View.VISIBLE
         relLayoutMain!!.addView(switchView)
         switchView?.isClickable = true
         switchView?.isFocusable = true
+
+//        if (fistTimeTwoUsers <=1){
+        setNamesTwoUsers(isCallerSmall)
+//        }
+
     }
 
 
@@ -1409,10 +1464,12 @@ EglRendererInterface{
         play_view_renderer2?.layoutParams = paramsRemoteVideo
     }
 
+
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration?
+        newConfig: Configuration
     ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         LogUtil.e("onPiPMode", "connectedStreamList $tempValue")
         if (isInPictureInPictureMode) {
             isPictureInPictureMode = true
@@ -1585,6 +1642,7 @@ EglRendererInterface{
     }
 
     override fun onBackPressed() {
+        super.onBackPressed()
         if (imgBack?.isEnabled == true) {
             val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
             val sourceRectHint = Rect()
@@ -1627,8 +1685,8 @@ EglRendererInterface{
 
     override fun handleSocketSuccessResponse(response: String, type: String) {
         LogUtil.e(TAG, "-----------------------")
-        LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
-        LogUtil.e(TAG, "handleSocketSuccessResponse: $type")
+        LogUtil.e("setNamesToTextview- soc", " : $response")
+        LogUtil.e("setNamesToTextview-- soc", "handleSocketSuccessResponse23: $type")
 //        LogUtil.e(TAG, "-----------------------")
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
@@ -1637,7 +1695,11 @@ EglRendererInterface{
                 runOnUiThread {
                     bottomSheetAdapter?.manageUIVisibility(createCallSocketDataClass)
                     if (createCallSocketDataClass.type == Constants.SocketSuffix.SOCKET_TYPE_ACCEPT_CALL) {
-                        receiverName = createCallSocketDataClass.receiver_name
+                        if (fistTimeTwoUsers <= 1) {
+                            fistTimeTwoUsers += 1
+                            receiverName = createCallSocketDataClass.receiver_name
+                        }
+
 //                        txtBottomReceiverName?.text = receiverName
                         linlayCallerDetails?.visibility = View.GONE
                         if (createCallSocketDataClass.receiverId == Constants.UUIDs.USER_2) {
@@ -1846,6 +1908,17 @@ EglRendererInterface{
         participant3Visible = false
         participant4Visible = false
         participant5Visible = false
+        if (conferenceManager?.connectedStreamList == null || conferenceManager?.connectedStreamList?.size == 0) {
+            declineCall(true)
+        }
+        conferenceManager?.leaveFromConference()
+        stopCallDurationTimer()
+        iscallEnded = true
+        if (conferenceManager?.connectedStreamList?.size == 1) {
+            endCall(true)
+        } else {
+            endCall(false)
+        }
     }
 
     private fun showDefaultView() {
@@ -1921,7 +1994,7 @@ EglRendererInterface{
 
     }
 
-    private fun manageTopTwoUsersView() {
+    private fun manageTopTwoUsersView(parentHeight : Int = 0) {
         val paramsLocalVideo: RelativeLayout.LayoutParams =
             publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
         val paramsRemoteVideo: RelativeLayout.LayoutParams =
@@ -1939,14 +2012,30 @@ EglRendererInterface{
         relLayParticipant2?.removeView(play_view_renderer1)
 
 // set Local Video View Params
+
+        val orientation = resources.configuration.orientation
+        val width = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//
+            if (parentHeight==0){
+                val activityHeight = window.decorView.height
+                activityHeight / 2
+            }else{
+                parentHeight / 2
+            }
+
+        } else {
+            displayMetrics.widthPixels / 2
+        }
+        val width1Layout =
+        Log.d("getWidth k", "$width")
         paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-        paramsLocalVideo.width = displayMetrics.widthPixels / 2
+        paramsLocalVideo.width = width
         paramsLocalVideo.marginEnd = 0
         paramsLocalVideo.topMargin = 0
 
 // set Remote Video View Params
         paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-        paramsRemoteVideo.width = displayMetrics.widthPixels / 2
+        paramsRemoteVideo.width = width
         paramsRemoteVideo.marginEnd = 0
         paramsRemoteVideo.topMargin = 0
 
@@ -1956,14 +2045,14 @@ EglRendererInterface{
 
 // set Relative Layout Local Video View Params
         paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsRelLayLocal.width = displayMetrics.widthPixels / 2
+        paramsRelLayLocal.width = width
         paramsRelLayLocal.marginEnd = 0
         paramsRelLayLocal.topMargin = 0
         paramsRelLayLocal.gravity = Gravity.START
 
 // set Relative Layout Remote Video View Params
         paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsRelLayRemote.width = displayMetrics.widthPixels / 2
+        paramsRelLayRemote.width = width
         paramsRelLayRemote.marginEnd = 0
         paramsRelLayRemote.topMargin = 0
         paramsRelLayRemote.gravity = Gravity.END
@@ -1973,6 +2062,7 @@ EglRendererInterface{
 
         publishViewRenderer.visibility = View.VISIBLE
         play_view_renderer1?.visibility = View.VISIBLE
+//
     }
 
     private fun showThreeUsersUI() {
@@ -2062,6 +2152,7 @@ EglRendererInterface{
                 relLayParticipant1?.visibility = View.GONE
                 play_view_renderer1?.visibility = View.VISIBLE
             }
+
             1 -> {
                 displayParticipant3View(false)
                 txtParticipant3?.visibility = View.GONE
@@ -2080,6 +2171,7 @@ EglRendererInterface{
                 }
 
             }
+
             2 -> {
                 displayParticipant4View(false)
                 txtParticipant4?.visibility = View.GONE
@@ -2097,6 +2189,7 @@ EglRendererInterface{
                 }
 
             }
+
             3 -> {
                 displayParticipant5View(false)
                 txtParticipant5?.visibility = View.GONE
@@ -2158,7 +2251,10 @@ EglRendererInterface{
                 LogUtil.e(TAG, "Server Parsed Response : " + Gson().toJson(response.body()))
                 if (response.isSuccessful) {
                     LogUtil.e(TAG, "--------------------")
-                    LogUtil.e(TAG, "Success Response : ${Gson().toJson(response.body())}")
+                    LogUtil.e(
+                        "setNames api",
+                        "Success Response : ${Gson().toJson(response.body())}"
+                    )
                     LogUtil.e(TAG, "--------------------")
                     if (response.body() != null) {
                         // Below code is for to show the list of participants in the BottomSheet
@@ -2181,11 +2277,34 @@ EglRendererInterface{
                         //-------------------------
 
                         if (response.body()?.success?.size!! > 0) {
-                            response.body()?.success?.let { getRoomDetailsDataArrayList.addAll(it) }
+                            getRoomDetailsDataArrayList.clear()
+//                            response.body()?.success?.let { getRoomDetailsDataArrayList.addAll(it) }
+//                            setNamesToTextview()
+                            lifecycleScope.launch {
+                                launch {
+                                    response.body()?.success?.let {
+                                        getRoomDetailsDataArrayList.addAll(it)
+                                        val streamId =
+                                            getRoomDetailsDataArrayList.find { it.name == thisDevicePersonName }?.stream_id
+                                        if (userIdAndposition.contains(streamId)) userIdAndposition.remove(
+                                            streamId
+                                        )
+                                    }
+                                }.join()
+                                if (userIdAndposition.size >= 1) {
+                                    runOnUiThread {
+                                        setNamesToTextview()
+//                                        manageUserViews()
+                                    }
+                                }
+
+                            }
+//                            if (booleanWhenUserEntersOrExit) {
+//
+//                            }
+
                         }
-                        if (booleanWhenUserEntersOrExit) {
-                            manageUserViews()
-                        }
+
 
                     }
                 }
@@ -2518,74 +2637,96 @@ EglRendererInterface{
             }
         }
 
-        namesLayoutParent.visibility = View.GONE
+        namesLayoutParent.visibility = View.VISIBLE
+        setNamesToTextview()
         Log.e("$TAG Connected Users", "joinedUserStreamIds : " + Gson().toJson(joinedUserStreamIds))
         Log.e(
             "$TAG Users StreamIDs",
             "--> isUser1InTheRoom : ($user1StreamId) --> isUser2InTheRoom : ($user2StreamId) --> isUser3InTheRoom : ($user3StreamId) --> isUser4InTheRoom : ($user4StreamId)  --> isUser5InTheRoom : ($user5StreamId)"
         )
 
-//        setNamesToTextView()
+    }
+
+    private fun removeIdIfAnyoneLeftOnCrash(){
+        conferenceManager?.connectedStreamList?.let { connectedStreamList ->
+            userIdAndposition.forEach{
+                if (!connectedStreamList.contains(it)){
+                    userIdAndposition.remove(it)
+                }
+            }
+        }
 
     }
 
     private fun setNamesToTextview() {
-        if (isReceiverID) {
-            txtParticipant1!!.text = receiverName
-            txtInitialViewParticipant1!!.text = receiverName
-        } else {
-            txtParticipant1!!.text = callerName
-            txtInitialViewParticipant1!!.text = callerName
+//        removeIdIfAnyoneLeftOnCrash()
+        conferenceManager?.connectedStreamList?.let {
+            userIdAndposition.retainAll{it in conferenceManager?.connectedStreamList!!}
         }
-        if (!remoteUsersSet.isNullOrEmpty()) {
-            txtInitialViewParticipant2!!.text = getConnectedUserName(remoteUsersSet.elementAt(0))
-            when (remoteUsersSet.size) {
-                1 -> txtParticipant2!!.text = getConnectedUserName(remoteUsersSet.elementAt(0))
-                2 -> txtParticipant3!!.text = getConnectedUserName(remoteUsersSet.elementAt(1))
-
-            }
-
+        twoUsersLayoutType = isReceiverID
+        Log.d("setNamesToTextview lis", userIdAndposition.toString())
+        val name = if (isReceiverID) receiverName else callerName
+            if (userIdAndposition.isNotEmpty()) {
+                when (userIdAndposition.size) {
+                    1 -> {
+                        Log.d("setNamesToTextview 4", getConnectedUserName(userIdAndposition[0]))
+                        txtParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                        txtInitialViewParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                        txtParticipant2!!.text = name
+                        txtInitialViewParticipant2!!.text = name
+                        binding.apply {
+                            publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: "A"
+                            playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
+                        }
+                    }
+                    2 -> {
+                        Log.d(
+                            "setNamesToTextview 5",
+                            getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
+                        )
+                        txtParticipant1!!.text = name
+                        txtParticipant2!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                        txtParticipant3!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
+                        binding.apply {
+                            publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
+                            playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
+                            playViewRenderer2MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1])).first().uppercase()
+                        }
+                    }
+                }
 
         }
     }
 
+    private fun setNamesTwoUsers(type: Boolean) {
+//        Log.d("setNamesTwoUsers", fistTimeTwoUsers.toString())
+        if (userIdAndposition.isEmpty()) {
+            Log.d("setNamesToTextview 0-0", "return")
+            return
+        }
+        if (type) {
+            txtParticipant1!!.text =
+                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtInitialViewParticipant1!!.text =
+                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtParticipant2!!.text = if (isReceiverID) receiverName else callerName
+            txtInitialViewParticipant2!!.text = if (isReceiverID) receiverName else callerName
+            Log.d("setNamesToTextview 1", receiverName.toString())
+        } else {
+            txtParticipant2!!.text =
+                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtInitialViewParticipant2!!.text =
+                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtParticipant1!!.text = if (isReceiverID) receiverName else callerName
+            txtInitialViewParticipant1!!.text = if (isReceiverID) receiverName else callerName
+            Log.d("setNamesToTextview 2", callerName.toString())
+        }
+    }
+
     private fun storeDataLogsFile() {
-//        LogUtil.e("SocketConfig", "File Pathvc $pid")
-//        if (isExternalStorageWritable()) {
-//            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
-//            val cDir: File? = applicationContext?.getExternalFilesDir(null);
-//            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
-//            val logDirectory = File("$appDirectory/logs")
-//            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
-//            // create app folder
-//            if (!appDirectory.exists()) {
-//                appDirectory.mkdir()
-//            }
-//
-//            // create log folder
-//            if (!logDirectory.exists()) {
-//                logDirectory.mkdir()
-//            }
-
-            lifecycleScope.launch(Dispatchers.IO){
-                SaveLogsToFile(applicationContext).startLog("VcActivity")
-            }
-            // clear the previous logcat and then write the new one to the file
-//            try {
-////                Process process = Runtime.getRuntime().exec("logcat -c");
-////                val process = Runtime.getRuntime().exec("logcat | grep $pid > ${logFile.absolutePath}")
-//
-////                LogUtil.e("SocketConfig", "File Path $process");
-
-//
-//            } catch (e: IOException) {
-//                e.printStackTrace()
-//            }
-//        } else if (isExternalStorageReadable()) {
-//            // only readable
-//        } else {
-//            // not accessible
-//        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            SaveLogsToFile(applicationContext).startLog("VcActivity")
+        }
     }
 
     /* Checks if external storage is available for read and write */
@@ -2619,19 +2760,22 @@ EglRendererInterface{
             "getConnectedUserName",
             "getRoomDetailsDataArrayList: ${Gson().toJson(getRoomDetailsDataArrayList)}"
         );
-        for (item in getRoomDetailsDataArrayList.indices) {
-            strParticipantName =
-                if (participantStreamID.lowercase()
-                        .contains(
-                            getRoomDetailsDataArrayList[item].stream_id.toString().lowercase()
-                        )
-                ) {
-                    return getRoomDetailsDataArrayList[item].name.toString()
-                } else {
-                    participantStreamID
-                }
-        }
-        return strParticipantName
+        val name = getRoomDetailsDataArrayList.find {
+            it.stream_id.equals(participantStreamID, ignoreCase = true)
+        }?.name ?: participantStreamID
+//        for (item in getRoomDetailsDataArrayList.indices) {
+//            strParticipantName =
+//                if (participantStreamID.lowercase()
+//                        .contains(
+//                            getRoomDetailsDataArrayList[item].stream_id.toString().lowercase()
+//                        )
+//                ) {
+//                    return getRoomDetailsDataArrayList[item].name.toString()
+//                } else {
+//                    participantStreamID
+//                }
+//        }
+        return name
     }
 
     private fun getInitials(strName: String?): String {
@@ -2669,8 +2813,10 @@ EglRendererInterface{
     }
 
     override fun publishVideoInitializedTwice() {
-        Toast.makeText(this,"Network issue or Server Issue", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Network issue or Server Issue", Toast.LENGTH_LONG).show()
         conferenceManager?.leaveFromConference()
         finish()
     }
 }
+
+//agjqticlbhvredpouzkf

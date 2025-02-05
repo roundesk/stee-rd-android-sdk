@@ -4,22 +4,22 @@ plugins {
 }
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    compileSdkVersion 33
+//    buildToolsVersion "29.0.3"
+    namespace "com.roundesk.app"
 
     defaultConfig {
-        configurations.all {
-            resolutionStrategy { force 'androidx.core:core-ktx:1.6.0' }
-        }
+//        configurations.all {
+//            resolutionStrategy { force 'androidx.core:core-ktx:1.6.0' }
+//        }
         applicationId "com.roundesk.app"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             minifyEnabled false

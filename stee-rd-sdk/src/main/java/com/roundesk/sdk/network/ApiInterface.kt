@@ -38,4 +38,13 @@ interface ApiInterface {
         @Part("apiToken") apiToken: String
     ): Call<BaseDataClassResponse?>
 
+    @POST(Constants.ApiSuffix.API_KEY_CAMERA_STATUS)
+    fun muteVideo(
+     @Body data : MuteVideoRequestData
+    ) : Call <Any>
+
+    @POST(Constants.ApiSuffix.API_KEY_AUDIO_STATUS)
+    fun muteAudio(
+      @Body data : MuteAudioRequestData
+    ) : Call<Any>
 }

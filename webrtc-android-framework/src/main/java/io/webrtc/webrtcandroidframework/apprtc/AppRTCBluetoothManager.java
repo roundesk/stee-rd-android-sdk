@@ -260,7 +260,7 @@ public class AppRTCBluetoothManager {
       Log.e(TAG, "Bluetooth SCO audio is not available off call");
       return;
     }
-    logBluetoothAdapterInfo(bluetoothAdapter);
+//    logBluetoothAdapterInfo(bluetoothAdapter);
     // Establish a connection to the HEADSET profile (includes both Bluetooth Headset and
     // Hands-Free) proxy object and install a listener.
     if (!getBluetoothProfileProxy(

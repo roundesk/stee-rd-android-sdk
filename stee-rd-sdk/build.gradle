@@ -4,24 +4,26 @@ plugins {
 }
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
-
+    compileSdkVersion 33
+//    buildToolsVersion "29.0.3"
+   namespace "com.roundesk.sdk"
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
-
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    buildFeatures{
+        viewBinding true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -67,8 +69,13 @@ dependencies {
     implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
     implementation "com.squareup.retrofit2:converter-moshi:2.9.0"
 
+    implementation "androidx.activity:activity-ktx:1.7.2"  // or the latest version
+//    implementation "androidx.activity:activity:1.9.0"
     //lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01"
     implementation "androidx.lifecycle:lifecycle-service:2.4.0-alpha01"
 
 }
+
+
+

@@ -17,10 +17,15 @@ object Constants {
 //    private const val SERVER_ADDRESS_DEV: String = "stee-prod.roundesk.io:5443"
 //    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/LiveApp/websocket"
 
-    const val BASE_URL_DEV: String = "http://test.roundesk.io/stee-server/public/api/"
-    const val SOCKET_URL_DEV: String = "http://test.roundesk.io:3000"
-    private const val SERVER_ADDRESS_DEV: String = "stee-dev.roundesk.io:5443"
-    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/testing/websocket"
+//    const val BASE_URL_DEV: String = "http://test.roundesk.io/stee-server/public/api/"
+//    const val SOCKET_URL_DEV: String = "http://test.roundesk.io:3000"
+//    private const val SERVER_ADDRESS_DEV: String = "stee-dev.roundesk.io:5443"
+//    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/testing/websocket"
+
+    const val BASE_URL_DEV: String = "https://stee-rd-uat.roundesk.io/api/"
+    const val SOCKET_URL_DEV: String = "https://stee-rd-uat.roundesk.io:3000/"
+    private const val SERVER_ADDRESS_DEV: String = "stee-rd-uat.roundesk.io:5443"
+    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/WebRTCAppEE/websocket"
 
     const val BASE_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
     const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
@@ -43,6 +48,8 @@ object Constants {
         const val API_KEY_ALL_CALL: String = "all-calls"
         const val API_KEY_ROOM_DETAIL: String = "room-detail"
         const val API_KEY_UPLOAD_DATA_LOG: String = "upload-file-content"
+        const val API_KEY_CAMERA_STATUS: String = "camera-status"
+        const val API_KEY_AUDIO_STATUS: String = "microphone-status"
     }
 
     object UUIDs {

@@ -2,7 +2,9 @@ package com.roundesk.sdk.activity
 
 import android.Manifest
 import android.content.Intent
+import android.content.res.Configuration
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -124,6 +126,9 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         txtDoctorName?.text = receiver_name
     }
 
+
+
+
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.imgCallAccept -> {
@@ -244,6 +249,8 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         }
     }
 
+
+
     private fun declineCall() {
         val declineCallRequest = DeclineCallRequest(
             Constants.CALLER_SOCKET_ID,
@@ -301,8 +308,12 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     private fun hasStoragePermission(): Boolean {
-        return (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                && EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        return if (Build.VERSION.SDK_INT< Build.VERSION_CODES.S_V2){
+            (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    && EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        }else{
+            true
+        }
     }
 
     override fun onRequestPermissionsResult(

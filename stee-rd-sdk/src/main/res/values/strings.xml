@@ -24,4 +24,6 @@
     <string name="rationale_storage">This app needs access to your storage</string>
     <string name="toast_err_in_response">Error in getting response</string>
     <string name="toast_request_to_try_later">Try later</string>
+
+
 </resources>

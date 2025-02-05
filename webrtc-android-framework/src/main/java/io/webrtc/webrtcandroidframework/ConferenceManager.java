@@ -17,16 +17,22 @@ import org.webrtc.SurfaceViewRenderer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import io.webrtc.webrtcandroidframework.apprtc.IDataChannelMessageSender;
 
 import static io.webrtc.webrtcandroidframework.apprtc.CallActivity.EXTRA_DATA_CHANNEL_ENABLED;
+
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 public class ConferenceManager implements MediaSignallingEvents, IDataChannelMessageSender {
     private final Context context;
@@ -43,7 +49,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     private WebSocketHandler wsHandler;
     private Handler handler = new Handler();
     private boolean joined = false;
-
+    private final MutableLiveData<List<String>> connectedStreamListLive = new MutableLiveData<>();
     private boolean openFrontCamera = true;
     private String[] connectedStreamList;
    private  EglRendererInterface eglRendererInterface;
@@ -170,23 +176,39 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     @Override
     public void onPublishStarted(String streamId) {
         Log.i("ConferenceManager", "onPublishStarted() streamId : " + streamId);
-        peers.get(streamId).onPublishStarted(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onPublishStarted(streamId);
     }
 
     @Override
     public void onRemoteIceCandidate(String streamId, IceCandidate candidate) {
-        peers.get(streamId).onRemoteIceCandidate(streamId, candidate);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onRemoteIceCandidate(streamId, candidate);
     }
 
     @Override
     public void onTakeConfiguration(String streamId, SessionDescription sdp) {
-        peers.get(streamId).onTakeConfiguration(streamId, sdp);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onTakeConfiguration(streamId, sdp);
     }
 
     @Override
     public void onPublishFinished(String streamId) {
         Log.i("ConferenceManager", "onPublishFinished() streamId : " + streamId);
-        peers.get(streamId).onPublishFinished(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onPublishFinished(streamId);
     }
 
     public String getStreamId() {
@@ -195,12 +217,20 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     @Override
     public void onPlayStarted(String streamId) {
-        peers.get(streamId).onPlayStarted(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onPlayStarted(streamId);
     }
 
     @Override
     public void onPlayFinished(String streamId) {
         //it has been deleted because of stream leaved message
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
         if (peers.containsKey(streamId)) {
             peers.get(streamId).onPlayFinished(streamId);
         }
@@ -210,20 +240,32 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     @Override
     public void noStreamExistsToPlay(String streamId) {
-        peers.get(streamId).noStreamExistsToPlay(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.noStreamExistsToPlay(streamId);
     }
 
     @Override
     public void streamIdInUse(String streamId) {
         Log.e("ConferenceManager", "streamIdInUse" + streamId);
 //        if (!streamId.equalsIgnoreCase("null") && streamId != null) {
-        peers.get(streamId).streamIdInUse(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.streamIdInUse(streamId);
 //        }
     }
 
     @Override
     public void onStartStreaming(String streamId) {
-        peers.get(streamId).onStartStreaming(streamId);
+        WebRTCClient client = peers.get(streamId);
+        if (client == null){
+            return;
+        }
+        client.onStartStreaming(streamId);
     }
 
 
@@ -270,6 +312,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     @Override
     public void onRoomInformation(String[] streams) {
         Log.e("ConferenceManager", "streams : " + streams.length);
+        connectedStreamListLive.setValue(Arrays.asList(streams));
         connectedStreamList = streams;
         Set<String> streamSet = new HashSet<>();
         Collections.addAll(streamSet, streams);
@@ -509,6 +552,10 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
 
     public String[] getConnectedStreamList() {
         return connectedStreamList;
+    }
+
+    public LiveData<List<String>> getConnectedStreamListLiveData(){
+        return connectedStreamListLive;
     }
 
     public LinkedHashMap<SurfaceViewRenderer, WebRTCClient> getPlayRendererAllocationMap(){

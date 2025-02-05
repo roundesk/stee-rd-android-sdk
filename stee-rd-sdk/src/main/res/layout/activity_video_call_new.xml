@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/videoCallParentView"
     tools:context=".activity.VideoCallActivityNew">
 
     <include layout="@layout/content_main_multiple_user_conference" />

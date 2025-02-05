@@ -40,7 +40,7 @@ class ForegroundService : Service() {
         val notificationIntent = Intent(this, SettingsActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
-            0, notificationIntent, 0
+            0, notificationIntent, PendingIntent.FLAG_IMMUTABLE
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("STEE-SDK SOCKET Service")

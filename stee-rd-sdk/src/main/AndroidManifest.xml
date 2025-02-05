@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
 <!--    android:name=".socket.SocketConfigSDK"-->
     <application
@@ -25,18 +27,23 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:noHistory="true"
-            android:screenOrientation="portrait"
-            android:supportsPictureInPicture="true" />
+            android:supportsPictureInPicture="true"
+            android:exported="true"/>
 
         <activity
             android:name=".activity.OutgoingCallActivity"
-            android:screenOrientation="portrait" />
+            android:exported="false"/>
         <activity
             android:name=".activity.IncomingCallActivity"
-            android:screenOrientation="portrait" />
+            android:exported="false"/>
         <activity
             android:name=".activity.CallHistoryActivity"
-            android:screenOrientation="portrait" />
+            android:exported="false"/>
+
+        <service android:name=".base.ScreenshotService"
+            android:exported="false"
+            android:enabled="true"
+            android:foregroundServiceType="mediaProjection"/>
     </application>
 
 </manifest>

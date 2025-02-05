@@ -13,9 +13,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:alpha="0.6"
         android:background="@drawable/bottom_call_options"
-        android:orientation="vertical"
-        android:alpha="0.6">
+        android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/lin_layBottomOptions"
@@ -28,13 +28,15 @@
                 android:layout_width="@dimen/dimen_30dp"
                 android:layout_height="@dimen/dimen_20dp"
                 android:layout_gravity="center"
-                android:visibility="gone"
                 android:layout_marginTop="@dimen/dimen_10dp"
-                android:src="@drawable/ic_arrow_up_white" />
+                android:src="@drawable/ic_arrow_up_white"
+                android:visibility="gone" />
 
             <LinearLayout
+                android:id="@+id/bottom_sheet_icons_parent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="@dimen/dimen_20dp">
 
@@ -46,22 +48,60 @@
                     android:layout_weight="1"
                     android:src="@drawable/ic_camera_flip" />
 
-                <ImageView
-                    android:id="@+id/imgBottomVideo"
-                    android:layout_width="@dimen/dimen_30dp"
-                    android:layout_height="@dimen/dimen_20dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="@dimen/dimen_10dp"
+                <RelativeLayout
+                    android:id="@+id/muteVideo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:src="@drawable/ic_video" />
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/imgBottomVideo"
+                        android:layout_width="@dimen/dimen_30dp"
+                        android:layout_height="@dimen/dimen_30dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="@dimen/dimen_10dp"
+                        android:src="@drawable/ic_video"
+                        android:visibility="visible" />
+
+                    <ProgressBar
+                        android:id="@+id/muteVideoProgressBar"
+                        android:layout_width="@dimen/dimen_30dp"
+                        android:layout_height="@dimen/dimen_30dp"
+                        android:indeterminateTint="@color/white"
+                        android:visibility="gone" />
+                </RelativeLayout>
+
+
+                <RelativeLayout
+                    android:id="@+id/muteAudio"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:id="@+id/imgAudio"
+                        android:layout_width="@dimen/dimen_30dp"
+                        android:layout_height="@dimen/dimen_30dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_audio" />
+
+                    <ProgressBar
+                        android:id="@+id/muteAudioProgressBar"
+                        android:layout_width="@dimen/dimen_30dp"
+                        android:layout_height="@dimen/dimen_30dp"
+                        android:indeterminateTint="@color/white"
+                        android:visibility="gone" />
+                </RelativeLayout>
 
                 <ImageView
-                    android:id="@+id/imgAudio"
-                    android:layout_width="@dimen/dimen_30dp"
-                    android:layout_height="@dimen/dimen_30dp"
+                    android:id="@+id/screenshot_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/dimen_40dp"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1"
-                    android:src="@drawable/ic_audio" />
+                    android:src="@drawable/baseline_screenshot" />
 
                 <ImageView
                     android:id="@+id/imgCallEnd"
@@ -78,8 +118,8 @@
             android:layout_height="wrap_content"
             android:background="@color/bottom_bar_color"
             android:orientation="horizontal"
-            android:visibility="gone"
-            android:padding="@dimen/dimen_15dp">
+            android:padding="@dimen/dimen_15dp"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/txtBottomCallerName"
@@ -118,8 +158,8 @@
             android:layout_height="wrap_content"
             android:background="@color/bottom_bar_color"
             android:orientation="horizontal"
-            android:visibility="gone"
-            android:padding="@dimen/dimen_15dp">
+            android:padding="@dimen/dimen_15dp"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/txtBottomReceiverName"
@@ -157,8 +197,8 @@
                 android:layout_width="@dimen/dimen_20dp"
                 android:layout_height="@dimen/dimen_20dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_close_button"
                 android:layout_marginEnd="@dimen/dimen_10dp"
+                android:src="@drawable/ic_close_button"
                 android:visibility="gone"
                 app:tint="@color/decline_color" />
         </LinearLayout>

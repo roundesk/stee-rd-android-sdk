@@ -352,8 +352,13 @@ class ChatActivity : SocketController(), View.OnClickListener,
     }
 
     private fun hasStoragePermission(): Boolean {
-        return (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                && EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        return if (Build.VERSION.SDK_INT< Build.VERSION_CODES.S_V2){
+            (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    && EasyPermissions.hasPermissions(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        }else{
+            true
+        }
+
     }
 
     override fun onRequestPermissionsResult(

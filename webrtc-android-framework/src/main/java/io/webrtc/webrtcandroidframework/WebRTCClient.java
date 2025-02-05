@@ -144,7 +144,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
     // Turn Server URL for Dev
 //    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:3478";
-    private String turnServerURI = "turn:stee-prod.roundesk.io:3478";
+//    private String turnServerURI = "turn:stee-prod.roundesk.io:3478";
+    private String turnServerURI = "turn:stee-rd-uat.roundesk.io:3478";
 
 
     List<PeerConnection.IceServer> iceServers = new ArrayList();
@@ -341,6 +342,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             videoHeight = displayMetrics.heightPixels;
         }
         PeerConnectionClient.DataChannelParameters dataChannelParameters = null;
+
         if (intent.getBooleanExtra(CallActivity.EXTRA_DATA_CHANNEL_ENABLED, false)) {
             dataChannelParameters = new PeerConnectionClient.DataChannelParameters(intent.getBooleanExtra(CallActivity.EXTRA_ORDERED, true),
                     intent.getIntExtra(CallActivity.EXTRA_MAX_RETRANSMITS_MS, -1),
@@ -772,6 +774,8 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
             audioManager.stop();
             audioManager = null;
         }
+        Log.d("Peerconnection clo", "release");
+
     }
 
     private void disconnect() {

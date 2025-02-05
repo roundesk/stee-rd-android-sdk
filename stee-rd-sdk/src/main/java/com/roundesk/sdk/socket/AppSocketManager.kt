@@ -1,4 +1,5 @@
 package com.roundesk.sdk.socket
+import android.util.Log
 import com.github.nkzawa.emitter.Emitter
 import com.github.nkzawa.socketio.client.Socket
 import com.roundesk.sdk.socket.SocketListener
@@ -13,6 +14,7 @@ class AppSocketManager(
 
     fun emitSocketEvents() {
         LogUtil.e("AppSocketManager", "------>Socket Emitting & Receiving Data from Server<------")
+        mSocket?.off(emitEventName, onEventEmitter)
         mSocket?.on(emitEventName, onEventEmitter)
         mSocket?.on(Socket.EVENT_DISCONNECT) {
             LogUtil.e("AppSocketManager", "------>$emitEventName Socket Disconnected<------")
@@ -25,6 +27,7 @@ class AppSocketManager(
 
     private val onEventEmitter = Emitter.Listener { args ->
         val response = "" + args[0]
+        Log.d("getSocketResposne9090", response.toString())
         socketListener.handleSocketSuccessResponse(
             response,
             emitEventName
@@ -32,6 +35,7 @@ class AppSocketManager(
     }
 
     fun disconnectSocket() {
+        LogUtil.e("AppSocketManager", "------>disconnectSocket<------")
         mSocket?.disconnect()
         mSocket?.off(emitEventName)
     }

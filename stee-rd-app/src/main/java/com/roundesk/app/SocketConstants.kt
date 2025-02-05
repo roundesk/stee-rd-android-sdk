@@ -13,10 +13,10 @@ object SocketConstants {
         const val USER_2: String = "crhuzkfvodpajiletqgb" // Name : deepak yahoo
         const val USER_3: String = "agjqticlbhvredpouzkf" // Name : deepak outlook
         const val USER_4: String = "gihuzkfvodpajiletlmn" // Name : Priyanka
-        const val USER_5: String =  "wqhuzkfvodpajiletqst" // Name : himanshu
+        const val USER_5: String = "wqhuzkfvodpajiletqst" // Name : himanshu
     }
 
-    const val CALLER_SOCKET_ID: String = UUIDs.USER_3
+    const val CALLER_SOCKET_ID: String = UUIDs.USER_4
     const val showIncomingCallUI: Boolean = false
     const val showIncomingCallTopBarUI: Boolean = false
     const val SOCKET_SEND_CALL_TO_CLIENT: String = "sendCallToClient"

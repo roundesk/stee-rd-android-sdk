@@ -162,7 +162,8 @@ class Camera2Session implements CameraSession {
          * TEMPLATE_RECORD: Stable frame rate is used, and post-processing is set for recording
          *   quality.
          */
-        final CaptureRequest.Builder captureRequestBuilder =
+          assert cameraDevice != null;
+          final CaptureRequest.Builder captureRequestBuilder =
             cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
         // Set auto exposure fps range.
         captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
