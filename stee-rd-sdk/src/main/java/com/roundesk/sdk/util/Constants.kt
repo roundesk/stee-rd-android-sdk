@@ -5,38 +5,10 @@ import com.github.nkzawa.socketio.client.Socket
 
 object Constants {
 
-    const val UAT = "uat"
-    const val DEV = "dev"
-    const val PRODUCTION = "production"
-
-    // Change this BUILD_TYPE to UAT for generating UAT build
-    const val BUILD_TYPE = DEV
-
-//    const val BASE_URL_DEV: String = "https://stee-prod.roundesk.io/api/"
-//    const val SOCKET_URL_DEV: String = "https://stee-prod.roundesk.io:3000"
-//    private const val SERVER_ADDRESS_DEV: String = "stee-prod.roundesk.io:5443"
-//    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/LiveApp/websocket"
-
-//    const val BASE_URL_DEV: String = "http://test.roundesk.io/stee-server/public/api/"
-//    const val SOCKET_URL_DEV: String = "http://test.roundesk.io:3000"
-//    private const val SERVER_ADDRESS_DEV: String = "stee-dev.roundesk.io:5443"
-//    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/testing/websocket"
-
-    const val BASE_URL_DEV: String = "https://stee-rd-uat.roundesk.io/api/"
-    const val SOCKET_URL_DEV: String = "https://stee-rd-uat.roundesk.io:3000/"
-    private const val SERVER_ADDRESS_DEV: String = "stee-rd-uat.roundesk.io:5443"
-    const val SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/WebRTCAppEE/websocket"
-
-    const val BASE_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg/api/"
-    const val SOCKET_URL_UAT: String = "https://tele-omnii-lb.intranet.spfoneuat.gov.sg:3000"
-    private const val SERVER_ADDRESS_UAT: String = "tele-omnii-lb.intranet.spfoneuat.gov.sg:5443"
-    const val SERVER_URL_UAT = "wss://$SERVER_ADDRESS_UAT/WebRTCAppEE/websocket"
-
-
-    const val BASE_URL_PRODUCTION: String = "https://tele-omnii-lb.intranet.spfone.gov.sg/api/"
-    const val SOCKET_URL_PRODUCTION: String = "https://tele-omnii-lb.intranet.spfone.gov.sg:3000"
-    private const val SERVER_ADDRESS_PRODUCTION: String = "tele-omnii-lb.intranet.spfone.gov.sg:5443"
-    const val SERVER_URL_PRODUCTION = "wss://$SERVER_ADDRESS_PRODUCTION/LiveApp/websocket"
+     var BASE_URL_DEV: String = "https://stee-rd-uat.roundesk.io/api/"
+     var SOCKET_URL_DEV: String = "https://stee-rd-uat.roundesk.io:3000/"
+     var SERVER_ADDRESS_DEV: String = "stee-rd-uat.roundesk.io:5443"
+     var SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/WebRTCAppEE/websocket"
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 

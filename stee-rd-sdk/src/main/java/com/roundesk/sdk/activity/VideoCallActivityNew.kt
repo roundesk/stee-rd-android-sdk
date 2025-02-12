@@ -58,6 +58,9 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.nio.charset.StandardCharsets
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashSet
 
 
 class VideoCallActivityNew : ComponentActivity(),
@@ -217,6 +220,7 @@ class VideoCallActivityNew : ComponentActivity(),
     private var participantsList: ArrayList<RoomDetailDataClassResponse.Success> = arrayListOf()
 
     val userIdAndposition = ArrayList<String>()
+    val usersNameList = LinkedHashSet<String>()
     val surfaceViewList = ArrayList<Int>()
     var surfaceViewIdList = ArrayList<SurfaceViewRenderer>()
     val relaytiveLayoutList = ArrayList<RelativeLayout>()
@@ -383,9 +387,9 @@ class VideoCallActivityNew : ComponentActivity(),
         }
         if (conferenceManager?.connectedStreamList.isNullOrEmpty()) return
         if (::frameLaySurfaceViews.isInitialized && conferenceManager?.connectedStreamList?.size!! >= 2) {
-            relLayoutMain?.post {
+//            relLayoutMain?.post {
                manageTopTwoUsersView(relLayoutMain?.height ?: 0 )
-            }
+//            }
         }
 
     }
@@ -599,6 +603,7 @@ class VideoCallActivityNew : ComponentActivity(),
         )
 
 
+
         conferenceManager?.setPlayOnlyMode(false)
         conferenceManager?.setOpenFrontCamera(true)
     }
@@ -770,7 +775,6 @@ class VideoCallActivityNew : ComponentActivity(),
                     } else {
                         muteVideoProgressBar.visibility = View.GONE
                         imgBottomVideo?.visibility = View.VISIBLE
-
                     }
                 }
             }
@@ -785,6 +789,23 @@ class VideoCallActivityNew : ComponentActivity(),
                     }
                 }
             }
+//      \      launch {
+//                viewModel.muteVideoListState.collect{
+//                    if (usersNameList.isNotEmpty()){
+//                        val item = usersNameList.toList()[0]
+//                        binding.playViewRenderer1MuteView.muteParentView.apply {
+//                            if (viewModel.muteVideoList.get(item) == true){
+//                                visibility = View.GONE
+//                                surfaceViewIdList[playViewRenderIndex].visibility = View.VISIBLE
+//                            }else{
+//                                visibility = View.VISIBLE
+//                                surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
+//                            }
+//                        }
+//
+//                    }
+//                }
+//            }
         }
     }
 
@@ -1069,13 +1090,12 @@ class VideoCallActivityNew : ComponentActivity(),
     override fun onMessageSent(buffer: DataChannel.Buffer?, successful: Boolean) {
         val data = buffer!!.data
         val strDataJson = String(data.array(), StandardCharsets.UTF_8)
-
         LogUtil.e(TAG, "SentEvent: $strDataJson")
     }
 
     private fun getDisconnectedView() {
         var boolean = true
-        lifecycleScope.launch {
+//        lifecycleScope.launch {
             if (conferenceManager!!.playRendererAllocationMap != null) {
                 var p = 0
                 conferenceManager!!.playRendererAllocationMap.forEach { (key, value) ->
@@ -1090,7 +1110,7 @@ class VideoCallActivityNew : ComponentActivity(),
                     }
                 }
 
-            }
+//            }
         }
     }
 
@@ -1123,7 +1143,7 @@ class VideoCallActivityNew : ComponentActivity(),
 
 
         namesLayoutParent.visibility = View.VISIBLE
-//        setNamesToTextview()
+        setNamesToTextview()
 //        if(position < oldUserEntersCount!!-1) {
 //            Log.d("getuserIdAndposition45", "1")
 //            for (i in position until oldUserEntersCount!!-1) {
@@ -1688,6 +1708,13 @@ class VideoCallActivityNew : ComponentActivity(),
         LogUtil.e("setNamesToTextview- soc", " : $response")
         LogUtil.e("setNamesToTextview-- soc", "handleSocketSuccessResponse23: $type")
 //        LogUtil.e(TAG, "-----------------------")
+        if (response.contains("\"type\":\"camera status\"")){
+            val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
+            viewModel.muteVideoListState(
+                muteData.caller_name,
+                muteData.camera.contains("on", ignoreCase = true)
+            )
+        }
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -1892,7 +1919,6 @@ class VideoCallActivityNew : ComponentActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
-        conferenceManager?.leaveFromConference()
         initialView = false
         stopSong()
         allJoinedUserArray.clear()
@@ -1908,17 +1934,23 @@ class VideoCallActivityNew : ComponentActivity(),
         participant3Visible = false
         participant4Visible = false
         participant5Visible = false
-        if (conferenceManager?.connectedStreamList == null || conferenceManager?.connectedStreamList?.size == 0) {
-            declineCall(true)
-        }
+
+//        if (conferenceManager?.connectedStreamList == null || conferenceManager?.connectedStreamList?.size == 0) {
+//            declineCall(true)
+//        }
+//        conferenceManager?.leaveFromConference()
+//        stopCallDurationTimer()
+//        iscallEnded = true
+//        if (conferenceManager?.connectedStreamList?.size == 1) {
+//            endCall(true)
+//        } else {
+//            endCall(false)
+//        }
+    }
+
+    override fun onStop() {
+        super.onStop()
         conferenceManager?.leaveFromConference()
-        stopCallDurationTimer()
-        iscallEnded = true
-        if (conferenceManager?.connectedStreamList?.size == 1) {
-            endCall(true)
-        } else {
-            endCall(false)
-        }
     }
 
     private fun showDefaultView() {
@@ -2008,8 +2040,7 @@ class VideoCallActivityNew : ComponentActivity(),
 
         publishViewRenderer.visibility = View.GONE
         play_view_renderer1?.visibility = View.GONE
-        relLayParticipant1?.removeView(publishViewRenderer)
-        relLayParticipant2?.removeView(play_view_renderer1)
+
 
 // set Local Video View Params
 
@@ -2284,11 +2315,18 @@ class VideoCallActivityNew : ComponentActivity(),
                                 launch {
                                     response.body()?.success?.let {
                                         getRoomDetailsDataArrayList.addAll(it)
-                                        val streamId =
-                                            getRoomDetailsDataArrayList.find { it.name == thisDevicePersonName }?.stream_id
-                                        if (userIdAndposition.contains(streamId)) userIdAndposition.remove(
-                                            streamId
-                                        )
+                                        val streamId = getRoomDetailsDataArrayList.find { it.name == thisDevicePersonName }?.stream_id
+                                        if (userIdAndposition.contains(streamId)) userIdAndposition.remove(streamId)
+//                                        userIdAndposition.forEach { id ->
+//                                            val index = getRoomDetailsDataArrayList.indexOf(getRoomDetailsDataArrayList.find { it.stream_id.equals(id, ignoreCase = true) })
+//                                            if(getRoomDetailsDataArrayList.isNotEmpty() && index > 0 && index <getRoomDetailsDataArrayList.size-1) {
+//                                                val name = getRoomDetailsDataArrayList[index].name
+//                                                if (!name.isNullOrBlank()){
+//                                                        if (!usersNameList.contains(name))usersNameList.add(name)
+//                                                }
+//
+//                                            }
+//                                        }
                                     }
                                 }.join()
                                 if (userIdAndposition.size >= 1) {

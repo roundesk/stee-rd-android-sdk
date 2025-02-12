@@ -14,7 +14,7 @@ class AppSocketManager(
 
     fun emitSocketEvents() {
         LogUtil.e("AppSocketManager", "------>Socket Emitting & Receiving Data from Server<------")
-        mSocket?.off(emitEventName, onEventEmitter)
+//        mSocket?.off(emitEventName, onEventEmitter)
         mSocket?.on(emitEventName, onEventEmitter)
         mSocket?.on(Socket.EVENT_DISCONNECT) {
             LogUtil.e("AppSocketManager", "------>$emitEventName Socket Disconnected<------")
