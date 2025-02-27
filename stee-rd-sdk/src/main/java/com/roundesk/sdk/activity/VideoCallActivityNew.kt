@@ -33,7 +33,6 @@ import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
 import com.roundesk.sdk.base.ScreenshotService
-import com.roundesk.sdk.databinding.ActivityVideoCallNewBinding
 import com.roundesk.sdk.databinding.ContentMainMultipleUserConferenceBinding
 import com.roundesk.sdk.databinding.ContentMainNewBinding
 import com.roundesk.sdk.databinding.MuteViewBinding
@@ -44,23 +43,27 @@ import com.roundesk.sdk.socket.AppSocketManager
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
-import io.webrtc.webrtcandroidframework.*
+import io.webrtc.webrtcandroidframework.ConferenceManager
+import io.webrtc.webrtcandroidframework.IDataChannelObserver
+import io.webrtc.webrtcandroidframework.IWebRTCListener
+import io.webrtc.webrtcandroidframework.StreamInfo
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import org.webrtc.*
+import org.webrtc.DataChannel
+import org.webrtc.EglRendererInterface
+import org.webrtc.SurfaceViewRenderer
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.nio.charset.StandardCharsets
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
-import kotlin.collections.LinkedHashSet
 
 
 class VideoCallActivityNew : ComponentActivity(),
@@ -222,7 +225,8 @@ class VideoCallActivityNew : ComponentActivity(),
     val userIdAndposition = ArrayList<String>()
     val usersNameList = LinkedHashSet<String>()
     val surfaceViewList = ArrayList<Int>()
-    var surfaceViewIdList = ArrayList<SurfaceViewRenderer>()
+    private val surfaceViewIdList = ArrayList<SurfaceViewRenderer>()
+    private val muteViewIdList = ArrayList<LinearLayout>()
     val relaytiveLayoutList = ArrayList<RelativeLayout>()
     val textViewList = ArrayList<TextView>()
     var playViewRenderIndex: Int = 0
@@ -380,19 +384,23 @@ class VideoCallActivityNew : ComponentActivity(),
         super.onConfigurationChanged(newConfig)
         Log.d("getWidth la", "onConfigurationChanged")
 //        adjustLayout()
+        var orientation = ""
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            orientation = "landscape"
             bottomSheetIconsParentLayout.setPadding(20,10,20,10)
         }else{
+            orientation = "portrait"
             bottomSheetIconsParentLayout.setPadding(20,20,20,20)
         }
         if (conferenceManager?.connectedStreamList.isNullOrEmpty()) return
-        if (::frameLaySurfaceViews.isInitialized && conferenceManager?.connectedStreamList?.size!! >= 2) {
-//            relLayoutMain?.post {
-               manageTopTwoUsersView(relLayoutMain?.height ?: 0 )
-//            }
-        }
-
+            if (::frameLaySurfaceViews.isInitialized && (conferenceManager?.connectedStreamList?.size ?: 0) >= 2) {
+                manageTopTwoUsersView()
+            }
     }
+
+
+
+
 
 
     private fun getIntentData() {
@@ -530,6 +538,10 @@ class VideoCallActivityNew : ComponentActivity(),
         surfaceViewIdList.add(play_view_renderer2)
         surfaceViewIdList.add(play_view_renderer3)
         surfaceViewIdList.add(play_view_renderer4)
+        binding.apply {
+            muteViewIdList.add(playViewRenderer1MuteView.muteParentView)
+            muteViewIdList.add(playViewRenderer2MuteView.muteParentView)
+        }
 
 
 //        relaytiveLayoutList.add(relLayParticipant1)
@@ -1095,28 +1107,25 @@ class VideoCallActivityNew : ComponentActivity(),
 
     private fun getDisconnectedView() {
         var boolean = true
-//        lifecycleScope.launch {
-            if (conferenceManager!!.playRendererAllocationMap != null) {
-                var p = 0
-                conferenceManager!!.playRendererAllocationMap.forEach { (key, value) ->
-                    if (value == null) {
-                        val s = conferenceManager!!.playRendererAllocationMap[key]
-                        if (boolean) {
-                            p = surfaceViewList.indexOf(key.id)
-                            Log.d("switchLayout", "values = $p")
-                            manageViewsIfAnyUserLeave(p)
-                            boolean = false
-                        }
+        if (conferenceManager!!.playRendererAllocationMap != null) {
+            var p: Int
+            conferenceManager!!.playRendererAllocationMap.forEach { (key, value) ->
+                if (value == null) {
+                    val s = conferenceManager!!.playRendererAllocationMap[key]
+                    if (boolean) {
+                        p = surfaceViewList.indexOf(key.id)
+                        Log.d("switchLayout", "values = $p")
+                        manageViewsIfAnyUserLeave(p)
+                        boolean = false
                     }
                 }
+            }
 
-//            }
         }
     }
 
     private fun manageViewsIfAnyUserLeave(position: Int) {
-//        Log.d("switchLayout", "values = $position")
-//      runOnUiThread {
+
         if (position == 0) {
 //            Log.d("manageViewsIfAnyUser", "1")
             relLayParticipant3.removeView(play_view_renderer2)
@@ -1265,18 +1274,20 @@ class VideoCallActivityNew : ComponentActivity(),
             relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
 
 
+
         publishViewRenderer.visibility = View.GONE
         surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
 
-        publishViewRenderer.parent?.let { (it as ViewGroup).removeView(publishViewRenderer) }
-        binding.publishMuteView.muteParentView.parent?.let { (it as ViewGroup).removeView(binding.publishMuteView.muteParentView) }
-        relLayParticipant2?.removeView(surfaceViewIdList[playViewRenderIndex])
+        publishViewRenderer.removeFromParent()
+        binding.publishMuteView.muteParentView.removeFromParent()
+        surfaceViewIdList[playViewRenderIndex].removeFromParent()
+        muteViewIdList[playViewRenderIndex].removeFromParent()
         publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
         surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
 
         if (isCallerSmall) {
-            setSmallLocalVideoView(true, paramsLocalVideo)
-            setSmallRemoteVideoView(false, paramsRemoteVideo)
+//            setSmallLocalVideoView(true, paramsLocalVideo)
+//            setSmallRemoteVideoView(false, paramsRemoteVideo)
             val paramsMuteView = FrameLayout.LayoutParams(
                 432,510
             ).apply {
@@ -1300,6 +1311,7 @@ class VideoCallActivityNew : ComponentActivity(),
             paramsRelLayRemote.topMargin = 0
 
             relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
+            relLayParticipant2.addView(muteViewIdList[playViewRenderIndex], paramsRelLayRemote)
             relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
             frameLaySurfaceViews.addView(binding.publishMuteView.muteParentView, paramsMuteView)
 
@@ -1342,6 +1354,10 @@ class VideoCallActivityNew : ComponentActivity(),
 
     }
 
+    private fun View.removeFromParent(){
+        (parent as? ViewGroup)?.removeView(this)
+    }
+
 
     private fun manage2and3UserView(boolean: Boolean) {
         if (boolean) {
@@ -1362,8 +1378,8 @@ class VideoCallActivityNew : ComponentActivity(),
             publishViewRenderer.setZOrderMediaOverlay(false)
             play_view_renderer1?.setZOrderMediaOverlay(true)
 
-            setSmallLocalVideoView(true, paramsLocalVideo)
-            setSmallRemoteVideoView(true, paramsRemoteVideo)
+//            setSmallLocalVideoView(true, paramsLocalVideo)
+//            setSmallRemoteVideoView(true, paramsRemoteVideo)
 
             paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
             paramsRelLayLocal.width = FrameLayout.LayoutParams.MATCH_PARENT
@@ -2026,74 +2042,76 @@ class VideoCallActivityNew : ComponentActivity(),
 
     }
 
-    private fun manageTopTwoUsersView(parentHeight : Int = 0) {
-        val paramsLocalVideo: RelativeLayout.LayoutParams =
-            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
-        val paramsRemoteVideo: RelativeLayout.LayoutParams =
-            play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
-        val paramsRelLayLocal: FrameLayout.LayoutParams =
-            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
-        val paramsRelLayRemote: FrameLayout.LayoutParams =
-            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+    private  fun manageTopTwoUsersView() {
+        relLayoutMain?.let { layout ->
+            layout.post {
+                    val paramsLocalVideo: RelativeLayout.LayoutParams =
+                        publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+                    val paramsRemoteVideo: RelativeLayout.LayoutParams =
+                        play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+                    val paramsRelLayLocal: FrameLayout.LayoutParams =
+                        relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
+                    val paramsRelLayRemote: FrameLayout.LayoutParams =
+                        relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
 
-        dividerView?.visibility = View.VISIBLE
+                    dividerView?.visibility = View.VISIBLE
 
-        publishViewRenderer.visibility = View.GONE
-        play_view_renderer1?.visibility = View.GONE
+                    publishViewRenderer.visibility = View.GONE
+                    play_view_renderer1?.visibility = View.GONE
 
-
+                    publishViewRenderer.removeFromParent()
+                    play_view_renderer1.removeFromParent()
+                    binding.publishMuteView.muteParentView.removeFromParent()
 // set Local Video View Params
 
-        val orientation = resources.configuration.orientation
-        val width = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//
-            if (parentHeight==0){
-                val activityHeight = window.decorView.height
-                activityHeight / 2
-            }else{
-                parentHeight / 2
-            }
-
-        } else {
-            displayMetrics.widthPixels / 2
-        }
-        val width1Layout =
-        Log.d("getWidth k", "$width")
-        paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-        paramsLocalVideo.width = width
-        paramsLocalVideo.marginEnd = 0
-        paramsLocalVideo.topMargin = 0
+                    val orientation = resources.configuration.orientation
+                    val width = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                        val activityHeight = (relLayoutMain?.width) ?: window.decorView.height
+                        Log.d("getWidth k", "parent 0")
+                        activityHeight / 2
+                    } else {
+                        (relLayoutMain?.width ?: window.decorView.width) / 2
+                    }
+                    Log.d("getWidth final", width.toString())
+                    paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                    paramsLocalVideo.width = width
+                    paramsLocalVideo.marginEnd = 0
+                    paramsLocalVideo.topMargin = 0
 
 // set Remote Video View Params
-        paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-        paramsRemoteVideo.width = width
-        paramsRemoteVideo.marginEnd = 0
-        paramsRemoteVideo.topMargin = 0
+                    paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                    paramsRemoteVideo.width = width
+                    paramsRemoteVideo.marginEnd = 0
+                    paramsRemoteVideo.topMargin = 0
 
-        publishViewRenderer.layoutParams = paramsLocalVideo
-        play_view_renderer1?.layoutParams = paramsRemoteVideo
+                    publishViewRenderer.layoutParams = paramsLocalVideo
+                    binding.publishMuteView.muteParentView.layoutParams = paramsLocalVideo
+                    play_view_renderer1?.layoutParams = paramsRemoteVideo
 
 
 // set Relative Layout Local Video View Params
-        paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsRelLayLocal.width = width
-        paramsRelLayLocal.marginEnd = 0
-        paramsRelLayLocal.topMargin = 0
-        paramsRelLayLocal.gravity = Gravity.START
+                    paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
+                    paramsRelLayLocal.width = width
+                    paramsRelLayLocal.marginEnd = 0
+                    paramsRelLayLocal.topMargin = 0
+                    paramsRelLayLocal.gravity = Gravity.START
 
 // set Relative Layout Remote Video View Params
-        paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
-        paramsRelLayRemote.width = width
-        paramsRelLayRemote.marginEnd = 0
-        paramsRelLayRemote.topMargin = 0
-        paramsRelLayRemote.gravity = Gravity.END
+                    paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+                    paramsRelLayRemote.width = width
+                    paramsRelLayRemote.marginEnd = 0
+                    paramsRelLayRemote.topMargin = 0
+                    paramsRelLayRemote.gravity = Gravity.END
 
-        relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-        relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+                    relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+                    relLayParticipant1?.addView(binding.publishMuteView.muteParentView, paramsRelLayLocal)
+                    relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
 
-        publishViewRenderer.visibility = View.VISIBLE
-        play_view_renderer1?.visibility = View.VISIBLE
+                    publishViewRenderer.visibility = View.VISIBLE
+                    play_view_renderer1?.visibility = View.VISIBLE
 //
+                }
+        }
     }
 
     private fun showThreeUsersUI() {
@@ -2704,34 +2722,34 @@ class VideoCallActivityNew : ComponentActivity(),
         twoUsersLayoutType = isReceiverID
         Log.d("setNamesToTextview lis", userIdAndposition.toString())
         val name = if (isReceiverID) receiverName else callerName
-            if (userIdAndposition.isNotEmpty()) {
-                when (userIdAndposition.size) {
-                    1 -> {
-                        Log.d("setNamesToTextview 4", getConnectedUserName(userIdAndposition[0]))
-                        txtParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-                        txtInitialViewParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-                        txtParticipant2!!.text = name
-                        txtInitialViewParticipant2!!.text = name
-                        binding.apply {
-                            publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: "A"
-                            playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
-                        }
-                    }
-                    2 -> {
-                        Log.d(
-                            "setNamesToTextview 5",
-                            getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
-                        )
-                        txtParticipant1!!.text = name
-                        txtParticipant2!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-                        txtParticipant3!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
-                        binding.apply {
-                            publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
-                            playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
-                            playViewRenderer2MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1])).first().uppercase()
-                        }
+        if (userIdAndposition.isNotEmpty()) {
+            when (userIdAndposition.size) {
+                1 -> {
+                    Log.d("setNamesToTextview 4", getConnectedUserName(userIdAndposition[0]))
+                    txtParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                    txtInitialViewParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                    txtParticipant2!!.text = name
+                    txtInitialViewParticipant2!!.text = name
+                    binding.apply {
+                        publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
+                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
                     }
                 }
+                2 -> {
+                    Log.d(
+                        "setNamesToTextview 5",
+                        getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
+                    )
+                    txtParticipant1!!.text = name
+                    txtParticipant2!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                    txtParticipant3!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
+                    binding.apply {
+                        publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
+                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
+                        playViewRenderer2MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1])).first().uppercase()
+                    }
+                }
+            }
 
         }
     }
