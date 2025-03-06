@@ -33,6 +33,7 @@ import retrofit2.Response
 import java.io.File
 import java.util.*
 import com.roundesk.sdk.socket.AppSocketManager
+import com.roundesk.sdk.socket.VideoMuteListenerHelper
 import kotlinx.coroutines.*
 
 class ChatActivity : SocketController(), View.OnClickListener,
@@ -394,6 +395,13 @@ class ChatActivity : SocketController(), View.OnClickListener,
 //        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketSuccessResponse: $response")
 //        Log.e(TAG, "-----------------------")
+        if (response.contains("\"type\":\"camera status\"")){
+            val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
+            VideoMuteListenerHelper.muteVideoListState(
+                muteData.caller_name,
+                muteData.camera.contains("on", ignoreCase = true)
+            )
+        }
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
@@ -475,9 +483,9 @@ class ChatActivity : SocketController(), View.OnClickListener,
 //                }
 
 
-               lifecycleScope.launchWhenResumed {
-                    SaveLogsToFile(applicationContext).startLog("cht")
-                }
+            lifecycleScope.launchWhenResumed {
+                SaveLogsToFile(applicationContext).startLog("cht")
+            }
 //
 //               }
 
@@ -488,7 +496,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
 //            } catch (e: IOException) {
 //                e.printStackTrace()
-            }
+        }
 //        } else if (isExternalStorageReadable()) {
 //            // only readable
 //        } else {

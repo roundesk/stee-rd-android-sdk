@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/mute_view_bg"
-    android:elevation="10dp"
     android:outlineProvider="bounds"
     android:visibility="gone"
     android:gravity="center"

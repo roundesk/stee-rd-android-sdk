@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="horizontal"
+
             android:visibility="visible">
 
             <View
@@ -36,6 +36,7 @@
                     android:id="@+id/publish_mute_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:visibility="gone"
                     layout="@layout/mute_view"/>
                 <org.webrtc.SurfaceViewRenderer
                     android:id="@+id/publish_view_renderer"
@@ -56,6 +57,7 @@
                     android:id="@+id/play_view_renderer1_mute_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:visibility="gone"
                     layout="@layout/mute_view" />
                 <org.webrtc.SurfaceViewRenderer
                     android:id="@+id/play_view_renderer1"
@@ -82,17 +84,19 @@
                 android:layout_weight="1"
                 android:visibility="gone">
 
-                <org.webrtc.SurfaceViewRenderer
-                    android:id="@+id/play_view_renderer2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
                 <include
                     android:id="@+id/play_view_renderer2_mute_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="gone"
                     layout="@layout/mute_view"/>
+
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/play_view_renderer2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    />
+
+
             </RelativeLayout>
 
             <RelativeLayout

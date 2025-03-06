@@ -23,6 +23,7 @@ import com.roundesk.sdk.socket.AppSocketManager
 import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
 import com.roundesk.sdk.socket.SocketManager
+import com.roundesk.sdk.socket.VideoMuteListenerHelper
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
@@ -326,7 +327,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
-            LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
+        LogUtil.d(TAG, "onPermissionsGranted:" + requestCode + ":" + perms.size)
     }
 
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
@@ -349,6 +350,13 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         LogUtil.e(TAG, "-----------------------")
         LogUtil.e(TAG, "handleSocketSuccessResponse: $response")
         LogUtil.e(TAG, "-----------------------")
+        if (response.contains("\"type\":\"camera status\"")){
+            val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
+            VideoMuteListenerHelper.muteVideoListState(
+                muteData.caller_name,
+                muteData.camera.contains("on", ignoreCase = true)
+            )
+        }
         when (type) {
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =

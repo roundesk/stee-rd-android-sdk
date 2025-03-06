@@ -41,6 +41,7 @@ import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
 import com.roundesk.sdk.socket.SocketListener
+import com.roundesk.sdk.socket.VideoMuteListenerHelper
 import com.roundesk.sdk.util.*
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.ConferenceManager
@@ -48,14 +49,19 @@ import io.webrtc.webrtcandroidframework.IDataChannelObserver
 import io.webrtc.webrtcandroidframework.IWebRTCListener
 import io.webrtc.webrtcandroidframework.StreamInfo
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.webrtc.DataChannel
 import org.webrtc.EglRendererInterface
@@ -253,7 +259,6 @@ class VideoCallActivityNew : ComponentActivity(),
     private lateinit var captureIntent: Intent
     private var initializeOnce = 0
     private val parallelVideoItemWidth = MutableStateFlow<Int>(0)
-
     private lateinit var viewModel: VideoCallViewModel
     private suspend fun runMainLoop() {
         while (true) {
@@ -267,15 +272,15 @@ class VideoCallActivityNew : ComponentActivity(),
                     if (tempValue!! < it.size) {
                         tempValue = it.size
                         isCallStarted = true
-//                        runOnUiThread {
-                        manageUserViews()
+                        runOnUiThread {
+                            manageUserViews()
+                        }
                         if (forTimer) {
                             forTimer = false
                             lifecycleScope.launch {
                                 timer()
                             }
                         }
-//                        }
 
                     } else if (tempValue!! > it.size) {
                         tempValue = it.size
@@ -305,7 +310,7 @@ class VideoCallActivityNew : ComponentActivity(),
     }
 
 
-    private fun refreshRoomDetails() {
+    private   fun refreshRoomDetails() {
 //        if (conferenceManager?.connectedStreamList?.size != null) {
         if (userIdAndposition.size > 0) {
             getRoomInfoDetails()
@@ -393,9 +398,9 @@ class VideoCallActivityNew : ComponentActivity(),
             bottomSheetIconsParentLayout.setPadding(20,20,20,20)
         }
         if (conferenceManager?.connectedStreamList.isNullOrEmpty()) return
-            if (::frameLaySurfaceViews.isInitialized && (conferenceManager?.connectedStreamList?.size ?: 0) >= 2) {
-                manageTopTwoUsersView()
-            }
+        if (::frameLaySurfaceViews.isInitialized && (conferenceManager?.connectedStreamList?.size ?: 0) >= 2) {
+            manageTopTwoUsersView()
+        }
     }
 
 
@@ -672,7 +677,9 @@ class VideoCallActivityNew : ComponentActivity(),
             }
 
             R.id.imgAudio -> {
-                controlAudio()
+                if (userIdAndposition.isNotEmpty()) {
+                    controlAudio()
+                }
             }
 
             R.id.screenshot_btn -> {
@@ -681,7 +688,9 @@ class VideoCallActivityNew : ComponentActivity(),
             }
 
             R.id.imgBottomVideo -> {
-                controlVideo()
+                if (userIdAndposition.isNotEmpty()){
+                    controlVideo()
+                }
             }
 
             R.id.imgArrowUp -> {
@@ -791,7 +800,7 @@ class VideoCallActivityNew : ComponentActivity(),
                 }
             }
             launch {
-                viewModel.muteAudioState.collect {
+                viewModel.muteAudioState.collect{
                     if (it is MuteAudioViewState.Loading) {
                         imgAudio?.visibility = View.GONE
                         muteAudioProgressBar.visibility = View.VISIBLE
@@ -801,24 +810,58 @@ class VideoCallActivityNew : ComponentActivity(),
                     }
                 }
             }
-//      \      launch {
-//                viewModel.muteVideoListState.collect{
-//                    if (usersNameList.isNotEmpty()){
-//                        val item = usersNameList.toList()[0]
-//                        binding.playViewRenderer1MuteView.muteParentView.apply {
-//                            if (viewModel.muteVideoList.get(item) == true){
-//                                visibility = View.GONE
-//                                surfaceViewIdList[playViewRenderIndex].visibility = View.VISIBLE
-//                            }else{
-//                                visibility = View.VISIBLE
-//                                surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
-//                            }
-//                        }
-//
-//                    }
-//                }
-//            }
         }
+        collectMuteVideoView()
+    }
+
+    private fun collectMuteVideoView(){
+        lifecycleScope.launch(Dispatchers.IO){
+            VideoMuteListenerHelper.muteVideoListState.collectLatest{
+                while (userIdAndposition.isEmpty() || getRoomDetailsDataArrayList.isEmpty()){
+                    delay(500)
+                }
+                withContext(Dispatchers.Main){
+                    if (userIdAndposition.isNotEmpty()){
+                        when(userIdAndposition.size){
+                            1->{
+                                muteViewHideLogic(playViewRenderIndex,  getConnectedUserName(userIdAndposition[0]))
+                                publishViewRenderer.apply {
+                                    bringToFront()
+                                    requestLayout()
+                                }
+                            }
+                            2->{
+                                muteViewHideLogic(0,  getConnectedUserName(userIdAndposition[0]))
+                                muteViewHideLogic(1, getConnectedUserName(userIdAndposition[1]))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    private fun muteViewHideLogic(index : Int, name: String){
+        if (!VideoMuteListenerHelper.muteVideoList.contains(name)){
+            return
+        }
+        Log.d("getMuteLogicvalue", "$index   ---  $name")
+        try {
+            if (VideoMuteListenerHelper.muteVideoList.get(name) == true){
+                muteViewIdList[index].visibility = View.GONE
+                surfaceViewIdList[index].visibility = View.VISIBLE
+            } else {
+                muteViewIdList[index].visibility = View.VISIBLE
+                surfaceViewIdList[index].visibility = View.GONE
+            }
+        }catch (e : IndexOutOfBoundsException){
+            Log.d("muteViewHideLogic" , e.message.toString())
+        }catch (e : Exception){
+            Log.d("muteViewHideLogic" , e.message.toString())
+
+        }
+
     }
 
     private fun controlAudio() {
@@ -1105,6 +1148,7 @@ class VideoCallActivityNew : ComponentActivity(),
         LogUtil.e(TAG, "SentEvent: $strDataJson")
     }
 
+
     private fun getDisconnectedView() {
         var boolean = true
         if (conferenceManager!!.playRendererAllocationMap != null) {
@@ -1130,7 +1174,11 @@ class VideoCallActivityNew : ComponentActivity(),
 //            Log.d("manageViewsIfAnyUser", "1")
             relLayParticipant3.removeView(play_view_renderer2)
             relLayParticipant2.removeView(play_view_renderer1)
+            binding.playViewRenderer1MuteView.muteParentView.removeFromParent()
+            binding.playViewRenderer2MuteView.muteParentView.removeFromParent()
+
             relLayParticipant2.addView(play_view_renderer2)
+            relLayParticipant2.addView(binding.playViewRenderer2MuteView.muteParentView)
             relLayParticipant3.visibility = View.GONE
 //            txtParticipant2!!.text = txtParticipant3!!.text
             txtParticipant3!!.visibility = View.GONE
@@ -1263,86 +1311,55 @@ class VideoCallActivityNew : ComponentActivity(),
         relLayoutMain!!.removeView(switchView)
         Log.d("switchLayout", "switchLayout2")
         Log.d("switchLayout", "$playViewRenderIndex")
-        val paramsRemoteVideo: RelativeLayout.LayoutParams =
-            surfaceViewIdList[playViewRenderIndex!!].layoutParams as RelativeLayout.LayoutParams
-        val paramsLocalVideo: RelativeLayout.LayoutParams =
-            publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
-
-        val paramsRelLayLocal: FrameLayout.LayoutParams =
-            relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
-        val paramsRelLayRemote: FrameLayout.LayoutParams =
-            relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
-
-
-
-        publishViewRenderer.visibility = View.GONE
-        surfaceViewIdList[playViewRenderIndex].visibility = View.GONE
 
         publishViewRenderer.removeFromParent()
         binding.publishMuteView.muteParentView.removeFromParent()
         surfaceViewIdList[playViewRenderIndex].removeFromParent()
         muteViewIdList[playViewRenderIndex].removeFromParent()
-        publishViewRenderer.setZOrderMediaOverlay(isCallerSmall)
-        surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(!isCallerSmall)
+        relLayParticipant1.removeFromParent()
+        relLayParticipant2.removeFromParent()
+
+
+        relLayParticipant2.layoutParams = layoutParams(true)
+        relLayParticipant1.layoutParams = layoutParams(false)
+
+        surfaceViewIdList[playViewRenderIndex].layoutParams = layoutParamsRelativeLayout()
+        muteViewIdList[playViewRenderIndex].layoutParams = layoutParamsRelativeLayout()
+        publishViewRenderer.layoutParams = layoutParamsRelativeLayout()
+        binding.publishMuteView.muteParentView.layoutParams = layoutParamsRelativeLayout()
 
         if (isCallerSmall) {
-//            setSmallLocalVideoView(true, paramsLocalVideo)
-//            setSmallRemoteVideoView(false, paramsRemoteVideo)
-            val paramsMuteView = FrameLayout.LayoutParams(
-                432,510
-            ).apply {
-                marginEnd = 40
-                topMargin = 40
-                gravity = Gravity.END
-            }
 
+            relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex])
+            relLayParticipant2.addView(muteViewIdList[playViewRenderIndex] )
+            relLayParticipant1?.addView(publishViewRenderer)
+            relLayParticipant1.addView(binding.publishMuteView.muteParentView)
 
-            paramsRelLayLocal.height = 510
-            paramsRelLayLocal.width = 432
-            paramsRelLayLocal.marginEnd = 40
-            paramsRelLayLocal.topMargin = 40
-            paramsRelLayLocal.gravity = Gravity.END
+            frameLaySurfaceViews.addView(relLayParticipant2)
+            frameLaySurfaceViews.addView(relLayParticipant1)
 
+            publishViewRenderer.setZOrderMediaOverlay(true)
 
+            surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(false)
 
-            paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayRemote.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayRemote.marginEnd = 0
-            paramsRelLayRemote.topMargin = 0
-
-            relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
-            relLayParticipant2.addView(muteViewIdList[playViewRenderIndex], paramsRelLayRemote)
-            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            frameLaySurfaceViews.addView(binding.publishMuteView.muteParentView, paramsMuteView)
 
         } else {
-            setSmallLocalVideoView(false, paramsLocalVideo)
-            setSmallRemoteVideoView(true, paramsRemoteVideo)
 
-            paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayLocal.width = FrameLayout.LayoutParams.MATCH_PARENT
-            paramsRelLayLocal.marginEnd = 0
-            paramsRelLayLocal.topMargin = 0
 
-            paramsRelLayRemote.height = 510
-            paramsRelLayRemote.width = 432
-            paramsRelLayRemote.marginEnd = 40
-            paramsRelLayRemote.topMargin = 40
-            paramsRelLayRemote.gravity = Gravity.END
+            relLayParticipant2?.addView(binding.publishMuteView.muteParentView)
+            relLayParticipant2.addView(publishViewRenderer )
+            relLayParticipant1?.addView(muteViewIdList[playViewRenderIndex])
+            relLayParticipant1.addView( surfaceViewIdList[playViewRenderIndex])
 
-            relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-            relLayParticipant1.addView(binding.publishMuteView.muteParentView, paramsRelLayLocal)
-            relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex], paramsRelLayRemote)
+            frameLaySurfaceViews.addView(relLayParticipant2)
+            frameLaySurfaceViews.addView(relLayParticipant1)
+
+            publishViewRenderer.setZOrderMediaOverlay(false)
+
+            surfaceViewIdList[playViewRenderIndex]?.setZOrderMediaOverlay(true)
 
         }
 
-
-        publishViewRenderer.visibility = View.VISIBLE
-        surfaceViewIdList[playViewRenderIndex]?.visibility = View.VISIBLE
-        binding.publishMuteView.muteParentView.apply {
-            bringToFront()
-            requestLayout()
-        }
 
         relLayoutMain!!.addView(switchView)
         switchView?.isClickable = true
@@ -1352,6 +1369,35 @@ class VideoCallActivityNew : ComponentActivity(),
         setNamesTwoUsers(isCallerSmall)
 //        }
 
+    }
+
+
+    private fun layoutParams(fullScreen: Boolean) : FrameLayout.LayoutParams {
+        return  if (fullScreen){
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT
+            ).apply {
+                marginEnd = 0
+                topMargin = 0
+            }
+        }else{
+            FrameLayout.LayoutParams(
+                432,510
+            ).apply {
+                marginEnd = 40
+                topMargin = 40
+                gravity = Gravity.END
+            }
+        }
+    }
+
+    private fun layoutParamsRelativeLayout () : RelativeLayout.LayoutParams{
+        return RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
+        ).apply {
+            marginEnd = 0
+            topMargin = 0
+        }
     }
 
     private fun View.removeFromParent(){
@@ -1726,7 +1772,7 @@ class VideoCallActivityNew : ComponentActivity(),
 //        LogUtil.e(TAG, "-----------------------")
         if (response.contains("\"type\":\"camera status\"")){
             val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
-            viewModel.muteVideoListState(
+            VideoMuteListenerHelper.muteVideoListState(
                 muteData.caller_name,
                 muteData.camera.contains("on", ignoreCase = true)
             )
@@ -1935,6 +1981,7 @@ class VideoCallActivityNew : ComponentActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
+        VideoMuteListenerHelper.muteVideoList.clear()
         initialView = false
         stopSong()
         allJoinedUserArray.clear()
@@ -2045,81 +2092,109 @@ class VideoCallActivityNew : ComponentActivity(),
     private  fun manageTopTwoUsersView() {
         relLayoutMain?.let { layout ->
             layout.post {
-                    val paramsLocalVideo: RelativeLayout.LayoutParams =
-                        publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
-                    val paramsRemoteVideo: RelativeLayout.LayoutParams =
-                        play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
-                    val paramsRelLayLocal: FrameLayout.LayoutParams =
-                        relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
-                    val paramsRelLayRemote: FrameLayout.LayoutParams =
-                        relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
+                publishViewRenderer.removeFromParent()
+                play_view_renderer1.removeFromParent()
+                binding.publishMuteView.muteParentView.removeFromParent()
+                binding.playViewRenderer1MuteView.muteParentView.removeFromParent()
+                val paramsLocalVideo: RelativeLayout.LayoutParams =
+                    publishViewRenderer.layoutParams as RelativeLayout.LayoutParams
+                val paramsRemoteVideo: RelativeLayout.LayoutParams =
+                    play_view_renderer1?.layoutParams as RelativeLayout.LayoutParams
+                val paramsRelLayLocal: FrameLayout.LayoutParams =
+                    relLayParticipant1?.layoutParams as FrameLayout.LayoutParams
+                val paramsRelLayRemote: FrameLayout.LayoutParams =
+                    relLayParticipant2?.layoutParams as FrameLayout.LayoutParams
 
-                    dividerView?.visibility = View.VISIBLE
+                dividerView?.visibility = View.VISIBLE
 
-                    publishViewRenderer.visibility = View.GONE
-                    play_view_renderer1?.visibility = View.GONE
-
-                    publishViewRenderer.removeFromParent()
-                    play_view_renderer1.removeFromParent()
-                    binding.publishMuteView.muteParentView.removeFromParent()
 // set Local Video View Params
 
-                    val orientation = resources.configuration.orientation
-                    val width = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        val activityHeight = (relLayoutMain?.width) ?: window.decorView.height
-                        Log.d("getWidth k", "parent 0")
-                        activityHeight / 2
-                    } else {
-                        (relLayoutMain?.width ?: window.decorView.width) / 2
-                    }
-                    Log.d("getWidth final", width.toString())
-                    paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-                    paramsLocalVideo.width = width
-                    paramsLocalVideo.marginEnd = 0
-                    paramsLocalVideo.topMargin = 0
+                val orientation = resources.configuration.orientation
+                val width = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    val activityHeight = (relLayoutMain?.width) ?: window.decorView.height
+                    Log.d("getWidth k", "parent 0")
+                    activityHeight / 2
+                } else {
+                    (relLayoutMain?.width ?: window.decorView.width) / 2
+                }
+                Log.d("getWidth final", width.toString())
+                paramsLocalVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                paramsLocalVideo.width = width
+                paramsLocalVideo.marginEnd = 0
+                paramsLocalVideo.topMargin = 0
 
 // set Remote Video View Params
-                    paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
-                    paramsRemoteVideo.width = width
-                    paramsRemoteVideo.marginEnd = 0
-                    paramsRemoteVideo.topMargin = 0
+                paramsRemoteVideo.height = RelativeLayout.LayoutParams.MATCH_PARENT
+                paramsRemoteVideo.width = width
+                paramsRemoteVideo.marginEnd = 0
+                paramsRemoteVideo.topMargin = 0
 
-                    publishViewRenderer.layoutParams = paramsLocalVideo
-                    binding.publishMuteView.muteParentView.layoutParams = paramsLocalVideo
-                    play_view_renderer1?.layoutParams = paramsRemoteVideo
+                publishViewRenderer.layoutParams = paramsLocalVideo
+                binding.publishMuteView.muteParentView.layoutParams = paramsLocalVideo
+                play_view_renderer1?.layoutParams = paramsRemoteVideo
 
 
 // set Relative Layout Local Video View Params
-                    paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
-                    paramsRelLayLocal.width = width
-                    paramsRelLayLocal.marginEnd = 0
-                    paramsRelLayLocal.topMargin = 0
-                    paramsRelLayLocal.gravity = Gravity.START
+                paramsRelLayLocal.height = FrameLayout.LayoutParams.MATCH_PARENT
+                paramsRelLayLocal.width = width
+                paramsRelLayLocal.marginEnd = 0
+                paramsRelLayLocal.topMargin = 0
+                paramsRelLayLocal.gravity = Gravity.START
 
 // set Relative Layout Remote Video View Params
-                    paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
-                    paramsRelLayRemote.width = width
-                    paramsRelLayRemote.marginEnd = 0
-                    paramsRelLayRemote.topMargin = 0
-                    paramsRelLayRemote.gravity = Gravity.END
+                paramsRelLayRemote.height = FrameLayout.LayoutParams.MATCH_PARENT
+                paramsRelLayRemote.width = width
+                paramsRelLayRemote.marginEnd = 0
+                paramsRelLayRemote.topMargin = 0
+                paramsRelLayRemote.gravity = Gravity.END
 
-                    relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
-                    relLayParticipant1?.addView(binding.publishMuteView.muteParentView, paramsRelLayLocal)
-                    relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
+                relLayParticipant1?.addView(publishViewRenderer, paramsRelLayLocal)
+                relLayParticipant1?.addView(binding.publishMuteView.muteParentView, paramsRelLayLocal)
+                relLayParticipant2?.addView(play_view_renderer1, paramsRelLayRemote)
 
-                    publishViewRenderer.visibility = View.VISIBLE
-                    play_view_renderer1?.visibility = View.VISIBLE
-//
+                val playViewRenderer1MuteViewParams =  FrameLayout.LayoutParams(
+                    width,  FrameLayout.LayoutParams.MATCH_PARENT
+                ).apply {
+                    gravity = Gravity.END
+                    marginEnd = 0
+                    topMargin = 0
                 }
+
+                relLayParticipant2.addView(binding.playViewRenderer1MuteView.muteParentView, playViewRenderer1MuteViewParams)
+
+            }
         }
     }
 
     private fun showThreeUsersUI() {
         manageTopTwoUsersView()
+        play_view_renderer2.removeFromParent()
+        binding.playViewRenderer2MuteView.muteParentView.removeFromParent()
+        play_view_renderer2.layoutParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
+        )
+        binding.playViewRenderer2MuteView.muteParentView.layoutParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
+        )
+        relLayParticipant3.addView(binding.playViewRenderer2MuteView.muteParentView)
+        relLayParticipant3.addView(play_view_renderer2)
+
         linLayUser34?.visibility = View.VISIBLE
         displayParticipant3View(true)
         displayParticipant4View(false)
         displayParticipant5View(false)
+        lifecycleScope.launch(Dispatchers.IO){
+            while (userIdAndposition.size <2 || getRoomDetailsDataArrayList.size < 2){
+                Log.d("getTheThreeUserMute", "yesss")
+                delay(1000)
+            }
+            withContext(Dispatchers.Main){
+                if (userIdAndposition.size ==2){
+                    muteViewHideLogic(0,  getConnectedUserName(userIdAndposition[0]))
+                    muteViewHideLogic(1, getConnectedUserName(userIdAndposition[1]))
+                }
+            }
+        }
     }
 
     private fun showFourUsersUI() {
@@ -2140,6 +2215,7 @@ class VideoCallActivityNew : ComponentActivity(),
         if (!visible) {
             relLayParticipant3?.visibility = View.GONE
             play_view_renderer2?.visibility = View.GONE
+
         } else {
             relLayParticipant3?.visibility = View.VISIBLE
             play_view_renderer2?.visibility = View.VISIBLE
@@ -2306,45 +2382,27 @@ class VideoCallActivityNew : ComponentActivity(),
                     )
                     LogUtil.e(TAG, "--------------------")
                     if (response.body() != null) {
-                        // Below code is for to show the list of participants in the BottomSheet
-                        //-------------------------
-                        /*recyclerview?.layoutManager = LinearLayoutManager(this@VideoCallActivityNew)
-                        bottomSheetAdapter =
-                            response.body()
-                                ?.let {
-                                    BottomSheetUserListAdapter(
-                                        this@VideoCallActivityNew,
-                                        it.success
-                                    )
-                                }
 
-                        // Setting the Adapter with the recyclerview
-                        recyclerview?.adapter = bottomSheetAdapter
-
-                        participantsList.clear()
-                        response.body()?.let { participantsList.addAll(it.success) }*/
-                        //-------------------------
 
                         if (response.body()?.success?.size!! > 0) {
                             getRoomDetailsDataArrayList.clear()
-//                            response.body()?.success?.let { getRoomDetailsDataArrayList.addAll(it) }
-//                            setNamesToTextview()
+
                             lifecycleScope.launch {
                                 launch {
                                     response.body()?.success?.let {
                                         getRoomDetailsDataArrayList.addAll(it)
                                         val streamId = getRoomDetailsDataArrayList.find { it.name == thisDevicePersonName }?.stream_id
                                         if (userIdAndposition.contains(streamId)) userIdAndposition.remove(streamId)
-//                                        userIdAndposition.forEach { id ->
-//                                            val index = getRoomDetailsDataArrayList.indexOf(getRoomDetailsDataArrayList.find { it.stream_id.equals(id, ignoreCase = true) })
-//                                            if(getRoomDetailsDataArrayList.isNotEmpty() && index > 0 && index <getRoomDetailsDataArrayList.size-1) {
-//                                                val name = getRoomDetailsDataArrayList[index].name
-//                                                if (!name.isNullOrBlank()){
-//                                                        if (!usersNameList.contains(name))usersNameList.add(name)
-//                                                }
-//
-//                                            }
-//                                        }
+                                        userIdAndposition.forEach { id ->
+                                            val index = getRoomDetailsDataArrayList.indexOf(getRoomDetailsDataArrayList.find { it.stream_id.equals(id, ignoreCase = true) })
+                                            if(getRoomDetailsDataArrayList.isNotEmpty() && index > 0 && index <getRoomDetailsDataArrayList.size-1) {
+                                                val name = getRoomDetailsDataArrayList[index].name
+                                                if (!name.isNullOrBlank()){
+                                                    if (!usersNameList.contains(name))usersNameList.add(name)
+                                                }
+
+                                            }
+                                        }
                                     }
                                 }.join()
                                 if (userIdAndposition.size >= 1) {

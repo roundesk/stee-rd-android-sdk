@@ -20,6 +20,7 @@ import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
 //import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
+import com.roundesk.sdk.socket.VideoMuteListenerHelper
 //import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
@@ -111,6 +112,13 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
 //        Log.e(TAG, "-----------------------")
         Log.e(TAG, "handleSocketSuccessResponse: $response")
 //        Log.e(TAG, "-----------------------")
+        if (response.contains("\"type\":\"camera status\"")){
+            val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
+            VideoMuteListenerHelper.muteVideoListState(
+                muteData.caller_name,
+                muteData.camera.contains("on", ignoreCase = true)
+            )
+        }
         when (type) {
             SocketConstants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT -> {
                 val createCallSocketDataClass: CreateCallSocketDataClass =
