@@ -5,6 +5,7 @@ import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.dataclass.CallHistoryResponseDataClass
 import okhttp3.MultipartBody
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiInterface {
@@ -47,4 +48,11 @@ interface ApiInterface {
     fun muteAudio(
       @Body data : MuteAudioRequestData
     ) : Call<Any>
+
+    @GET(Constants.ApiSuffix.API_KEY_ORIENTATION_STATUS)
+    suspend fun updateOnOrientationChange(
+        @Query("meetingid") meetingId : Int,
+        @Query("dimension") dimension : String,
+        @Query("caller_id") callerId : String
+    ) : Response<Any>
 }

@@ -27,11 +27,11 @@ class VideoCallViewModel : ViewModel() {
     private val _muteAudioState = MutableStateFlow<MuteAudioViewState>(MuteAudioViewState.Initial)
     val muteAudioState : StateFlow<MuteAudioViewState> = _muteAudioState.asStateFlow()
 
+    private val api = ServiceBuilder.buildService(ApiInterface::class.java)
 
     fun muteVideo(data : MuteVideoRequestData){
         viewModelScope.launch(Dispatchers.IO){
             _muteVideoState.value = MuteVideoViewState.Loading
-            val api = ServiceBuilder.buildService(ApiInterface::class.java)
             val call = api.muteVideo(data)
             Log.d("muteVideo success", data.toString())
 
@@ -61,9 +61,7 @@ class VideoCallViewModel : ViewModel() {
     fun muteAudio(data : MuteAudioRequestData){
         viewModelScope.launch(Dispatchers.IO){
             _muteAudioState.value = MuteAudioViewState.Loading
-            val api = ServiceBuilder.buildService(ApiInterface::class.java)
             val call = api.muteAudio(data)
-
             call.enqueue(object : Callback<Any>{
                 override fun onResponse(call: Call<Any>, response: Response<Any>) {
                     Log.d("muteAudio success", response.toString())
@@ -84,4 +82,26 @@ class VideoCallViewModel : ViewModel() {
         }
     }
 
+
+    fun updateOnOrientationChange( meetingId : Int, meetingUUID : String,  dimension : String ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = api.updateOnOrientationChange(
+                    meetingId = meetingId,
+                    callerId = meetingUUID,
+                    dimension = dimension
+                )
+                if (response.isSuccessful) {
+                    Log.d("Orientation api suc", response.toString())
+                    Log.d("Orientation api suc", response.body().toString())
+                } else {
+                    Log.d("Orientation api error", response.body().toString())
+                }
+            } catch (e: Exception) {
+                Log.d("Orientation api errr", "${e.message}")
+            }
+            Log.d("Orientation api", "end")
+
+        }
+    }
 }

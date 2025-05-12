@@ -22,6 +22,7 @@ object Constants {
         const val API_KEY_UPLOAD_DATA_LOG: String = "upload-file-content"
         const val API_KEY_CAMERA_STATUS: String = "camera-status"
         const val API_KEY_AUDIO_STATUS: String = "microphone-status"
+        const val API_KEY_ORIENTATION_STATUS : String = "get-dimension"
     }
 
     object UUIDs {

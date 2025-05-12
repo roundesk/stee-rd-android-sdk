@@ -2,35 +2,27 @@ package com.roundesk.sdk.activity
 
 import android.Manifest
 import android.content.Intent
-import android.content.res.Configuration
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import com.roundesk.sdk.R
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
-import com.roundesk.sdk.socket.SocketControllerSDK
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.SocketManager
-import com.roundesk.sdk.socket.VideoMuteListenerHelper
+import com.roundesk.sdk.socket.SocketListenerHelper
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
 import com.roundesk.sdk.util.ToastUtil
 import com.roundesk.sdk.util.URLConfigurationUtil
-import io.webrtc.webrtcandroidframework.ConferenceManager
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
@@ -352,7 +344,7 @@ class IncomingCallActivity : AppCompatActivity(), View.OnClickListener,
         LogUtil.e(TAG, "-----------------------")
         if (response.contains("\"type\":\"camera status\"")){
             val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
-            VideoMuteListenerHelper.muteVideoListState(
+            SocketListenerHelper.muteVideoListState(
                 muteData.caller_name,
                 muteData.camera.contains("on", ignoreCase = true)
             )

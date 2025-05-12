@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
@@ -20,7 +19,7 @@ import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
 //import com.roundesk.sdk.socket.SocketConnection
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.VideoMuteListenerHelper
+import com.roundesk.sdk.socket.SocketListenerHelper
 //import com.roundesk.sdk.socket.SocketManager
 import com.roundesk.sdk.util.Constants
 import com.roundesk.sdk.util.LogUtil
@@ -30,7 +29,6 @@ import pub.devrel.easypermissions.EasyPermissions
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.*
 
 
 class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickListener,
@@ -114,7 +112,7 @@ class SettingsActivity : SocketController(), SocketListener<Any>, View.OnClickLi
 //        Log.e(TAG, "-----------------------")
         if (response.contains("\"type\":\"camera status\"")){
             val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
-            VideoMuteListenerHelper.muteVideoListState(
+            SocketListenerHelper.muteVideoListState(
                 muteData.caller_name,
                 muteData.camera.contains("on", ignoreCase = true)
             )

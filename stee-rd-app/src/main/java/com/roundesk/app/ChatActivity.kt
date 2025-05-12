@@ -33,7 +33,7 @@ import retrofit2.Response
 import java.io.File
 import java.util.*
 import com.roundesk.sdk.socket.AppSocketManager
-import com.roundesk.sdk.socket.VideoMuteListenerHelper
+import com.roundesk.sdk.socket.SocketListenerHelper
 import kotlinx.coroutines.*
 
 class ChatActivity : SocketController(), View.OnClickListener,
@@ -397,7 +397,7 @@ class ChatActivity : SocketController(), View.OnClickListener,
 //        Log.e(TAG, "-----------------------")
         if (response.contains("\"type\":\"camera status\"")){
             val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
-            VideoMuteListenerHelper.muteVideoListState(
+            SocketListenerHelper.muteVideoListState(
                 muteData.caller_name,
                 muteData.camera.contains("on", ignoreCase = true)
             )

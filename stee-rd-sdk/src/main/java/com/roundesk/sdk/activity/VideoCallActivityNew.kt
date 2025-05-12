@@ -6,6 +6,7 @@ import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
@@ -34,37 +35,31 @@ import com.roundesk.sdk.R
 import com.roundesk.sdk.adapter.BottomSheetUserListAdapter
 import com.roundesk.sdk.base.ScreenshotService
 import com.roundesk.sdk.databinding.ContentMainMultipleUserConferenceBinding
-import com.roundesk.sdk.databinding.ContentMainNewBinding
-import com.roundesk.sdk.databinding.MuteViewBinding
 import com.roundesk.sdk.dataclass.*
 import com.roundesk.sdk.network.ApiInterface
 import com.roundesk.sdk.network.ServiceBuilder
 import com.roundesk.sdk.socket.AppSocketManager
+import com.roundesk.sdk.socket.OrientationState
 import com.roundesk.sdk.socket.SocketListener
-import com.roundesk.sdk.socket.VideoMuteListenerHelper
+import com.roundesk.sdk.socket.SocketListenerHelper
 import com.roundesk.sdk.util.*
+import com.roundesk.sdk.util.Constants.CALLER_SOCKET_ID
 import de.tavendo.autobahn.WebSocket
 import io.webrtc.webrtcandroidframework.ConferenceManager
 import io.webrtc.webrtcandroidframework.IDataChannelObserver
 import io.webrtc.webrtcandroidframework.IWebRTCListener
 import io.webrtc.webrtcandroidframework.StreamInfo
 import io.webrtc.webrtcandroidframework.apprtc.CallActivity
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.webrtc.DataChannel
 import org.webrtc.EglRendererInterface
+import org.webrtc.RendererCommon
 import org.webrtc.SurfaceViewRenderer
 import retrofit2.Call
 import retrofit2.Callback
@@ -259,6 +254,7 @@ class VideoCallActivityNew : ComponentActivity(),
     private lateinit var captureIntent: Intent
     private var initializeOnce = 0
     private val parallelVideoItemWidth = MutableStateFlow<Int>(0)
+    var orientation = ""
     private lateinit var viewModel: VideoCallViewModel
     private suspend fun runMainLoop() {
         while (true) {
@@ -272,7 +268,7 @@ class VideoCallActivityNew : ComponentActivity(),
                     if (tempValue!! < it.size) {
                         tempValue = it.size
                         isCallStarted = true
-                        runOnUiThread {
+                         withContext(Dispatchers.Main) {
                             manageUserViews()
                         }
                         if (forTimer) {
@@ -284,7 +280,7 @@ class VideoCallActivityNew : ComponentActivity(),
 
                     } else if (tempValue!! > it.size) {
                         tempValue = it.size
-                        runOnUiThread {
+                        withContext(Dispatchers.Main) {
                             if (tempValue != 0) {
                                 getDisconnectedView()
                             }
@@ -325,15 +321,17 @@ class VideoCallActivityNew : ComponentActivity(),
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this).get(VideoCallViewModel::class.java)
+        lockScreenOrientation()
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.activity_video_call_new)
         binding = ContentMainMultipleUserConferenceBinding.inflate(layoutInflater)
         appSocketManager = AppSocketManager(this, Constants.InitializeSocket.socketConnection,
             Constants.SocketSuffix.SOCKET_CONNECT_SEND_CALL_TO_CLIENT
         )
-        viewModel = ViewModelProvider(this).get(VideoCallViewModel::class.java)
         windowManager.defaultDisplay.getRealMetrics(displayMetrics)
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         captureIntent = mediaProjectionManager.createScreenCaptureIntent()
@@ -385,11 +383,34 @@ class VideoCallActivityNew : ComponentActivity(),
         return conferenceManager?.connectedStreamList?.size ?: 0
     }
 
+    private fun lockScreenOrientation(){
+        requestedOrientation = when (windowManager.defaultDisplay.rotation) {
+            Surface.ROTATION_0 -> {
+                orientation = "portrait"
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+            Surface.ROTATION_90 -> {
+                orientation = "landscape"
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            }
+            Surface.ROTATION_180 -> {
+                orientation = "portrait"
+                ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+            }
+            Surface.ROTATION_270 -> {
+                orientation = "landscape"
+                ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+            }
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         Log.d("getWidth la", "onConfigurationChanged")
 //        adjustLayout()
-        var orientation = ""
+         orientation = ""
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
             orientation = "landscape"
             bottomSheetIconsParentLayout.setPadding(20,10,20,10)
@@ -401,6 +422,11 @@ class VideoCallActivityNew : ComponentActivity(),
         if (::frameLaySurfaceViews.isInitialized && (conferenceManager?.connectedStreamList?.size ?: 0) >= 2) {
             manageTopTwoUsersView()
         }
+//        viewModel.updateOnOrientationChange(
+//            dimension = orientation,
+//            meetingId = mMeetingId,
+//            meetingUUID = CALLER_SOCKET_ID
+//        )
     }
 
 
@@ -583,6 +609,10 @@ class VideoCallActivityNew : ComponentActivity(),
             joinConference()
         }
         collectAudioAndVideoApiState()
+
+        onBackButtonPressed {
+            enterPictureInPictureModeOnBackPress()
+        }
     }
 
 
@@ -812,11 +842,12 @@ class VideoCallActivityNew : ComponentActivity(),
             }
         }
         collectMuteVideoView()
+        collectRemoteOrientationChanges()
     }
 
     private fun collectMuteVideoView(){
         lifecycleScope.launch(Dispatchers.IO){
-            VideoMuteListenerHelper.muteVideoListState.collectLatest{
+            SocketListenerHelper.muteVideoListState.collectLatest{
                 while (userIdAndposition.isEmpty() || getRoomDetailsDataArrayList.isEmpty()){
                     delay(500)
                 }
@@ -841,14 +872,54 @@ class VideoCallActivityNew : ComponentActivity(),
         }
     }
 
+    private fun collectRemoteOrientationChanges() {
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            SocketListenerHelper.orientationListState.collect {
+                while (userIdAndposition.isEmpty() || getRoomDetailsDataArrayList.isEmpty()) {
+                    delay(500)
+                }
+                val index = userIdAndposition.indexOf("")
+
+                withContext(Dispatchers.Main) {
+                    if (userIdAndposition.isNotEmpty()) {
+                        surfaceViewIdList[0].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                        surfaceViewIdList[0].requestLayout()
+                        when (userIdAndposition.size) {
+                            1 -> {
+                                orientationLogic(
+                                    playViewRenderIndex,
+                                    userIdAndposition[0]
+                                )
+                            }
+//
+                            2 -> {
+                                orientationLogic(0, userIdAndposition[0])
+                                orientationLogic(1, userIdAndposition[1])
+                            }
+                        }
+                    }
+                }
+            }
+
+//            viewModel.deviceOrientation.combine(SocketListenerHelper.orientationListState){ deviceOrientation, remoteOrientation ->
+//                Pair(deviceOrientation, remoteOrientation)
+//            }.distinctUntilChanged()
+//                .collect{ (deviceOrientation, remoteOrientation) ->
+//
+//            }
+
+        }
+
+    }
 
     private fun muteViewHideLogic(index : Int, name: String){
-        if (!VideoMuteListenerHelper.muteVideoList.contains(name)){
+        if (!SocketListenerHelper.muteVideoList.contains(name)){
             return
         }
         Log.d("getMuteLogicvalue", "$index   ---  $name")
         try {
-            if (VideoMuteListenerHelper.muteVideoList.get(name) == true){
+            if (SocketListenerHelper.muteVideoList.get(name) == true){
                 muteViewIdList[index].visibility = View.GONE
                 surfaceViewIdList[index].visibility = View.VISIBLE
             } else {
@@ -859,6 +930,60 @@ class VideoCallActivityNew : ComponentActivity(),
             Log.d("muteViewHideLogic" , e.message.toString())
         }catch (e : Exception){
             Log.d("muteViewHideLogic" , e.message.toString())
+
+        }
+    }
+
+    private fun parts(streamId: String): String {
+        val parts = streamId.split("-")
+        return if (parts.size >= 3) parts[1] else ""
+    }
+
+
+    private fun orientationLogic(index: Int, streamId: String) {
+        val orientation = resources.configuration.orientation
+        val item = SocketListenerHelper.orientationList[parts(streamId)]
+        val devicePortrait = orientation == Configuration.ORIENTATION_PORTRAIT
+        val deviceLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE
+        Log.d("getOrientationDetailsit", "${item.toString()}  $orientation")
+
+
+        try {
+            if (!SocketListenerHelper.orientationList.contains(parts(streamId)) && deviceLandscape) {
+//            playViewRenderers[index].rotation = 90f
+                Log.d("orientationblock", "1 -----  $streamId")
+                surfaceViewIdList[index].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                surfaceViewIdList[index].requestLayout()
+            }
+            if (!SocketListenerHelper.orientationList.contains(parts(streamId)) && devicePortrait) {
+//            playViewRenderers[index].rotation = 90f
+                Log.d("orientationblock", "2 -----  $streamId "  )
+                surfaceViewIdList[index].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
+                surfaceViewIdList[index].requestLayout()
+            }
+            if (item == OrientationState.Portrait && devicePortrait) {
+                Log.d("orientationblock", "3 ------  $streamId")
+                surfaceViewIdList[index].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
+                surfaceViewIdList[index].requestLayout()
+            }
+            if (item == OrientationState.Landscape && deviceLandscape) {
+                Log.d("orientationblock", "4 ------ $streamId")
+                surfaceViewIdList[index].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
+                surfaceViewIdList[index].requestLayout()
+            }
+
+            if ((item == OrientationState.Portrait && deviceLandscape) ||
+                (item == OrientationState.Landscape && devicePortrait)
+            ) {
+                Log.d("orientationblock", "5 ------- $index")
+                surfaceViewIdList[index].setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_BALANCED)
+                surfaceViewIdList[index].requestLayout()
+            }
+
+        } catch (e: IndexOutOfBoundsException) {
+            Log.d("muteViewHideLogic", e.message.toString())
+        } catch (e: Exception) {
+            Log.d("muteViewHideLogic", e.message.toString())
 
         }
 
@@ -1083,6 +1208,12 @@ class VideoCallActivityNew : ComponentActivity(),
         lifecycleScope.launch {
             refreshRoomDetails()
         }
+
+        viewModel.updateOnOrientationChange(
+            dimension = orientation,
+            meetingId = mMeetingId,
+            meetingUUID = CALLER_SOCKET_ID
+        )
         Log.d("setNamesToTextview ic", userIdAndposition.toString())
     }
 
@@ -1320,18 +1451,26 @@ class VideoCallActivityNew : ComponentActivity(),
         relLayParticipant2.removeFromParent()
 
 
-        relLayParticipant2.layoutParams = layoutParams(true)
-        relLayParticipant1.layoutParams = layoutParams(false)
 
-        surfaceViewIdList[playViewRenderIndex].layoutParams = layoutParamsRelativeLayout()
-        muteViewIdList[playViewRenderIndex].layoutParams = layoutParamsRelativeLayout()
-        publishViewRenderer.layoutParams = layoutParamsRelativeLayout()
-        binding.publishMuteView.muteParentView.layoutParams = layoutParamsRelativeLayout()
+
+        relLayParticipant2.layoutParams = smallAndFullViewFrameLayoutLayoutParams(true).apply {
+            gravity = Gravity.CENTER
+        }
+        relLayParticipant1.layoutParams = if (isPictureInPictureMode) {
+            onPiPModeSmallViewLayoutParams()
+        } else {
+            smallAndFullViewFrameLayoutLayoutParams(false)
+        }
+
+        surfaceViewIdList[playViewRenderIndex].layoutParams = fullSizeLayoutRelativeLayoutParams()
+        muteViewIdList[playViewRenderIndex].layoutParams = fullSizeMuteViewLayoutParams()
+        publishViewRenderer.layoutParams = fullSizeLayoutRelativeLayoutParams()
+        binding.publishMuteView.muteParentView.layoutParams = fullSizeMuteViewLayoutParams()
 
         if (isCallerSmall) {
 
             relLayParticipant2?.addView(surfaceViewIdList[playViewRenderIndex])
-            relLayParticipant2.addView(muteViewIdList[playViewRenderIndex] )
+            relLayParticipant2.addView(muteViewIdList[playViewRenderIndex])
             relLayParticipant1?.addView(publishViewRenderer)
             relLayParticipant1.addView(binding.publishMuteView.muteParentView)
 
@@ -1347,9 +1486,9 @@ class VideoCallActivityNew : ComponentActivity(),
 
 
             relLayParticipant2?.addView(binding.publishMuteView.muteParentView)
-            relLayParticipant2.addView(publishViewRenderer )
+            relLayParticipant2.addView(publishViewRenderer)
             relLayParticipant1?.addView(muteViewIdList[playViewRenderIndex])
-            relLayParticipant1.addView( surfaceViewIdList[playViewRenderIndex])
+            relLayParticipant1.addView(surfaceViewIdList[playViewRenderIndex])
 
             frameLaySurfaceViews.addView(relLayParticipant2)
             frameLaySurfaceViews.addView(relLayParticipant1)
@@ -1372,33 +1511,6 @@ class VideoCallActivityNew : ComponentActivity(),
     }
 
 
-    private fun layoutParams(fullScreen: Boolean) : FrameLayout.LayoutParams {
-        return  if (fullScreen){
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT
-            ).apply {
-                marginEnd = 0
-                topMargin = 0
-            }
-        }else{
-            FrameLayout.LayoutParams(
-                432,510
-            ).apply {
-                marginEnd = 40
-                topMargin = 40
-                gravity = Gravity.END
-            }
-        }
-    }
-
-    private fun layoutParamsRelativeLayout () : RelativeLayout.LayoutParams{
-        return RelativeLayout.LayoutParams(
-            RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
-        ).apply {
-            marginEnd = 0
-            topMargin = 0
-        }
-    }
 
     private fun View.removeFromParent(){
         (parent as? ViewGroup)?.removeView(this)
@@ -1723,10 +1835,13 @@ class VideoCallActivityNew : ComponentActivity(),
 //        mHandler.sendEmptyMessage(MSG_STOP_TIMER);
     }
 
+    @Deprecated("Deprecated in API 33")
     override fun onBackPressed() {
-        super.onBackPressed()
+        enterPictureInPictureModeOnBackPress()
+    }
+    private fun enterPictureInPictureModeOnBackPress() {
         if (imgBack?.isEnabled == true) {
-            val aspectRatio = Rational(relLayoutMain!!.getWidth(), relLayoutMain!!.getHeight())
+            val aspectRatio = Rational(relLayoutMain!!.width, relLayoutMain!!.height)
             val sourceRectHint = Rect()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 pictureInPictureParamsBuilder
@@ -1772,9 +1887,19 @@ class VideoCallActivityNew : ComponentActivity(),
 //        LogUtil.e(TAG, "-----------------------")
         if (response.contains("\"type\":\"camera status\"")){
             val muteData = Gson().fromJson(response, SocketMuteVideoData::class.java)
-            VideoMuteListenerHelper.muteVideoListState(
+            SocketListenerHelper.muteVideoListState(
                 muteData.caller_name,
                 muteData.camera.contains("on", ignoreCase = true)
+            )
+        }
+
+        if (response.contains("\"type\":\"dimension\"")) {
+            val data = Gson().fromJson(response, SocketOrientationData::class.java)
+            Log.d("orientationblock", data.toString())
+
+            SocketListenerHelper.updateOrientationList(
+                data.caller_id,
+                data.dimension
             )
         }
         when (type) {
@@ -1981,7 +2106,7 @@ class VideoCallActivityNew : ComponentActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
-        VideoMuteListenerHelper.muteVideoList.clear()
+        SocketListenerHelper.muteVideoList.clear()
         initialView = false
         stopSong()
         allJoinedUserArray.clear()
@@ -2406,7 +2531,7 @@ class VideoCallActivityNew : ComponentActivity(),
                                     }
                                 }.join()
                                 if (userIdAndposition.size >= 1) {
-                                    runOnUiThread {
+                                    withContext(Dispatchers.Main) {
                                         setNamesToTextview()
 //                                        manageUserViews()
                                     }
