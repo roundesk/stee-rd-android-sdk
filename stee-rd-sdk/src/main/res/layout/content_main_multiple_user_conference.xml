@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-
+            android:layout_gravity="center"
             android:visibility="visible">
 
             <View
@@ -52,7 +52,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="end"
-                android:gravity="end">
+                android:gravity="center_horizontal">
                 <include
                     android:id="@+id/play_view_renderer1_mute_view"
                     android:layout_width="match_parent"

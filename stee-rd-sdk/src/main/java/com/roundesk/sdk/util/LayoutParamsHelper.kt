@@ -10,13 +10,13 @@ import android.widget.RelativeLayout
 
 
 
- fun fullSizeLayoutRelativeLayoutParams () : RelativeLayout.LayoutParams{
+fun fullSizeLayoutRelativeLayoutParams () : RelativeLayout.LayoutParams{
     return RelativeLayout.LayoutParams(
         RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT
     ).apply {
         marginEnd = 0
         topMargin = 0
-
+        addRule(RelativeLayout.CENTER_IN_PARENT)
     }
 }
 
@@ -26,15 +26,15 @@ fun fullSizeMuteViewLayoutParams() : RelativeLayout.LayoutParams{
     ).apply {
         marginEnd = 0
         topMargin = 0
-
+        addRule(RelativeLayout.CENTER_IN_PARENT)
     }
 }
 
- fun smallAndFullViewFrameLayoutLayoutParams(fullScreen: Boolean) : FrameLayout.LayoutParams {
+fun smallAndFullViewFrameLayoutLayoutParams(fullScreen: Boolean) : FrameLayout.LayoutParams {
 
     return  if (fullScreen){
         FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
         ).apply {
             marginEnd = 0
             topMargin = 0
@@ -94,7 +94,7 @@ fun remoteVideoLayoutParamsOnOrientation(fullScreen: Boolean, orientation : Int)
 
 
 fun onPiPModeSmallViewLayoutParams()  : FrameLayout.LayoutParams{
-   return FrameLayout.LayoutParams(
+    return FrameLayout.LayoutParams(
         165,210
     ).apply {
         marginEnd = 10

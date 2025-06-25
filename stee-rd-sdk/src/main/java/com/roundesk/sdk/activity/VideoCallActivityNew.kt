@@ -268,7 +268,7 @@ class VideoCallActivityNew : ComponentActivity(),
                     if (tempValue!! < it.size) {
                         tempValue = it.size
                         isCallStarted = true
-                         withContext(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             manageUserViews()
                         }
                         if (forTimer) {
@@ -410,7 +410,7 @@ class VideoCallActivityNew : ComponentActivity(),
         super.onConfigurationChanged(newConfig)
         Log.d("getWidth la", "onConfigurationChanged")
 //        adjustLayout()
-         orientation = ""
+        orientation = ""
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
             orientation = "landscape"
             bottomSheetIconsParentLayout.setPadding(20,10,20,10)
@@ -1440,8 +1440,6 @@ class VideoCallActivityNew : ComponentActivity(),
 
     private fun switchLayout(isCallerSmall: Boolean) {
         relLayoutMain!!.removeView(switchView)
-        Log.d("switchLayout", "switchLayout2")
-        Log.d("switchLayout", "$playViewRenderIndex")
 
         publishViewRenderer.removeFromParent()
         binding.publishMuteView.muteParentView.removeFromParent()
@@ -1664,7 +1662,6 @@ class VideoCallActivityNew : ComponentActivity(),
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        LogUtil.e("onPiPMode", "connectedStreamList $tempValue")
         if (isInPictureInPictureMode) {
             isPictureInPictureMode = true
             layoutBottomSheet.visibility = View.GONE
@@ -1733,6 +1730,7 @@ class VideoCallActivityNew : ComponentActivity(),
                 txtParticipant5?.text = getInitials(strParticipant5Name)
             }
         } else {
+            isPictureInPictureMode = false
             layoutBottomSheet.visibility = View.VISIBLE
             relLayToolbar?.visibility = View.VISIBLE
             if (tempValue == 1) {
@@ -1788,6 +1786,8 @@ class VideoCallActivityNew : ComponentActivity(),
                 txtParticipant5?.text = strParticipant5Name
             }
         }
+
+        setNamesToTextview()
     }
 
 //    private val mHandler: Handler = object : Handler(Looper.getMainLooper()) {
@@ -2903,12 +2903,10 @@ class VideoCallActivityNew : ComponentActivity(),
             userIdAndposition.retainAll{it in conferenceManager?.connectedStreamList!!}
         }
         twoUsersLayoutType = isReceiverID
-        Log.d("setNamesToTextview lis", userIdAndposition.toString())
         val name = if (isReceiverID) receiverName else callerName
         if (userIdAndposition.isNotEmpty()) {
             when (userIdAndposition.size) {
                 1 -> {
-                    Log.d("setNamesToTextview 4", getConnectedUserName(userIdAndposition[0]))
                     txtParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
                     txtInitialViewParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
                     txtParticipant2!!.text = name
@@ -2919,10 +2917,6 @@ class VideoCallActivityNew : ComponentActivity(),
                     }
                 }
                 2 -> {
-                    Log.d(
-                        "setNamesToTextview 5",
-                        getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
-                    )
                     txtParticipant1!!.text = name
                     txtParticipant2!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
                     txtParticipant3!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
@@ -2940,7 +2934,6 @@ class VideoCallActivityNew : ComponentActivity(),
     private fun setNamesTwoUsers(type: Boolean) {
 //        Log.d("setNamesTwoUsers", fistTimeTwoUsers.toString())
         if (userIdAndposition.isEmpty()) {
-            Log.d("setNamesToTextview 0-0", "return")
             return
         }
         if (type) {
@@ -2950,7 +2943,6 @@ class VideoCallActivityNew : ComponentActivity(),
                 getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
             txtParticipant2!!.text = if (isReceiverID) receiverName else callerName
             txtInitialViewParticipant2!!.text = if (isReceiverID) receiverName else callerName
-            Log.d("setNamesToTextview 1", receiverName.toString())
         } else {
             txtParticipant2!!.text =
                 getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
@@ -2958,7 +2950,6 @@ class VideoCallActivityNew : ComponentActivity(),
                 getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
             txtParticipant1!!.text = if (isReceiverID) receiverName else callerName
             txtInitialViewParticipant1!!.text = if (isReceiverID) receiverName else callerName
-            Log.d("setNamesToTextview 2", callerName.toString())
         }
     }
 
