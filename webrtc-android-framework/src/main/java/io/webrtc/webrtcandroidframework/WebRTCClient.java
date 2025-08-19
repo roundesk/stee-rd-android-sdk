@@ -128,7 +128,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     private EglRendererInterface eglRendererInterface;
     private Handler handler = new Handler();
     private WebSocketHandler wsHandler;
-    private List<String> stunUrlList = new ArrayList<String>();
+    private List<String> stunServerUriList = new ArrayList<String>();
 //    private String googleStunServerUri = "stun:stun.l.google.com:19302";
 //    private String stunServerUri3478 = "stun:stee-rd-uat.roundesk.io:3478";
 //    private String stunServerUri5443 = "stun:stee-rd-uat.roundesk.io:5443";
@@ -194,7 +194,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     @Override
-    public void init(String url, String streamId, String mode, String token, Intent intent,List<String> stunUrlList ) {
+    public void init(String url, String streamId, String mode, String token, Intent intent,List<String> stunServerUriList ) {
         if (peerConnectionClient != null) {
             Log.w(TAG, "There is already a active peerconnection client ");
             return;
@@ -208,12 +208,12 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
         }
         this.url = url;
 
-        if (stunUrlList == null || stunUrlList.isEmpty()){
+        if (stunServerUriList == null || stunServerUriList.isEmpty()){
             logAndToast(this.context.getString(R.string.missing_url));
             Log.e(TAG, "Didn't get any Stun URL in intent!");
             return;
         }
-        this.stunUrlList = stunUrlList;
+        this.stunServerUriList = stunServerUriList;
 
         // Get Intent parameters.
         //String roomId = this.activity.getIntent().getStringExtra(CallActivity.EXTRA_ROOMID);
@@ -249,7 +249,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
 
 //        iceServers.add(PeerConnection.IceServer.builder(googleStunServerUri).createIceServer());
 
-        setStunUrlInIceServers(this.stunUrlList);
+        setStunUrlInIceServers(this.stunServerUriList);
 
 //        iceServers.add(PeerConnection.IceServer.builder(turnServerURI)
 //                .setUsername("username")
@@ -496,7 +496,7 @@ public class WebRTCClient implements IWebRTCClient, MediaSignallingEvents, PeerC
     }
 
     public void startStream() {
-        init(this.url, this.streamId, this.streamMode, this.token, this.intent, this.stunUrlList );
+        init(this.url, this.streamId, this.streamMode, this.token, this.intent, this.stunServerUriList );
         if (wsHandler == null) {
             wsHandler = new WebSocketHandler(this, handler);
             wsHandler.connect(roomConnectionParameters.roomUrl);

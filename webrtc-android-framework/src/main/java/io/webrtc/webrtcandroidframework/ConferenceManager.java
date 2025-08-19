@@ -40,7 +40,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     private final String serverUrl;
     private final String roomName;
     private String streamId;
-    private List<String> stunUrlList = new ArrayList<String>();
+    private List<String> stunUriList = new ArrayList<String>();
     private HashMap<String, WebRTCClient> peers = new HashMap<>();
      private LinkedHashMap<SurfaceViewRenderer, WebRTCClient> playRendererAllocationMap = new LinkedHashMap<>();
      private LinkedHashMap<SurfaceViewRenderer, String> playRendererMap = new LinkedHashMap<>();
@@ -66,7 +66,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
     private WebRTCClient webRTCClient;
 
 
-    public ConferenceManager(Context context, IWebRTCListener webRTCListener, Intent intent, String serverUrl, String roomName, SurfaceViewRenderer publishViewRenderer, ArrayList<SurfaceViewRenderer> playViewRenderers, String streamId, IDataChannelObserver dataChannelObserver, EglRendererInterface eglRendererInterface, List<String> stunUrlList) {
+    public ConferenceManager(Context context, IWebRTCListener webRTCListener, Intent intent, String serverUrl, String roomName, SurfaceViewRenderer publishViewRenderer, ArrayList<SurfaceViewRenderer> playViewRenderers, String streamId, IDataChannelObserver dataChannelObserver, EglRendererInterface eglRendererInterface, List<String> stunUriList) {
         this.context = context;
         this.intent = intent;
         this.eglRendererInterface = eglRendererInterface;
@@ -81,7 +81,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
         this.webRTCListener = webRTCListener;
         this.streamId = streamId;
         this.dataChannelObserver = dataChannelObserver;
-        this.stunUrlList = stunUrlList;
+        this.stunUriList = stunUriList;
         if (dataChannelObserver != null) {
             this.intent.putExtra(EXTRA_DATA_CHANNEL_ENABLED, true);
         }
@@ -142,7 +142,7 @@ public class ConferenceManager implements MediaSignallingEvents, IDataChannelMes
             webRTCClient.setDataChannelObserver(dataChannelObserver);
         }
 
-        webRTCClient.init(serverUrl, streamId, mode, tokenId, intent, this.stunUrlList);
+        webRTCClient.init(serverUrl, streamId, mode, tokenId, intent, this.stunUriList);
         Log.i("ConferenceManager",
                 "createPeer() serverUrl : " + serverUrl
                         + " streamId : " + streamId

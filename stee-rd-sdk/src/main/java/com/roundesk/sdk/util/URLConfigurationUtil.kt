@@ -51,8 +51,8 @@ open class URLConfigurationUtil {
             return Constants.SERVER_URL_DEV
         }
 
-        fun getStunUrls() : List<String>{
-            return Constants.STUN_URLS
+        fun getStunUri() : List<String>{
+            return Constants.STUN_SERVER_URI
         }
     }
 }

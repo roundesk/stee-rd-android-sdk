@@ -57,7 +57,7 @@ public interface IWebRTCClient extends CallFragment.OnCallEvents {
      * @param mode one of the MODE_PUBLISH, MODE_PLAY, MODE_JOIN
      * @param token one time token string
      */
-    void init(String url, String streamId, String mode, String token, Intent intent, List<String> stunUrlList);
+    void init(String url, String streamId, String mode, String token, Intent intent, List<String> stunServerUriList);
 
 
     /**
