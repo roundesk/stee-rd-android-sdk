@@ -646,7 +646,8 @@ class VideoCallActivityNew : ComponentActivity(),
             playViewRenderers,
             strStreamID,
             null,
-            this
+            this,
+            URLConfigurationUtil.getStunUrls()
         )
 
 

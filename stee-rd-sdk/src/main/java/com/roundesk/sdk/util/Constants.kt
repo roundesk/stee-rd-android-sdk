@@ -9,6 +9,11 @@ object Constants {
      var SOCKET_URL_DEV: String = "https://stee-rd-uat.roundesk.io:3000/"
      var SERVER_ADDRESS_DEV: String = "stee-rd-uat.roundesk.io:5443"
      var SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/WebRTCAppEE/websocket"
+     var STUN_URLS = arrayListOf(
+         "turn:tele-omnii-lb.intranet.spfone.gov.sg:5080",
+         "turn:tele-omnii-lb.intranet.spfone.gov.sg:3478",
+         "turn:stee-rd-uat.roundesk.io:3478"
+         )
 
     const val API_TOKEN: String = "eyJ0eXAiOiJLV1PiLOJhbK1iOiJSUzI1NiJ9"
 
