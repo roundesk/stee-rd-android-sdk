@@ -2514,7 +2514,6 @@ class VideoCallActivityNew : ComponentActivity(),
                             getRoomDetailsDataArrayList.clear()
 
                             lifecycleScope.launch {
-                                launch {
                                     response.body()?.success?.let {
                                         getRoomDetailsDataArrayList.addAll(it)
                                         val streamId = getRoomDetailsDataArrayList.find { it.name == thisDevicePersonName }?.stream_id
@@ -2530,7 +2529,6 @@ class VideoCallActivityNew : ComponentActivity(),
                                             }
                                         }
                                     }
-                                }.join()
                                 if (userIdAndposition.size >= 1) {
                                     withContext(Dispatchers.Main) {
                                         setNamesToTextview()
@@ -2904,27 +2902,27 @@ class VideoCallActivityNew : ComponentActivity(),
             userIdAndposition.retainAll{it in conferenceManager?.connectedStreamList!!}
         }
         twoUsersLayoutType = isReceiverID
-        val name = if (isReceiverID) receiverName else callerName
+        val name = (if (isReceiverID) receiverName else callerName) ?: thisDevicePersonName
         if (userIdAndposition.isNotEmpty()) {
             when (userIdAndposition.size) {
                 1 -> {
-                    txtParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-                    txtInitialViewParticipant1!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+                    txtParticipant1!!.text = getConnectedUserName(userIdAndposition[0])
+                    txtInitialViewParticipant1!!.text = getConnectedUserName(userIdAndposition[0])
                     txtParticipant2!!.text = name
                     txtInitialViewParticipant2!!.text = name
                     binding.apply {
-                        publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
-                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
+                        publishMuteView.muteViewTxt.text = name.trim().first().uppercase()
+                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(userIdAndposition[0]).trim().first().uppercase()
                     }
                 }
                 2 -> {
                     txtParticipant1!!.text = name
-                    txtParticipant2!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-                    txtParticipant3!!.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1]))
+                    txtParticipant2!!.text = getConnectedUserName(userIdAndposition[0])
+                    txtParticipant3!!.text = getConnectedUserName(userIdAndposition[1])
                     binding.apply {
-                        publishMuteView.muteViewTxt.text = name?.first()?.uppercase() ?: thisDevicePersonName.first().uppercase()
-                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[0])).first().uppercase()
-                        playViewRenderer2MuteView.muteViewTxt.text = getConnectedUserName(getConnectedUserName(userIdAndposition[1])).first().uppercase()
+                        publishMuteView.muteViewTxt.text = name.trim().first().uppercase()
+                        playViewRenderer1MuteView.muteViewTxt.text = getConnectedUserName(userIdAndposition[0]).trim().first().uppercase()
+                        playViewRenderer2MuteView.muteViewTxt.text = getConnectedUserName(userIdAndposition[1]).trim().first().uppercase()
                     }
                 }
             }
@@ -2938,17 +2936,13 @@ class VideoCallActivityNew : ComponentActivity(),
             return
         }
         if (type) {
-            txtParticipant1!!.text =
-                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-            txtInitialViewParticipant1!!.text =
-                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtParticipant1!!.text = getConnectedUserName(userIdAndposition[0])
+            txtInitialViewParticipant1!!.text = getConnectedUserName(userIdAndposition[0])
             txtParticipant2!!.text = if (isReceiverID) receiverName else callerName
             txtInitialViewParticipant2!!.text = if (isReceiverID) receiverName else callerName
         } else {
-            txtParticipant2!!.text =
-                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
-            txtInitialViewParticipant2!!.text =
-                getConnectedUserName(getConnectedUserName(userIdAndposition[0]))
+            txtParticipant2!!.text = getConnectedUserName(userIdAndposition[0])
+            txtInitialViewParticipant2!!.text =getConnectedUserName(userIdAndposition[0])
             txtParticipant1!!.text = if (isReceiverID) receiverName else callerName
             txtInitialViewParticipant1!!.text = if (isReceiverID) receiverName else callerName
         }

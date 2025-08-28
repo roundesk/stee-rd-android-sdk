@@ -15,7 +15,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.gson.Gson
 import com.roundesk.sdk.activity.ApiFunctions
 import com.roundesk.sdk.activity.IncomingCallActivity
@@ -452,56 +454,13 @@ class ChatActivity : SocketController(), View.OnClickListener,
 
 
     private fun storeDataLogsFile() {
-//        Log.e("SocketConfig", "File Path $pid");
         if (isExternalStorageWritable()) {
-//            val appDirectory = File(Environment.getExternalStorageDirectory().toString() + "/STEE_APP_DATA_LOGS")
-//            val cDir: File? = applicationContext?.getExternalFilesDir(null);
-//            val appDirectory = File(cDir?.path + "/" + "STEE_APP_DATA_LOGS")
-//            val logDirectory = File("$appDirectory/logs")
-//            val logFile = File(logDirectory, "logcat_" + System.currentTimeMillis() + ".txt")
-//            // create app folder
-//            if (!appDirectory.exists()) {
-//                appDirectory.mkdir()
-//            }
-//
-//            // create log folder
-//            if (!logDirectory.exists()) {
-//                logDirectory.mkdir()
-//            }
-
-            // clear the previous logcat and then write the new one to the file
-//            try {
-//                Process process = Runtime.getRuntime().exec("logcat -c");
-
-//                val process = Runtime.getRuntime().exec("logcat -f $logFile")
-//                lifecycleScope.launch(Dispatchers.IO){
-//
-//                    while(process.isAlive){
-//                        Log.d("isProcessAlive", "yes")
-//                        delay(2000)
-//                    }
-//                }
-
-
-            lifecycleScope.launchWhenResumed {
-                SaveLogsToFile(applicationContext).startLog("cht")
+            lifecycleScope.launch{
+                repeatOnLifecycle(Lifecycle.State.RESUMED){
+                    SaveLogsToFile(applicationContext).startLog("cht")
+                }
             }
-//
-//               }
-
-
-
-
-//                Log.e("SocketConfig", "File Path $process");
-
-//            } catch (e: IOException) {
-//                e.printStackTrace()
         }
-//        } else if (isExternalStorageReadable()) {
-//            // only readable
-//        } else {
-//            // not accessible
-//        }
     }
 
 

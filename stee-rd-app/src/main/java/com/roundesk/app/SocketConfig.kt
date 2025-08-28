@@ -15,7 +15,7 @@ class SocketConfig : Application() {
 
     private var mSocket: Socket? = null
     private var pid = 0
-    private var job = MainScope()
+    private var job = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     companion object {
         private var mInstance: SocketConfig? = null

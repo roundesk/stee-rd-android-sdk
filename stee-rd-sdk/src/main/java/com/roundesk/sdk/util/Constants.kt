@@ -10,7 +10,7 @@ object Constants {
      var SERVER_ADDRESS_DEV: String = "stee-rd-uat.roundesk.io:5443"
      var SERVER_URL_DEV = "wss://$SERVER_ADDRESS_DEV/WebRTCAppEE/websocket"
      var STUN_SERVER_URI = arrayListOf(
-         "turn:tele-omnii-lb.intranet.spfone.gov.sg:5080",
+         "turn:tele-omnii-lb.intranet.spfoneuat.gov.sg:5080",
          "turn:tele-omnii-lb.intranet.spfone.gov.sg:3478",
          "turn:stee-rd-uat.roundesk.io:3478"
          )
